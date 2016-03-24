@@ -5,6 +5,7 @@
 #include "event2/util.h"
 #include "event2/event.h"
 #include "thirdparty/Ipv4Address.h"
+#include "proto.h"
 
 #include <list>
 #include <map>

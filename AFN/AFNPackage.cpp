@@ -3,7 +3,7 @@
 #include "YQErrCode.h"
 
 unsigned int AFNPackage::s_pkgID = 1;
-unsigned int pkg::PKG_HEADLEN = 6; 
+
 AFNPackage::AFNPackage()
 	:m_nId(s_pkgID)
 {
@@ -11,15 +11,14 @@ AFNPackage::AFNPackage()
 AFNPackage::~AFNPackage(void)
 {
 }
-int AFNPackage::parseProto(BYTE* data,unsigned int len)
+int AFNPackage::parseProto(BYTE* data,DWORD len)
 {
-	if (len < 14)
+	if (len < (PKG_HEADLEN+PKG_USER_HEADLEN+PKG_TAILLEN))
 		return YQER_PKG_Err(1);
 
-	S1 = data[0];
-	E = data[len-1];
-	if (S1 != 0x68 || E != 0x16)
-		return YQER_PKG_Err(2);
-	memcpy(Ldata+1,
+	return 0;
+}
+int AFNPackage::serialize(BYTE* buf,DWORD bufLen)
+{
 	return 0;
 }

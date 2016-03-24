@@ -1,15 +1,27 @@
 //字节序，低位在前，高位在后，低字节在前，高字节在后
 //终端登录抓包：   68 32 00 32 00 68 c9 00 10 4d 04 00 02 75 00 00 01 00 a2 16
 //EXE测试登录发包：68 32 00 32 00 68 49 00 00 00 00 02 02 62 00 00 01 00 B0 16
+#ifndef _PROTO_H
+#define _PROTO_H
 
+#ifdef WIN32
+#include <windows.h>
+#else
 typedef unsigned char BYTE;
 typedef unsigned short WORD;
+typedef unsigned int DWORD;
+#endif
 
-class afn;
+#define PKG_HEADLEN 6 //固定包头6字节长度
+#define PKG_USER_HEADLEN 6 //用户数据区头6字节长度
+#define PKG_TAILLEN 2 //包尾2字节长度
 
-class pkg{
+class pkg;
+class pkg_afn;
+class pkg_afn_base;
+
+class pkg_header{
 public:
-	static unsigned int PKG_HEADLEN;//固定包头6字节长度
 	/*
 	固定长度包头,6BYTE
 	*/
@@ -38,9 +50,12 @@ public:
 		};
 	};
 	BYTE S2;//起始字符0x68
-	/*
-	用户数据区,包括C,A,D部分
-	*/
+};
+/*
+用户数据区包头,包括C,A部分
+*/
+class pkg_user_header{
+public:	
 	/*
 	C:控制域,按位说明如下
 		D7:传输方向位DIR,DIR=0下行，DIR=1上行
@@ -114,17 +129,20 @@ public:
 			BYTE MSA:7;
 		};
 	};
-	/*
-	D:链路用户数据区,见下面afn定义
-	*/
-	afn* D;
-	/*
-	包尾
-	*/
+};
+/*
+包尾
+*/
+class pkg_tail{
+public:	
 	BYTE CS;//用户数据区校验和,按8位组算术和,不考虑溢出
 	BYTE E;//结束字符0x16
 };
-class afn{
+/*
+用户数据区D
+*/
+class pkg_afn_header{
+public:
 	/*
 	功能码
 	AFN值		功能定义
@@ -150,7 +168,7 @@ class afn{
 	BYTE AFN;
 	/*
 	序列号
-	D7:时间标签有效位TpV,时间戳,=1附加信息域带有时间戳，=0无时间戳
+	D7:时间标签有效位TPV,时间戳,=1附加信息域带有时间戳，=0无时间戳
 	D6:首帧标识FIR,第一帧
 	D5:末帧标识FIN,最后一帧,(D5,D6)组合使用，如下表
 		D6	D5	说明
@@ -169,7 +187,7 @@ class afn{
 			BYTE PRSEQ:4;//PSEQ时为PFC低4位,取值(0~15)，RSEQ时初始为PSEQ，以后递增1,如果连续收到RSEQ相同的帧，则不处理，连续收到PSEQ，则重发响应
 			BYTE FIN:1;
 			BYTE FIR:1;
-			BYTE TvP:1;
+			BYTE TPV:1;
 		};
 	};
 	
@@ -186,13 +204,9 @@ class afn{
 	*/
 	BYTE DT1;//数据单元标识DT1,按位表示每个信息类组的(0-8种)信息类元
 	BYTE DT2;//数据单元标识DT2,按值(只取0-31)表示信息类组
-	/*
-	数据单元
-	按p0-p2040排列,每个pn内按F1-F248排列
-	终端响应数据时如果某项无数据则在DT的对应标识位置0(Fn=0),某项数据部分缺失，缺失数据部分填0xEE。
-	*/
-	BYTE *DATA;
-	
+};
+class pkg_afn_aux{
+public:
 	/*
 	附加信息域
 	*/
@@ -200,9 +214,53 @@ class afn{
 	BYTE EC1;//事件计数器EC1（重要事件计数器,范围0~255）,上行,ACD=1时有效
 	BYTE EC2;//事件计数器EC2（一般事件计数器,范围0~255）,上行,ACD=1时有效
 	
-	BYTE PFC;//时间戳TpV(启动帧计数器PFC)
-	BYTE TvP[4];//时间戳TpV(启动帧发送时标,记录启动帧发送的时间)
-	BYTE DELAY;//时间戳TpV(允许发送传输延时时间,单位:分钟)
+	BYTE PFC;//时间戳TPV(启动帧计数器PFC)
+	BYTE TP[4];//时间戳TPV(启动帧发送时标,记录启动帧发送的时间)
+	BYTE DELAY;//时间戳TPV(允许发送传输延时时间,单位:分钟)
+};
+class pkg_afn{
+public:
+	pkg_afn_header HEADER;
+	pkg_afn_aux    AUX;
+	/*
+	数据单元
+	按p0-p2040排列,每个pn内按F1-F248排列
+	终端响应数据时如果某项无数据则在DT的对应标识位置0(Fn=0),某项数据部分缺失，缺失数据部分填0xEE。
+	*/
+	pkg_afn_base *pAFN;
+};
+/*
+包
+*/
+class pkg{
+public:
+	pkg_header HEADER;
+	pkg_user_header USERHEADER;	
+	pkg_tail TAIL;
+	pkg_afn D;//链路用户数据区,见下面afn定义
+};
+
+class pkg_afn_base{
+	friend class pkg_afn;
+	friend class pkg;
+public:
+	pkg_afn_base(void* _data,DWORD _len):m_pData(NULL),m_nLen(0){
+		if (_len > 0){
+			m_pData = new BYTE[_len];
+			if (m_pData){
+				m_nLen = _len;
+				memcpy(m_pData,_data,m_nLen);
+			}
+		}
+	}
+	virtual ~pkg_afn_base(){
+		delete m_pData;
+		m_pData=NULL;
+		m_nLen=0;
+	}
+protected:
+	BYTE* m_pData;
+	DWORD m_nLen;
 };
 //---------------------------------------------------------------
-
+#endif

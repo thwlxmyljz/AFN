@@ -22,7 +22,7 @@ int Connection::SendBuf(const void* cmd,unsigned int cmdlen)
 }
 int Connection::SendPkg(const AFNPackage* pkg)
 {
-	return SendBuf(pkg->m_data,pkg->n_len);
+	return 0;
 }
 BOOL Connection::Compare(const string& name)
 {
