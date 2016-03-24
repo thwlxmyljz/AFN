@@ -1,0 +1,204 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="头文件\thirdparty">
+      <UniqueIdentifier>{31ffddfa-5498-4c13-b986-3c0e25689b22}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\thirdparty">
+      <UniqueIdentifier>{06d892db-040f-4561-9f13-7b0de5ca9927}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Connection.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="AFNPackage.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="AFNPackageBuilder.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DBManager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TcpServer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="YQUtils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="YQDefs.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="YQErrCode.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\Ipv4Address.h">
+      <Filter>头文件\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\Json.h">
+      <Filter>头文件\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\Lock.h">
+      <Filter>头文件\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\Mutex.h">
+      <Filter>头文件\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\Thread.h">
+      <Filter>头文件\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\Utility.h">
+      <Filter>头文件\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\XmlDocument.h">
+      <Filter>头文件\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\XmlException.h">
+      <Filter>头文件\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\XmlNode.h">
+      <Filter>头文件\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="LogFileu.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\Exception.h">
+      <Filter>头文件\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\IMutex.h">
+      <Filter>头文件\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\Parse.h">
+      <Filter>头文件\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\Semaphore.h">
+      <Filter>头文件\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\socket_include.h">
+      <Filter>头文件\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\SocketAddress.h">
+      <Filter>头文件\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\Ipv6Address.h">
+      <Filter>头文件\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\Base64.h">
+      <Filter>头文件\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\File.h">
+      <Filter>头文件\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\FileStream.h">
+      <Filter>头文件\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\IFile.h">
+      <Filter>头文件\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\IStream.h">
+      <Filter>头文件\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="proto.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="AFN.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Connection.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="AFNPackage.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="AFNPackageBuilder.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DBManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TcpServer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LogFileu.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="YQUtils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\Ipv4Address.cpp">
+      <Filter>源文件\thirdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\Json.cpp">
+      <Filter>源文件\thirdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\Lock.cpp">
+      <Filter>源文件\thirdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\Mutex.cpp">
+      <Filter>源文件\thirdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\Thread.cpp">
+      <Filter>源文件\thirdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\Utility.cpp">
+      <Filter>源文件\thirdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\XmlDocument.cpp">
+      <Filter>源文件\thirdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\XmlException.cpp">
+      <Filter>源文件\thirdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\XmlNode.cpp">
+      <Filter>源文件\thirdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\Exception.cpp">
+      <Filter>源文件\thirdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\Parse.cpp">
+      <Filter>源文件\thirdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\Semaphore.cpp">
+      <Filter>源文件\thirdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\Ipv6Address.cpp">
+      <Filter>源文件\thirdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\Base64.cpp">
+      <Filter>源文件\thirdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\File.cpp">
+      <Filter>源文件\thirdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\FileStream.cpp">
+      <Filter>源文件\thirdparty</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
