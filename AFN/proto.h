@@ -170,6 +170,11 @@ public:
 	0x0F		文件传输
 	0x10		数据转发
 	0x11-0xFF	备用
+
+	AFN=0x02时
+		F1:登录
+		F2:退出登录
+		F3:心跳
 	*/
 	BYTE AFN;
 	/*
@@ -184,8 +189,7 @@ public:
 		1	1	单帧
 	D4:请求确认标识位CON，=1表示收到报文后需要对该报文确认，=0不确认
 	D0~D3:启动帧序号PSEQ/响应帧序号RSEQ
-	举例:
-		
+	举例:	
 	*/
 	struct {
 		BYTE PRSEQ:4;//PSEQ时为PFC低4位,取值(0~15)，RSEQ时初始为PSEQ，以后递增1,如果连续收到RSEQ相同的帧，则不处理，连续收到PSEQ，则重发响应
@@ -224,7 +228,7 @@ class Pkg_Afn_Data{
 public:
 	Pkg_Afn_Data(BYTE* _data,DWORD _len);
 	virtual ~Pkg_Afn_Data();
-protected:
+protected:	
 	Pkg_Afn_DataTag m_Tag;
 	BYTE* m_pData;
 	DWORD m_nLen;
@@ -267,11 +271,7 @@ public:
 	Pkg_Afn(BYTE* _data,DWORD _len);
 	~Pkg_Afn();
 	/*
-	应用数据头
-	AFN=0x02时
-	F1:登录
-	F2:退出登录
-	F3:心跳
+	功能码+SEQ头,2字节
 	*/
 	Pkg_Afn_Header afnHeader;	
 	/*
