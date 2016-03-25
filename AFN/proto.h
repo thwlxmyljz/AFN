@@ -235,9 +235,9 @@ public:
 class pkg{
 public:
 	pkg_header HEADER;
-	pkg_user_header USERHEADER;	
-	pkg_tail TAIL;
+	pkg_user_header USERHEADER;		
 	pkg_afn D;//链路用户数据区,见下面afn定义
+	pkg_tail TAIL;
 };
 
 class pkg_afn_base{
