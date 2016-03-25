@@ -80,9 +80,11 @@ void ZjqList::conn_readcb(struct bufferevent *bev, void *user_data)
 	size_t len = bufferevent_read(bev, msg, sizeof(msg)-1 );
 	msg[len] = '\0';
 	printf("server read the data:%s\n", msg);
+	/*
 	char reply[] = "hello client";
 	bufferevent_write(bev, reply, strlen(reply) );
 	printf("server send the data:%s\n", reply);
+	*/
 }
 void ZjqList::conn_writecb(struct bufferevent *bev, void *user_data)
 {

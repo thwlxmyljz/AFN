@@ -200,5 +200,8 @@
     <ClCompile Include="thirdparty\FileStream.cpp">
       <Filter>源文件\thirdparty</Filter>
     </ClCompile>
+    <ClCompile Include="proto.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

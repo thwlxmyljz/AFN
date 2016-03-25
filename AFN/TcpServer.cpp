@@ -3,7 +3,7 @@
 #include "YQErrCode.h"
 #include "LogFileu.h"
 #include "Connection.h"
-#include "proto.h"
+#include "AFNPackage.h"
 
 #define VER "1.0.0"
 
@@ -57,7 +57,9 @@ int TcpServer::Run()
 	YQLogInfo("Server start ok");
 	//½â°ü²âÊÔ
 	BYTE data[20] = {0x68,0x32,0x00,0x32,0x00,0x68,0xc9,0x00,0x10,0x4d,0x04,0x00,0x02,0x75,0x00,0x00,0x01,0x00,0xa2,0x16};
-	
+	AFNPackage pkg;
+	pkg.parseProto(data,20);
+
     event_base_dispatch(base);
 
 	evconnlistener_free(listener);

@@ -124,6 +124,7 @@
     <ClCompile Include="Connection.cpp" />
     <ClCompile Include="DBManager.cpp" />
     <ClCompile Include="LogFileu.cpp" />
+    <ClCompile Include="proto.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
