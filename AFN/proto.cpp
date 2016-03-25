@@ -18,7 +18,7 @@ Pkg_Afn::Pkg_Afn(BYTE* _data,DWORD _len)
 			//_len -= 2;
 		}	
 		if (_len >= PKG_AFN_DATATAGLEN){
-			//带单元数据
+			//带单元数据数组
 			pAfnData = new Pkg_Afn_Data(_data,_len);
 		}					
 	}

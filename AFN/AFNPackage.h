@@ -10,10 +10,13 @@ public:
 	AFNPackage(void);
 	~AFNPackage(void);
 
-	//通过data数据分析出m_pkg包
+	//数据分析包
 	int parseProto(BYTE* data,DWORD len);
-	//将m_pkg包序列化到buf中
+	//包序列化到buf中
 	int serialize(BYTE* buf,DWORD bufLen);
+
+	//包处理
+	virtual int HandlePkg();
 
 	//计算CS值
 	static BYTE GetCS(BYTE* buf,DWORD len)
@@ -24,6 +27,7 @@ public:
 		}
 		return cs;
 	}
+
 	/*校验包合法性*/
 	inline BOOL valid()
 	{		

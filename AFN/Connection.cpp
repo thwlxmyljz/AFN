@@ -3,7 +3,6 @@
 #include "AFNPackage.h"
 #include "LogFileu.h"
 
-static const char MESSAGE[] = "Hello, World!\n";
 
 Connection::Connection(struct event_base *base,struct bufferevent *_bev,evutil_socket_t _fd,struct sockaddr *sa)
 	:bev(_bev),fd(_fd),m_remoteAddr((*(sockaddr_in*)sa)),\
@@ -16,6 +15,19 @@ Connection::~Connection(void)
 	LogFile->FmtLog(LOG_INFORMATION,"delete Connection(%s)",m_remoteAddr.Convert(true)); 
 	bufferevent_free(bev);
 }
+string Connection::printHex(void* data,int len)
+{
+	static char ss[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+	string str;
+	unsigned char* p = (unsigned char*)data;
+	while(len-- > 0){
+		unsigned char c = (*p++);		
+		str += ss[(c&0xf0)>>4];
+		str += ss[c&0x0f];
+		str += " ";
+	}
+	return str;
+}
 int Connection::SendBuf(const void* cmd,unsigned int cmdlen)
 {
     return bufferevent_write(bev, cmd, cmdlen);
@@ -23,6 +35,23 @@ int Connection::SendBuf(const void* cmd,unsigned int cmdlen)
 int Connection::SendPkg(const AFNPackage* pkg)
 {
 	return 0;
+}
+int Connection::RecBuf()
+{
+	//暂不考虑多帧，待做...
+	BYTE msg[16384];
+	size_t len = bufferevent_read(bev, msg, sizeof(msg)-1 );
+	msg[len] = '\0';
+	LogFile->FmtLog(LOG_INFORMATION,"rec pkg:%s", printHex(msg,len).c_str());
+
+	AFNPackage* pkg = new AFNPackage();
+	int errCode = pkg->parseProto(msg,len);
+	if (errCode != YQER_OK){
+		YQLogMin("RecBuf, but parse pkg invalid");/*XXX win32*/
+		return errCode;
+	}
+
+	return pkg->HandlePkg();
 }
 BOOL Connection::Compare(const string& name)
 {
@@ -42,8 +71,7 @@ ZjqList::~ZjqList()
 {
 	//清空连接
 	cIter it = begin();
-	while (it != end())
-	{
+	while (it != end()) {
 		Connection* con = (*it);
 		erase(it);
 		delete con;
@@ -54,8 +82,7 @@ int ZjqList::newConnection(struct event_base *base,evutil_socket_t fd, struct so
 {
 	struct bufferevent *bev;
     bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE);
-    if (!bev) 
-    {
+    if (!bev)  {
 		YQLogMaj("Error constructing bufferevent!");        
         return YQER_CON_Err(1);
     }
@@ -76,21 +103,20 @@ libevent event
 */
 void ZjqList::conn_readcb(struct bufferevent *bev, void *user_data)
 {
-	char msg[4096];
-	size_t len = bufferevent_read(bev, msg, sizeof(msg)-1 );
-	msg[len] = '\0';
-	printf("server read the data:%s\n", msg);
-	/*
-	char reply[] = "hello client";
-	bufferevent_write(bev, reply, strlen(reply) );
-	printf("server send the data:%s\n", reply);
-	*/
+	Connection* p = zjqList->getConnection(bev);
+	if (p){
+		p->RecBuf();
+	}
+	else{
+		YQLogMin("bev read, but no connection");/*XXX win32*/
+		bufferevent_free(bev);
+	}
 }
 void ZjqList::conn_writecb(struct bufferevent *bev, void *user_data)
 {
     struct evbuffer *output = bufferevent_get_output(bev);
     if (evbuffer_get_length(output) == 0) {
-        //发送数据完成
+        ;//发送数据完成
     }
 }
 
@@ -144,4 +170,17 @@ void ZjqList::delConnection(struct bufferevent *bev)
 			break;
 		}
 	}    
+}
+Connection* ZjqList::getConnection(struct bufferevent *bev)
+{
+	for (cIter it = zjqList->begin(); it != zjqList->end(); it++)
+	{
+		Connection* con = (*it);
+		if (con->Compare(bev))
+		{			
+			return con;
+			break;
+		}
+	} 
+	return NULL;
 }

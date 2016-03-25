@@ -192,7 +192,8 @@ public:
 	举例:	
 	*/
 	struct {
-		BYTE PRSEQ:4;//PSEQ时为PFC低4位,取值(0~15)，RSEQ时初始为PSEQ，以后递增1,如果连续收到RSEQ相同的帧，则不处理，连续收到PSEQ，则重发响应
+		//PSEQ时为PFC低4位,取值(0~15)，RSEQ时初始为PSEQ，以后递增1,如果连续收到RSEQ相同的帧，则不处理，连续收到PSEQ，则重发响应
+		BYTE PRSEQ:4;
 		BYTE CON:1;
 		BYTE FIN:1;
 		BYTE FIR:1;
@@ -229,7 +230,9 @@ public:
 	Pkg_Afn_Data(BYTE* _data,DWORD _len);
 	virtual ~Pkg_Afn_Data();
 protected:	
+	//DA,DT,4字节单元标识
 	Pkg_Afn_DataTag m_Tag;
+	//单元数据内容
 	BYTE* m_pData;
 	DWORD m_nLen;
 };
@@ -247,9 +250,9 @@ public:
 	} EC;
 	//时间戳,6字节
 	struct {
-		BYTE PFC;//时间戳TPV(启动帧计数器PFC,BIN编码)
-		BYTE TM[4];//时间戳TPV(启动帧发送时标,记录启动帧发送的时间,单位秒分时日)
-		BYTE DELAY;//时间戳TPV(允许发送传输延时时间,单位:分钟,BIN编码)
+		BYTE PFC;//启动帧计数器PFC,BIN编码,启动站每发送1帧数据则+1，从0～255循环增加，重发帧不变PFC
+		BYTE TM[4];//启动帧发送时标,记录启动帧发送的时间,单位秒分时日
+		BYTE DELAY;//允许发送传输延时时间,单位:分钟,BIN编码
 	} TP;
 };
 class Pkg_Afn_Aux_Down : Pkg_Afn_Aux {
@@ -271,11 +274,11 @@ public:
 	Pkg_Afn(BYTE* _data,DWORD _len);
 	~Pkg_Afn();
 	/*
-	功能码+SEQ头,2字节
+	功能码+SEQ,2字节
 	*/
 	Pkg_Afn_Header afnHeader;	
 	/*
-	应用数据单元
+	应用数据单元数组
 	按p0-p2040排列,每个pn内按F1-F248排列
 	终端响应数据时如果某项无数据则在DT的对应标识位置0(Fn=0),某项数据部分缺失，缺失数据部分填0xEE。
 	*/
@@ -295,7 +298,7 @@ public:
 	/*用户数据头*/
 	Pkg_User_Header userHeader;
 	/*应用数据*/
-	Pkg_Afn* pAfnCmd;
+	Pkg_Afn* pAfn;
 	/*包尾*/
 	Pkg_Tail pkgTail;
 };

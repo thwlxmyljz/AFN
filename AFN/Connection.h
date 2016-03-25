@@ -25,9 +25,12 @@ public:
 		EM_ST_NOLOGIN=0,
 		EM_ST_LOGINOK
 	}STATE;
+	static string printHex(void* data,int len);
 public:
 	int SendBuf(const void* cmd,unsigned int cmdlen);
 	int SendPkg(const AFNPackage* pkg);
+
+	int RecBuf();
 
 	STATE GetState(){ return m_state; }
 
@@ -65,6 +68,8 @@ public:
 	void delConnection(const string& name);
 	void delConnection(const string& areaCode,const string& number);
 	void delConnection(struct bufferevent *bev);
+	//获取连接对象
+	Connection* getConnection(struct bufferevent *bev);
 public:
 	/*libevent事件处理*/
 	static void conn_writecb(struct bufferevent *bev, void *user_data);

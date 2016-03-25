@@ -41,11 +41,15 @@ int AFNPackage::parseProto(BYTE* data,DWORD len)
 
 	//生成AFN对象
 	data += PKG_USER_HEADLEN;
-	pAfnCmd = new Pkg_Afn(data,pkgHeader.L.LEN-PKG_USER_HEADLEN);//应用数据长度=用户数据长度-用户头长度
+	pAfn = new Pkg_Afn(data,pkgHeader.L.LEN-PKG_USER_HEADLEN);//应用数据长度=用户数据长度-用户头长度
 	
-	return 0;
+	return YQER_OK;
 }
 int AFNPackage::serialize(BYTE* buf,DWORD bufLen)
 {
-	return 0;
+	return YQER_OK;
+}
+int AFNPackage::HandlePkg()
+{
+	return YQER_OK;
 }
