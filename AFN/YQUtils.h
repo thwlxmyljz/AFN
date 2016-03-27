@@ -3,6 +3,8 @@
 #define YQUtils_h
 
 #include "YQDefs.h"
+#include <string>
+using namespace std;
 //---------------------------------------------------------------------------
 class TYQUtils
 {
@@ -44,6 +46,8 @@ public:
     //时间处理
     static const char*GetDataTimeStamp(char *buffer);
     static const char*GetDataStamp(char *buffer);
+
+	static string Byte2Hex(void* data,int len);
 };
 //---------------------------------------------------------------------------
 #endif

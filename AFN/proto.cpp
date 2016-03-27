@@ -1,14 +1,22 @@
 #include "proto.h"
-
+#include "YQErrCode.h"
+Pkg_Afn::Pkg_Afn()
+		:pAfnData(NULL),pAux(NULL)
+{
+}
 Pkg_Afn::Pkg_Afn(BYTE* _data,DWORD _len)
 		:pAfnData(NULL),pAux(NULL)
 {
 	//上行解包
+	unPackData(_data,_len);
+}
+void Pkg_Afn::unPackData(BYTE* _data,DWORD _len)
+{
 	if (_len >= PKG_AFN_HEADLEN){
 		memcpy(&afnHeader,_data,PKG_AFN_HEADLEN);
 		_len -= PKG_AFN_HEADLEN;
 		_data += PKG_AFN_HEADLEN;
-		if (afnHeader.SEQ.TPV == 0x01){
+		if (afnHeader.SEQ._SEQ.TPV == 0x01){
 			//带时间戳,AUX的长度为8字节
 			//_len -= 8;
 			//pAux = new 
@@ -29,6 +37,11 @@ Pkg_Afn::~Pkg_Afn()
 	pAfnData = NULL;
 	delete pAux;
 	pAux = NULL;
+}
+Pkg_Afn_Data::Pkg_Afn_Data()
+		:m_pData(NULL),m_nLen(0)
+{
+
 }
 Pkg_Afn_Data::Pkg_Afn_Data(BYTE* _data,DWORD _len)
 		:m_pData(NULL),m_nLen(0)
@@ -53,4 +66,17 @@ Pkg_Afn_Data::~Pkg_Afn_Data()
 	delete m_pData;
 	m_pData=NULL;
 	m_nLen=0;
+}
+int Pkg_Afn_Data::HandleData()
+{
+	return YQER_OK;
+}
+int Pkg_Afn_Data::PackData(BYTE* _data,DWORD _len)
+{
+	if (_len >= m_nLen + PKG_AFN_DATATAGLEN){
+		memcpy(_data,&m_Tag,PKG_AFN_DATATAGLEN);
+		memcpy(_data+PKG_AFN_DATATAGLEN,m_pData,m_nLen);
+		return m_nLen + PKG_AFN_DATATAGLEN;
+	}
+	return 0;
 }

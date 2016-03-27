@@ -123,6 +123,9 @@
     <ClInclude Include="proto.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="AFNData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -201,6 +204,9 @@
       <Filter>源文件\thirdparty</Filter>
     </ClCompile>
     <ClCompile Include="proto.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="AFNData.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -34,7 +34,7 @@
 #define PKG_TAILLEN 2 //包尾2字节长度
 
 #define PKG_AFN_HEADLEN 2 //AFN应用数据区头2字节长度
-#define PKG_AFN_DATATAGLEN 4 //AFN应用数据区数据标识长度2字节
+#define PKG_AFN_DATATAGLEN 4 //AFN应用数据区数据标识长度4字节(DA,DT)
 
 class Pkg_Header{
 public:
@@ -51,23 +51,28 @@ public:
 	D0=1,D1=1:保留
 	D2-D15:控制域+地址域+用户数据长度值,BIN编码
 	*/
-	struct {
-		WORD TAG:2;
-		WORD LEN:14;		
-	} L;//长度1
+	union {
+		WORD l;
+		struct {
+			WORD TAG:2;
+			WORD LEN:14;		
+		} _L;//长度1
+	} L;
+	union {
+		WORD l1;
+		struct {
+			WORD TAG:2;
+			WORD LEN:14;
+		} _L1;//长度2
+	} L1;
 
-	struct {
-		WORD TAG:2;
-		WORD LEN:14;
-	} L1;//长度2
-	
 	BYTE S2;//起始字符0x68
 };
 /*
 用户数据区包头,包括C,A部分
 */
 class Pkg_User_Header{
-public:	
+public:		
 	/*
 	C:控制域,按位说明如下
 		D7:传输方向位DIR,DIR=0下行，DIR=1上行
@@ -105,7 +110,7 @@ public:
 			PRM=0时（报文来自从动站）
 			
 			值			帧类型			服务功能
-			0			确认			认可
+			0			确认				认可
 			1-7			保留
 			8			响应帧			用户数据
 			9			响应帧			否认：无所召唤的数据
@@ -113,14 +118,30 @@ public:
 			11			响应帧			链路状态
 			12-15		保留
 	*/
-	struct {
-		BYTE FUN:4;
-		BYTE FCV:1;
-		BYTE FCB:1;
-		BYTE PRM:1;
-		BYTE DIR:1;
+	union {
+		BYTE c;
+		struct {
+			BYTE FUN:4;
+			BYTE FCV:1;
+			BYTE FCB:1;
+			BYTE PRM:1;
+			BYTE DIR:1;
+		} _C;
 	} C;
-	
+	/*FUNC定义*/
+	enum UH_FUNC_MAIN{
+		UH_FUNC_MAIN1 = 1,
+		UH_FUNC_MAIN4 = 4,
+		UH_FUNC_MAIN9 = 9,
+		UH_FUNC_MAIN10 = 10,
+		UH_FUNC_MAIN11 = 11
+	};
+	enum UH_FUNC_SUB{
+		UH_FUNC_SUB0 = 0,
+		UH_FUNC_SUB8 = 8,
+		UH_FUNC_SUB9 = 9,
+		UH_FUNC_SUB11 = 11
+	};
 	/*
 	A:地址域,包含A1,A2,A3
 		A1:行政区码,按国标执行,2字节
@@ -131,10 +152,13 @@ public:
 	*/
 	WORD A1;//地址域，行政区码(BCD编码)
 	WORD A2;//地址域，终端地址(BIN)
-	struct {
-		BYTE TAG:1;
-		BYTE MSA:7;
-	} A3;//地址域，主站地址和终端组地址标识(BIN)
+	union {
+		BYTE a3;
+		struct {
+			BYTE TAG:1;
+			BYTE MSA:7;
+		} _A3;//地址域，主站地址和终端组地址标识(BIN)
+	} A3;
 };
 /*
 包尾
@@ -177,6 +201,25 @@ public:
 		F3:心跳
 	*/
 	BYTE AFN;
+	enum AFN_CODE{
+		AFN00 = 0,
+		AFN01,
+		AFN02,
+		AFN03,
+		AFN04,
+		AFN05,
+		AFN06,
+		AFN07,
+		AFN08,
+		AFN09,
+		AFN0A,
+		AFN0B,
+		AFN0C,
+		AFN0D,
+		AFN0E,
+		AFN0F,
+		AFN10,
+	};
 	/*
 	序列号
 	D7:时间标签有效位TPV,=1附加信息域带有时间戳，=0无时间戳
@@ -191,14 +234,25 @@ public:
 	D0~D3:启动帧序号PSEQ/响应帧序号RSEQ
 	举例:	
 	*/
-	struct {
-		//PSEQ时为PFC低4位,取值(0~15)，RSEQ时初始为PSEQ，以后递增1,如果连续收到RSEQ相同的帧，则不处理，连续收到PSEQ，则重发响应
-		BYTE PRSEQ:4;
-		BYTE CON:1;
-		BYTE FIN:1;
-		BYTE FIR:1;
-		BYTE TPV:1;
+	union {
+		BYTE seq;
+		struct {
+			//PSEQ时为PFC低4位,取值(0~15)，RSEQ时初始为PSEQ，以后递增1,如果连续收到RSEQ相同的帧，则不处理，连续收到PSEQ，则重发响应
+			BYTE PRSEQ:4;
+			BYTE CON:1;
+			BYTE FIN:1;
+			BYTE FIR:1;
+			BYTE TPV:1;
+		} _SEQ;
 	} SEQ;
+	enum SEQ_CON{
+		SEQ_CON_NOANSWER=0,
+		SEQ_CON_MBANSWER
+	};
+	enum SEQ_TPV{
+		SEQ_TPV_NO=0,
+		SEQ_CON_YES
+	};	
 };
 /*
 数据单元标识
@@ -206,7 +260,7 @@ public:
 class Pkg_Afn_DataTag{
 public:
 	/*
-	DA数据单元标识
+	DA数据单元标识,2字节
 	DA1,DA2共表示8*255=2040个信息点，记为pn,(n=[0~2040]),p0表示终端信息点,p1开始表示确切信息点
 	DA1=0xff,DA2=0x00表示所有有效测量点(不包含p0)
 	*/
@@ -214,7 +268,7 @@ public:
 	BYTE DA2;//数据单元标识DA2，按值（0-255）表示信息点组
 	
 	/*
-	DT数据单元标识
+	DT数据单元标识,2字节
 	DT1,DT2共表示8*31=248个信息类型，记为Fn,(n=[1~248]),终端无数据时,DT位清0，部分无数据时，将数据项缺失内容填写0xEE	
 	*/
 	BYTE DT1;//数据单元标识DT1,按位表示每个信息类组的(0-8种)信息类元
@@ -223,13 +277,21 @@ public:
 /*
 数据单元
 */
-class Pkg_Afn_Data{
+class Pkg_Afn_Data {
 	friend class Pkg_Afn;
 	friend class Pkg;
 public:
-	Pkg_Afn_Data(BYTE* _data,DWORD _len);
+	Pkg_Afn_Data();
 	virtual ~Pkg_Afn_Data();
-protected:	
+
+	//解包
+	Pkg_Afn_Data(BYTE* _data,DWORD _len);
+	void unPackData(BYTE* _data,DWORD _len);
+	virtual int HandleData();
+	
+	//封包,返回封包字节数
+	int PackData(BYTE* _data,DWORD _len);
+
 	//DA,DT,4字节单元标识
 	Pkg_Afn_DataTag m_Tag;
 	//单元数据内容
@@ -239,7 +301,8 @@ protected:
 /*
 附加信息域,分上下行
 */
-class Pkg_Afn_Aux{
+class Pkg_Afn_Aux {
+	virtual int PackData(BYTE* _data,DWORD _len) = 0;
 };
 class Pkg_Afn_Aux_Up : public Pkg_Afn_Aux {
 public:
@@ -254,6 +317,7 @@ public:
 		BYTE TM[4];//启动帧发送时标,记录启动帧发送的时间,单位秒分时日
 		BYTE DELAY;//允许发送传输延时时间,单位:分钟,BIN编码
 	} TP;
+	virtual int PackData(BYTE* _data,DWORD _len);
 };
 class Pkg_Afn_Aux_Down : Pkg_Afn_Aux {
 public:
@@ -265,14 +329,20 @@ public:
 		BYTE TM[4];//时间戳TPV(启动帧发送时标,记录启动帧发送的时间,单位秒分时日)
 		BYTE DELAY;//时间戳TPV(允许发送传输延时时间,单位:分钟,BIN编码)
 	} TP;
+	virtual int PackData(BYTE* _data,DWORD _len);
 };
 /*
 应用数据区包格式
 */
-class Pkg_Afn{
+class Pkg_Afn {
 public:
-	Pkg_Afn(BYTE* _data,DWORD _len);
+	Pkg_Afn();
 	~Pkg_Afn();
+
+	//解包
+	Pkg_Afn(BYTE* _data,DWORD _len);	
+	void unPackData(BYTE* _data,DWORD _len);
+
 	/*
 	功能码+SEQ,2字节
 	*/
@@ -291,7 +361,7 @@ public:
 /*
 包定义
 */
-class Pkg{
+class Pkg {
 public:
 	/*包头*/
 	Pkg_Header pkgHeader;

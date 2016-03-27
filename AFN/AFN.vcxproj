@@ -83,6 +83,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AFNData.h" />
     <ClInclude Include="AFNPackage.h" />
     <ClInclude Include="AFNPackageBuilder.h" />
     <ClInclude Include="Connection.h" />
@@ -119,6 +120,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AFN.cpp" />
+    <ClCompile Include="AFNData.cpp" />
     <ClCompile Include="AFNPackage.cpp" />
     <ClCompile Include="AFNPackageBuilder.cpp" />
     <ClCompile Include="Connection.cpp" />

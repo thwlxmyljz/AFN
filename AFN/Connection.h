@@ -20,39 +20,39 @@ class Connection
 	friend class ZjqList;
 public:
 	Connection(struct event_base *base,struct bufferevent *_bev,evutil_socket_t _fd,struct sockaddr *sa);
-	virtual ~Connection(void);	
-	typedef enum _STATE{
-		EM_ST_NOLOGIN=0,
-		EM_ST_LOGINOK
-	}STATE;
-	static string printHex(void* data,int len);
-public:
-	int SendBuf(const void* cmd,unsigned int cmdlen);
-	int SendPkg(const AFNPackage* pkg);
+	virtual ~Connection(void);
 
+public:
+	//读取连接数据包
 	int RecBuf();
 
-	STATE GetState(){ return m_state; }
+	//发送数据包
+	int SendBuf(const void* cmd,unsigned int cmdlen);
+	int SendPkg(const AFNPackage* pkg);
+	int SendPkg(std::list<AFNPackage*>& pkgLst);	
 
 	//集中器判断
 	BOOL Compare(const string& name);
 	BOOL Compare(const string& areaCode,const string& number);
 	BOOL Compare(struct bufferevent *_bev);
+protected:
+	void ClearRecPkgList();
 private:
 	//libevent数据通道
 	struct bufferevent *bev;
-	//file descript
+	//fd
 	evutil_socket_t fd;
 	//对端地址
 	Ipv4Address m_remoteAddr;
 	//名称
 	string m_name;
 	//行政区号
-	string m_areacode;
+	WORD m_areacode;
 	//地址编码
-	string m_number;
-	//登录状态
-	STATE m_state;
+	WORD m_number;
+	//报文列表
+	std::list<AFNPackage*> m_pkgList;
+	typedef std::list<AFNPackage*>::iterator Iter;
 };
 
 class ZjqList : public list<Connection*>

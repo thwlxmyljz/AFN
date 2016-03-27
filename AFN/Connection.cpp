@@ -2,11 +2,13 @@
 #include "Connection.h"
 #include "AFNPackage.h"
 #include "LogFileu.h"
+#include "YQUtils.h"
 
+#define BUF_SIZE 16384
 
 Connection::Connection(struct event_base *base,struct bufferevent *_bev,evutil_socket_t _fd,struct sockaddr *sa)
 	:bev(_bev),fd(_fd),m_remoteAddr((*(sockaddr_in*)sa)),\
-	m_name(""),m_areacode(""),m_number("")
+	m_name(""),m_areacode(0),m_number(0)
 {	
 	LogFile->FmtLog(LOG_INFORMATION,"new Connection(%s)",m_remoteAddr.Convert(true)); 
 }
@@ -15,19 +17,7 @@ Connection::~Connection(void)
 	LogFile->FmtLog(LOG_INFORMATION,"delete Connection(%s)",m_remoteAddr.Convert(true)); 
 	bufferevent_free(bev);
 }
-string Connection::printHex(void* data,int len)
-{
-	static char ss[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
-	string str;
-	unsigned char* p = (unsigned char*)data;
-	while(len-- > 0){
-		unsigned char c = (*p++);		
-		str += ss[(c&0xf0)>>4];
-		str += ss[c&0x0f];
-		str += " ";
-	}
-	return str;
-}
+
 int Connection::SendBuf(const void* cmd,unsigned int cmdlen)
 {
     return bufferevent_write(bev, cmd, cmdlen);
@@ -38,20 +28,81 @@ int Connection::SendPkg(const AFNPackage* pkg)
 }
 int Connection::RecBuf()
 {
-	//暂不考虑多帧，待做...
-	BYTE msg[16384];
+	//暂不考虑多帧同一event内收到
+	int nRet = YQER_OK;
+	BYTE msg[BUF_SIZE];
 	size_t len = bufferevent_read(bev, msg, sizeof(msg)-1 );
 	msg[len] = '\0';
-	LogFile->FmtLog(LOG_INFORMATION,"rec pkg:%s", printHex(msg,len).c_str());
+	LogFile->FmtLog(LOG_INFORMATION,"rec pkg:%s", TYQUtils::Byte2Hex(msg,len).c_str());
 
 	AFNPackage* pkg = new AFNPackage();
-	int errCode = pkg->parseProto(msg,len);
-	if (errCode != YQER_OK){
-		YQLogMin("RecBuf, but parse pkg invalid");/*XXX win32*/
+	int errCode = pkg->ParseProto(msg,len);
+	if (errCode != YQER_OK){		
+		YQLogMin("RecBuf, pkg invalid!");
+		delete pkg;
 		return errCode;
 	}
-
-	return pkg->HandlePkg();
+	std::list<AFNPackage* > ackLst;
+	m_areacode = pkg->userHeader.A1;
+	if (pkg->userHeader.A3._A3.TAG == 0){
+		//单地址
+		m_number = pkg->userHeader.A2;
+	}
+	if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 1  && pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 1) {
+		//单帧
+		nRet = pkg->HandlePkg(ackLst);
+		if (nRet == YQER_OK){
+			SendPkg(ackLst);
+		}
+		delete pkg;
+		return nRet;
+	}
+	else if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 0  && pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 1) {
+		//多帧，第一帧
+		ClearRecPkgList();
+		YQLogInfo("rec mul pkg , first");
+		m_pkgList.push_back(pkg);
+	}
+	else if (pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 0) {
+		//多帧，中间帧
+		m_pkgList.push_back(pkg);
+		YQLogInfo("rec mul pkg , middle");
+		if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 1)
+		{
+			//多帧，结束帧
+			YQLogInfo("rec mul pkg , end");
+			nRet = pkg->HandlePkg(m_pkgList,ackLst);
+			if (nRet == YQER_OK){
+				SendPkg(ackLst);
+			}	
+			ClearRecPkgList();			
+			return nRet;
+		}
+	}
+	return nRet;
+}
+int Connection::SendPkg(std::list<AFNPackage*>& pkgLst)
+{
+	BYTE msg[BUF_SIZE];
+	for (Iter it = pkgLst.begin(); it != pkgLst.end(); it++){
+		int cnt = (*it)->Serialize(msg,BUF_SIZE);
+		if (cnt > 0 && cnt < BUF_SIZE){
+			LogFile->FmtLog(LOG_INFORMATION,"send pkg:%s",TYQUtils::Byte2Hex(msg,cnt).c_str());
+			if (bufferevent_write(bev, msg, cnt) != 0){
+				YQLogMaj("send pkg, bufferevent_write error");
+			}
+		}else{
+			YQLogMaj("send pkg, Serialize pkg error");
+		}
+	}
+	return YQER_OK;
+}
+void Connection::ClearRecPkgList()
+{
+	for (Iter it = m_pkgList.begin();  it != m_pkgList.end(); it++){
+		delete (*it);
+	}
+	m_pkgList.clear();
 }
 BOOL Connection::Compare(const string& name)
 {
@@ -59,7 +110,7 @@ BOOL Connection::Compare(const string& name)
 }
 BOOL Connection::Compare(const string& areaCode,const string& number)
 {
-	return (m_areacode==areaCode)&&(m_number==number);
+	return TRUE;
 }
 BOOL Connection::Compare(struct bufferevent *_bev)
 {
