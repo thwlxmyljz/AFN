@@ -5,6 +5,7 @@
 #include "Connection.h"
 #include "AFNPackage.h"
 #include "YQUtils.h"
+#include "AFNPackageBuilder.h"
 
 #define VER "1.0.0"
 
@@ -12,7 +13,7 @@ TcpServer::TcpServer(unsigned int port)
 	:m_svrPort(port),base(NULL),listener(NULL),signal_event(NULL)
 {
 	LogFile = new TLogFile("afn.log",16*1024*1024,"APN",VER);
-	zjqList = new ZjqList();
+	zjqList = new ZjqList();	
 }
 TcpServer::~TcpServer(void)
 {
@@ -58,6 +59,7 @@ int TcpServer::Run()
 	YQLogInfo("Server start ok");
 
 	//½â°ü²âÊÔ
+	/*
 	BYTE data[20] = {0x68,0x32,0x00,0x32,0x00,0x68,0xc9,0x00,0x10,0x4d,0x04,0x00,0x02,0x75,0x00,0x00,0x01,0x00,0xa2,0x16};
 	string hex = TYQUtils::Byte2Hex(data,20);
 	printf("%s\n",hex.c_str());
@@ -65,7 +67,11 @@ int TcpServer::Run()
 	AFNPackage pkg;
 	pkg.ParseProto(data,20);
 	std::list<AFNPackage* > ackLst;
-	pkg.HandlePkg(ackLst);
+	AFNPackageBuilder::Instance().HandlePkg(&pkg,ackLst);
+	AFNPackage* ackPkg = (*ackLst.begin());
+	*/
+	BYTE data[18] = {0x0B, 0xFF , 0xFF , 0xFF , 0xFF , 0x02 , 0x00 , 0x61 , 0x00 , 0x00 , 0x03 , 0x00 , 0x02 , 0x00 , 0x00 , 0x01 , 0x00 , 0x00};
+	BYTE cs = AFNPackage::GetCS(data,18);
 
     event_base_dispatch(base);
 

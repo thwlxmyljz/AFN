@@ -3,6 +3,7 @@
 #include "AFNPackage.h"
 #include "LogFileu.h"
 #include "YQUtils.h"
+#include "AFNPackageBuilder.h"
 
 #define BUF_SIZE 16384
 
@@ -50,7 +51,7 @@ int Connection::RecBuf()
 	}
 	if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 1  && pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 1) {
 		//µ¥Ö¡
-		nRet = pkg->HandlePkg(ackLst);
+		nRet = AFNPackageBuilder::Instance().HandlePkg(pkg,ackLst);
 		if (nRet == YQER_OK){
 			SendPkg(ackLst);
 		}
@@ -71,7 +72,7 @@ int Connection::RecBuf()
 		{
 			//¶àÖ¡£¬½áÊøÖ¡
 			YQLogInfo("rec mul pkg , end");
-			nRet = pkg->HandlePkg(m_pkgList,ackLst);
+			nRet = AFNPackageBuilder::Instance().HandlePkg(m_pkgList,ackLst);
 			if (nRet == YQER_OK){
 				SendPkg(ackLst);
 			}	

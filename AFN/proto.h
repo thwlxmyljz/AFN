@@ -275,34 +275,51 @@ public:
 	BYTE DT2;//数据单元标识DT2,按值(只取0-31)表示信息类组
 };
 /*
+数据单元接口
+*/
+class Pkg_UserDataInterface{
+public:
+	//解包
+	virtual void unPackData(BYTE* _data,DWORD _len) = 0;
+	//封包,返回封包字节数
+	virtual int PackData(BYTE* _data,DWORD _len) = 0;
+	//数据长度
+	virtual int GetDataLen() = 0;
+};
+/*
 数据单元
 */
-class Pkg_Afn_Data {
+class Pkg_Afn_Data : public Pkg_UserDataInterface {
 	friend class Pkg_Afn;
 	friend class Pkg;
+
 public:
-	Pkg_Afn_Data();
-	virtual ~Pkg_Afn_Data();
-
-	//解包
-	Pkg_Afn_Data(BYTE* _data,DWORD _len);
-	void unPackData(BYTE* _data,DWORD _len);
-	virtual int HandleData();
-	
-	//封包,返回封包字节数
-	int PackData(BYTE* _data,DWORD _len);
-
 	//DA,DT,4字节单元标识
 	Pkg_Afn_DataTag m_Tag;
+
 	//单元数据内容
 	BYTE* m_pData;
 	DWORD m_nLen;
+
+public:
+	Pkg_Afn_Data();
+	virtual ~Pkg_Afn_Data();
+	Pkg_Afn_Data(BYTE* _data,DWORD _len);
+
+	//数据处理
+	virtual int HandleData();
+
+	virtual void unPackData(BYTE* _data,DWORD _len);
+	virtual int PackData(BYTE* _data,DWORD _len);
+	virtual int GetDataLen()
+	{
+		return PKG_AFN_DATATAGLEN+m_nLen;
+	}
 };
 /*
 附加信息域,分上下行
 */
-class Pkg_Afn_Aux {
-	virtual int PackData(BYTE* _data,DWORD _len) = 0;
+class Pkg_Afn_Aux : public Pkg_UserDataInterface{
 };
 class Pkg_Afn_Aux_Up : public Pkg_Afn_Aux {
 public:
@@ -317,32 +334,35 @@ public:
 		BYTE TM[4];//启动帧发送时标,记录启动帧发送的时间,单位秒分时日
 		BYTE DELAY;//允许发送传输延时时间,单位:分钟,BIN编码
 	} TP;
+	virtual void unPackData(BYTE* _data,DWORD _len);
 	virtual int PackData(BYTE* _data,DWORD _len);
+	virtual int GetDataLen()
+	{
+		return 8;
+	}
 };
 class Pkg_Afn_Aux_Down : Pkg_Afn_Aux {
 public:
 	//消息认证码PW,下行发送,由主站算法计算，如带此数据，则终端必须认证此数据，通过则响应命令，否则不响应命令
 	BYTE PW[16];
-	//时间戳
+	//时间戳,6字节
 	struct {
 		BYTE PFC;//时间戳TPV(启动帧计数器PFC,BIN编码)
 		BYTE TM[4];//时间戳TPV(启动帧发送时标,记录启动帧发送的时间,单位秒分时日)
 		BYTE DELAY;//时间戳TPV(允许发送传输延时时间,单位:分钟,BIN编码)
 	} TP;
+	virtual void unPackData(BYTE* _data,DWORD _len);
 	virtual int PackData(BYTE* _data,DWORD _len);
+	virtual int GetDataLen()
+	{
+		return 22;
+	}
 };
 /*
 应用数据区包格式
 */
 class Pkg_Afn {
 public:
-	Pkg_Afn();
-	~Pkg_Afn();
-
-	//解包
-	Pkg_Afn(BYTE* _data,DWORD _len);	
-	void unPackData(BYTE* _data,DWORD _len);
-
 	/*
 	功能码+SEQ,2字节
 	*/
@@ -357,6 +377,24 @@ public:
 	附加信息域
 	*/
 	Pkg_Afn_Aux  *pAux;
+public:
+	Pkg_Afn();
+	~Pkg_Afn();
+	Pkg_Afn(BYTE* _data,DWORD _len);	
+
+	virtual void unPackData(BYTE* _data,DWORD _len);
+	virtual int PackData(BYTE* _data,DWORD _len);
+	virtual int GetDataLen()
+	{
+		DWORD nLen = PKG_AFN_HEADLEN;
+		if (pAfnData){
+			nLen += pAfnData->GetDataLen();
+		}
+		if (pAux){
+			nLen += pAux->GetDataLen();
+		}
+		return nLen;
+	}
 };
 /*
 包定义

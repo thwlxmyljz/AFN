@@ -3,11 +3,8 @@
 #include "AFNPackage.h"
 
 AFNData::AFNData(void)
-	:Pkg_Afn_Data()
 {
 }
-
-
 AFNData::~AFNData(void)
 {
 }

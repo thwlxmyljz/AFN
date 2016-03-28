@@ -25,7 +25,8 @@ enum LOGCLS
 //错误代码，以YQER_开头
 #define YQER_OK					0					//成功或正常
 //---------------------------------------------------------------------------
-#define YQER_NOMEMORY  -99
+#define YQER_PARAMERR  -98 //参数错误
+#define YQER_NOMEMORY  -99 //内存错误
 //服务器错误
 #define YQER_SVR_Base				-100
 #define YQER_SVR_Err(x)			(YQER_SVR_Base - (x))
