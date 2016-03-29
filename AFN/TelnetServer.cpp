@@ -9,7 +9,9 @@
 #include "stdafx.h"
 #include <vector>
 #include <string>
+
 using namespace std;
+
 int split(const string& str, vector<string>& ret_, string sep)
 {
 	if (str.empty())

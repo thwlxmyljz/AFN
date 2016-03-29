@@ -322,6 +322,15 @@ public:
 class Pkg_Afn_Aux : public Pkg_UserDataInterface{
 public:
 	BYTE hasTp;
+	//时间戳,6字节
+	struct {
+		BYTE PFC;//启动帧计数器PFC,BIN编码,启动站每发送1帧数据则+1，从0～255循环增加，重发帧不变PFC
+		BYTE TM[4];//启动帧发送时标,记录启动帧发送的时间,单位秒分时日
+		BYTE DELAY;//允许发送传输延时时间,单位:分钟,BIN编码
+	} TP;
+	virtual void unPackData(BYTE* _data,DWORD _len);
+	virtual int PackData(BYTE* _data,DWORD _len);
+	virtual int GetDataLen();
 };
 class Pkg_Afn_Aux_Up : public Pkg_Afn_Aux {
 public:
@@ -341,12 +350,7 @@ public:
 	} TP;
 	virtual void unPackData(BYTE* _data,DWORD _len);
 	virtual int PackData(BYTE* _data,DWORD _len);
-	virtual int GetDataLen()
-	{
-		if (hasTp)
-			return 8;//1+1+1+4+1
-		return 2;
-	}
+	virtual int GetDataLen();
 };
 class Pkg_Afn_Aux_Down : public Pkg_Afn_Aux {
 public:

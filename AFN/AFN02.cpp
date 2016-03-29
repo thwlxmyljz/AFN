@@ -2,7 +2,7 @@
 #include "AFN02.h"
 #include "YQErrCode.h"
 #include "LogFileu.h"
-#include "Connection.h"
+//#include "Connection.h"
 
 AFN02Data_Ack::AFN02Data_Ack(Pkg_Afn_DataTag _what)
 	:Pkg_Afn_Data(),WhatAckDataTag(_what)
@@ -40,7 +40,7 @@ int AFN02::HandleRequest(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& 
 				reqPkg->pAfn->pAfnData->m_Tag.DT1 == 2 || \
 				reqPkg->pAfn->pAfnData->m_Tag.DT1 == 3)
 			{
-				g_JzqConList->ReportLoginState(reqPkg->userHeader.A1,reqPkg->userHeader.A2,reqPkg->pAfn->pAfnData->m_Tag.DT1,(int)reqPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ);
+				//g_JzqConList->ReportLoginState(reqPkg->userHeader.A1,reqPkg->userHeader.A2,reqPkg->pAfn->pAfnData->m_Tag.DT1,(int)reqPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ);
 				if (reqPkg->pAfn->afnHeader.SEQ._SEQ.CON != Pkg_Afn_Header::SEQ_CON_MBANSWER)//终端测试软件的CON=0，实际设备CON=1								
 					return YQER_OK;
 				//数据按F3回应，ERR定义如下，=0正确，=1其他错误，=2表地址重复，3~255备用
@@ -54,7 +54,7 @@ int AFN02::HandleRequest(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& 
 				ackPkg->userHeader.C._C.FCB = 0x00;
 				ackPkg->userHeader.C._C.FUN = 11;//链路状态
 				ackPkg->userHeader.A3._A3.TAG = 0;//单地址
-				ackPkg->userHeader.A3._A3.MSA = Jzq::s_MSA;
+				//ackPkg->userHeader.A3._A3.MSA = Jzq::s_MSA;
 				ackPkg->userHeader.A1 = reqPkg->userHeader.A1;
 				ackPkg->userHeader.A2 = reqPkg->userHeader.A2;
 				ackPkg->pAfn->afnHeader.AFN = Pkg_Afn_Header::AFN00;

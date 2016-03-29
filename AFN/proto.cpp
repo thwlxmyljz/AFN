@@ -114,3 +114,112 @@ int Pkg_Afn_Data::PackData(BYTE* _data,DWORD _len)
 	}
 	return 0x0;
 }
+void Pkg_Afn_Aux::unPackData(BYTE* _data,DWORD _len)
+{
+	if (_len >= GetDataLen()){
+		if (hasTp){			
+			TP.PFC = _data[0];
+			TP.TM[0] = _data[1];
+			TP.TM[1] = _data[2];
+			TP.TM[2] = _data[3];
+			TP.TM[3] = _data[4];
+			TP.DELAY = _data[5];
+		} 
+	}
+}
+int Pkg_Afn_Aux::PackData(BYTE* _data,DWORD _len)
+{
+	if (_len >= GetDataLen()){
+		if (hasTp){			
+			_data[2] = TP.PFC;
+			_data[3] = TP.TM[0];
+			_data[4] = TP.TM[1];
+			_data[5] = TP.TM[2];
+			_data[6] = TP.TM[3];
+			_data[7] = TP.DELAY;
+		} 
+	}
+	return GetDataLen();
+}
+int Pkg_Afn_Aux::GetDataLen()
+{
+	if (hasTp)
+		return 6;//1+1+1+4+1
+	return 0;
+}
+void Pkg_Afn_Aux_Up::unPackData(BYTE* _data,DWORD _len)
+{
+	if (_len >= GetDataLen()){
+		EC.EC1 = _data[0];
+		EC.EC2 = _data[1];
+		if (hasTp){			
+			TP.PFC = _data[2];
+			TP.TM[0] = _data[3];
+			TP.TM[1] = _data[4];
+			TP.TM[2] = _data[5];
+			TP.TM[3] = _data[6];
+			TP.DELAY = _data[7];
+		} 
+	}
+}
+int Pkg_Afn_Aux_Up::PackData(BYTE* _data,DWORD _len)
+{
+	if (_len >= GetDataLen()){
+		_data[0] = EC.EC1;
+		_data[1] = EC.EC2;
+		if (hasTp){			
+			_data[2] = TP.PFC;
+			_data[3] = TP.TM[0];
+			_data[4] = TP.TM[1];
+			_data[5] = TP.TM[2];
+			_data[6] = TP.TM[3];
+			_data[7] = TP.DELAY;
+		} 
+	}
+	return GetDataLen();
+}
+int Pkg_Afn_Aux_Up::GetDataLen()
+{
+	if (hasTp)
+		return 8;//1+1+1+4+1
+	return 2;
+}
+void Pkg_Afn_Aux_Down::unPackData(BYTE* _data,DWORD _len)
+{
+	if (_len >= GetDataLen()){
+		for (int i = 0; i < 16; i++){
+			PW[i] = _data[i];
+		}
+		if (hasTp){			
+			TP.PFC = _data[16];
+			TP.TM[0] = _data[17];
+			TP.TM[1] = _data[18];
+			TP.TM[2] = _data[19];
+			TP.TM[3] = _data[20];
+			TP.DELAY = _data[21];
+		} 
+	}
+}
+int Pkg_Afn_Aux_Down::PackData(BYTE* _data,DWORD _len)
+{
+	if (_len >= GetDataLen()){
+		for (int i = 0; i < 16; i++){
+			_data[i] = PW[i];
+		}
+		if (hasTp){			
+			_data[16] = TP.PFC;
+			_data[17] = TP.TM[0];
+			_data[18] = TP.TM[1];
+			_data[19] = TP.TM[2];
+			_data[20] = TP.TM[3];
+			_data[21] = TP.DELAY;
+		} 
+	}
+	return GetDataLen();
+}
+int Pkg_Afn_Aux_Down::GetDataLen()
+{
+	if (hasTp)
+		return 22;//16+1+4+1
+	return 16;
+}
