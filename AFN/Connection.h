@@ -49,7 +49,7 @@ private:
 	std::list<AFNPackage*> m_pkgList;
 	typedef std::list<AFNPackage*>::iterator Iter;
 };
-
+//------------------------------------------------------------------------------------
 class Jzq{
 public:
 	//名称
@@ -77,16 +77,21 @@ public:
 public:
 	Jzq():m_name(""),m_areacode(0),m_number(0),m_tag(0),m_conn(NULL),m_heart(0)
 	{
+		m_RSEQ = 0x0;
+		m_PSEQ = 0x0;
 	}
 	Jzq(string _name,WORD _areaCode,WORD _number,BYTE _tag)
 		:m_name(_name),m_areacode(_areaCode),m_number(_number),m_tag(_tag),m_conn(NULL),m_heart(0)
 	{
+		m_RSEQ = 0x0;
+		m_PSEQ = 0x0;
 	}
 	BOOL operator==(const Jzq& o)
 	{
 		return (o.m_areacode == m_areacode && o.m_number == m_number);
 	}
 };
+//------------------------------------------------------------------------------------
 /*
 集中器管理列表
 */
@@ -106,7 +111,9 @@ public:
 	//获取连接对象
 	Connection* getConnection(struct bufferevent *bev);
 	//登录相关
-	void ReportLoginState(BYTE _areacode,BYTE _number,int _Fn,int _pseq);
+	void ReportLoginState(WORD _areacode,WORD _number,BYTE _Fn,BYTE _pseq);
+	//获取集中器的RSEQ
+	BYTE GetRSEQ(WORD _areacode,WORD _number);
 public:
 	/*libevent事件处理*/
 	static void conn_writecb(struct bufferevent *bev, void *user_data);

@@ -1,0 +1,22 @@
+[warn] Added a signal to event base 003F9FE0 with signals already added to event
+_base 003FC5C0.  Only one can have signals at a time with the win32 backend.  Th
+e base with the most recently added signal or the most recent event_base_loop()
+call gets preference; do not rely on this behavior in future Libevent versions.
+[APN(1.0.0)] Info:File=d:\afn\afn\telnetserver.cpp, Line=93
+TelnetServer start ok
+[APN(1.0.0)] Info:File=d:\afn\afn\tcpserver.cpp, Line=59
+Server start ok
+[APN(1.0.0)] Info:new Connection(吏0)
+[APN(1.0.0)] Info:rec pkg:68 32 00 32 00 68 C9 00 10 4D 04 00 02 70 00 00 01 00
+9D 16
+[APN(1.0.0)] Info:File=d:\afn\afn\connection.cpp, Line=224
+new jzq
+[APN(1.0.0)] Info:jzq(4096,1101) login in
+[APN(1.0.0)] Info:send pkg:68 49 00 49 00 68 0B 00 10 4D 04 02 00 60 00 00 03 00
+ 02 00 00 01 00 00 D4 16
+[APN(1.0.0)] Info:rec pkg:68 4A 00 4A 00 68 C9 00 10 4D 04 00 02 71 00 00 04 00
+51 21 00 30 63 16 BC 16
+[APN(1.0.0)] Info:rec pkg:68 4A 00 4A 00 68 C9 00 10 4D 04 00 02 71 00 00 04 00
+51 21 00 30 63 16 BC 16
+[APN(1.0.0)] Info:rec pkg:68 4A 00 4A 00 68 C9 00 10 4D 04 00 02 71 00 00 04 00
+51 21 00 30 63 16 BC 16

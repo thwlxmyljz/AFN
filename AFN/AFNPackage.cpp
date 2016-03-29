@@ -94,5 +94,6 @@ int AFNPackage::Serialize(BYTE* buf,DWORD bufLen)
 	}
 	memcpy(buf,&pkgTail,PKG_TAILLEN);
 
+	//返回整个包长度字节数
 	return PKG_HEADLEN+PKG_USER_HEADLEN+afnLen+PKG_TAILLEN;
 }

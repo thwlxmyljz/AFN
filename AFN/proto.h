@@ -282,9 +282,9 @@ public:
 	//解包
 	virtual void unPackData(BYTE* _data,DWORD _len) = 0;
 	//封包,返回封包字节数
-	virtual int PackData(BYTE* _data,DWORD _len) = 0;
+	virtual DWORD PackData(BYTE* _data,DWORD _len) = 0;
 	//数据长度
-	virtual int GetDataLen() = 0;
+	virtual DWORD GetDataLen() = 0;
 };
 /*
 数据单元
@@ -310,11 +310,8 @@ public:
 	virtual int HandleData();
 
 	virtual void unPackData(BYTE* _data,DWORD _len);
-	virtual int PackData(BYTE* _data,DWORD _len);
-	virtual int GetDataLen()
-	{
-		return PKG_AFN_DATATAGLEN+m_nLen;
-	}
+	virtual DWORD PackData(BYTE* _data,DWORD _len);
+	virtual DWORD GetDataLen();
 };
 /*
 附加信息域,分上下行
@@ -329,8 +326,8 @@ public:
 		BYTE DELAY;//允许发送传输延时时间,单位:分钟,BIN编码
 	} TP;
 	virtual void unPackData(BYTE* _data,DWORD _len);
-	virtual int PackData(BYTE* _data,DWORD _len);
-	virtual int GetDataLen();
+	virtual DWORD PackData(BYTE* _data,DWORD _len);
+	virtual DWORD GetDataLen();
 };
 class Pkg_Afn_Aux_Up : public Pkg_Afn_Aux {
 public:
@@ -349,8 +346,8 @@ public:
 		BYTE DELAY;//允许发送传输延时时间,单位:分钟,BIN编码
 	} TP;
 	virtual void unPackData(BYTE* _data,DWORD _len);
-	virtual int PackData(BYTE* _data,DWORD _len);
-	virtual int GetDataLen();
+	virtual DWORD PackData(BYTE* _data,DWORD _len);
+	virtual DWORD GetDataLen();
 };
 class Pkg_Afn_Aux_Down : public Pkg_Afn_Aux {
 public:
@@ -366,13 +363,8 @@ public:
 		BYTE DELAY;//时间戳TPV(允许发送传输延时时间,单位:分钟,BIN编码)
 	} TP;
 	virtual void unPackData(BYTE* _data,DWORD _len);
-	virtual int PackData(BYTE* _data,DWORD _len);
-	virtual int GetDataLen()
-	{
-		if (hasTp)
-			return 22;//16+1+4+1
-		return 16;
-	}
+	virtual DWORD PackData(BYTE* _data,DWORD _len);
+	virtual DWORD GetDataLen();
 };
 /*
 应用数据区包格式
@@ -399,18 +391,8 @@ public:
 	Pkg_Afn(BYTE* _data,DWORD _len);	
 
 	virtual void unPackData(BYTE* _data,DWORD _len);
-	virtual int PackData(BYTE* _data,DWORD _len);
-	virtual int GetDataLen()
-	{
-		DWORD nLen = PKG_AFN_HEADLEN;
-		if (pAfnData){
-			nLen += pAfnData->GetDataLen();
-		}
-		if (pAux){
-			nLen += pAux->GetDataLen();
-		}
-		return nLen;
-	}
+	virtual DWORD PackData(BYTE* _data,DWORD _len);
+	virtual DWORD GetDataLen();
 };
 /*
 包定义

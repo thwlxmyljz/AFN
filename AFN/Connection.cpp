@@ -110,7 +110,9 @@ BOOL Connection::Compare(struct bufferevent *_bev)
 {
 	return bev==_bev;
 }
+//------------------------------------------------------------------------------------
 BYTE Jzq::s_MSA = 0x01;
+//------------------------------------------------------------------------------------
 JzqList* g_JzqConList = NULL;
 JzqList::~JzqList()
 {
@@ -209,7 +211,7 @@ Connection* JzqList::getConnection(struct bufferevent *bev)
 	} 
 	return NULL;
 }
-void JzqList::ReportLoginState(BYTE _areacode,BYTE _number,int _Fn,int _pseq)
+void JzqList::ReportLoginState(WORD _areacode,WORD _number,BYTE _Fn,BYTE _pseq)
 {
 	Jzq *p = NULL;
 	for (jzqIter it = m_jzq.begin(); it != m_jzq.end(); it++){
@@ -227,7 +229,7 @@ void JzqList::ReportLoginState(BYTE _areacode,BYTE _number,int _Fn,int _pseq)
 	}
 	if (_Fn==1){
 		p->m_tag |= (0x1<<1);
-		p->m_PSEQ = _pseq;		
+		p->m_RSEQ = _pseq;//响应帧起始=登录帧的请求帧起始序号,之后响应+1循环(0~15)
 		LogFile->FmtLog(LOG_INFORMATION,"jzq(%d,%d) login in",_areacode,_number);		
 	}
 	else if (_Fn == 2){
@@ -239,4 +241,20 @@ void JzqList::ReportLoginState(BYTE _areacode,BYTE _number,int _Fn,int _pseq)
 		LogFile->FmtLog(LOG_INFORMATION,"jzq(%d,%d) heartbeat",_areacode,_number);
 	}
 	TYQUtils::TimeStart(p->m_heart);
+}
+BYTE JzqList::GetRSEQ(WORD _areacode,WORD _number)
+{
+	for (jzqIter it = m_jzq.begin(); it != m_jzq.end(); it++)
+	{
+		Jzq* p = (*it);
+		if (p->m_areacode == _areacode && p->m_number == _number)
+		{			
+			BYTE n = p->m_RSEQ;
+			if (++p->m_RSEQ > 15){
+				p->m_RSEQ = 0;
+			}
+			return n;
+		}
+	}
+	return 0x0;
 }

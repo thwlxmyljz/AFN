@@ -1,7 +1,9 @@
 #pragma once
 
 #include "AFNData.h"
-#include "AFNPackage.h"
+#include "proto.h"
+#include <list>
+class AFNPackage;
 
 /*
 Á´Â·½Ó¿Ú¼ì²â
