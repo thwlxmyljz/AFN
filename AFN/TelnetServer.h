@@ -1,5 +1,5 @@
 #pragma once
-
+#include "Thread.h"
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
@@ -11,17 +11,20 @@
 #include "event2/util.h"
 #include "event2/event.h"
 
-class ZjqList;
 
-class TcpServer
+class TelnetServer
 {
 public:
-	TcpServer(unsigned int port);
-	~TcpServer(void);
+	TelnetServer(unsigned int port=5555);
+	~TelnetServer(void);
 	
 	int Run();
 private:
 	//libevent»Øµ÷
+	static void conn_readcb(struct bufferevent *bev, void *user_data);
+	static void conn_writecb(struct bufferevent *bev, void *user_data);
+	static void conn_eventcb(struct bufferevent *bev, short events, void *user_data);
+
 	static void signal_cb(evutil_socket_t sig, short events, void *user_data);
 	static void listener_cb(struct evconnlistener *listener, evutil_socket_t fd,\
 							struct sockaddr *sa, int socklen, void *user_data);
@@ -32,5 +35,13 @@ private:
 	struct event_base *base;
     struct evconnlistener *listener;
     struct event *signal_event;
+};
+
+class TelnetThread : public Thread
+{
+public:
+	void  Run();
+private:
+	TelnetServer svr;
 };
 

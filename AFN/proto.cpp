@@ -21,11 +21,13 @@ Pkg_Afn::Pkg_Afn(BYTE* _data,DWORD _len)
 void Pkg_Afn::unPackData(BYTE* _data,DWORD _len)
 {
 	//解包
-	if (_data && _len >= PKG_AFN_HEADLEN){
+	if (_data && _len >= PKG_AFN_HEADLEN)
+	{
 		memcpy(&afnHeader,_data,PKG_AFN_HEADLEN);
 		_len -= PKG_AFN_HEADLEN;
 		_data += PKG_AFN_HEADLEN;
-		if (afnHeader.SEQ._SEQ.TPV == 0x01){
+		if (afnHeader.SEQ._SEQ.TPV == 0x01)
+		{
 			//带时间戳,AUX的长度为8字节
 			//_len -= 8;
 			//pAux = new 

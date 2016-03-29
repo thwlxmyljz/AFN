@@ -36,14 +36,6 @@ public:
 	{		
 		return pkgHeader.S1==0x68 && pkgHeader.S2==0x68 && pkgTail.E==0x16;
 	}
-	//设置响应包RSEQ
-	inline void SetRSEQ()
-	{
-		pAfn->afnHeader.SEQ._SEQ.PRSEQ = s_RSEQ++;
-		if (s_RSEQ > 15){
-			s_RSEQ = 0;
-		}
-	}
 	//生产CS校验
 	inline void CreateCS()
 	{
@@ -72,12 +64,6 @@ public:
 public:
 	//应用层包唯一ID计数
 	static DWORD s_pkgID;
-	//响应帧序号
-	static BYTE s_RSEQ;
-	//请求帧序号
-	static BYTE s_PSEQ;
-	//主站MSA值
-	static BYTE s_MSA;
 	//应用层包唯一ID
 	DWORD m_nId;	
 };

@@ -8,8 +8,7 @@
 #define BUF_SIZE 16384
 
 Connection::Connection(struct event_base *base,struct bufferevent *_bev,evutil_socket_t _fd,struct sockaddr *sa)
-	:bev(_bev),fd(_fd),m_remoteAddr((*(sockaddr_in*)sa)),\
-	m_name(""),m_areacode(0),m_number(0)
+	:bev(_bev),fd(_fd),m_remoteAddr((*(sockaddr_in*)sa)),m_jzq(NULL)
 {	
 	LogFile->FmtLog(LOG_INFORMATION,"new Connection(%s)",m_remoteAddr.Convert(true)); 
 }
@@ -29,7 +28,6 @@ int Connection::SendPkg(const AFNPackage* pkg)
 }
 int Connection::RecBuf()
 {
-	//暂不考虑多帧同一event内收到
 	int nRet = YQER_OK;
 	BYTE msg[BUF_SIZE];
 	size_t len = bufferevent_read(bev, msg, sizeof(msg)-1 );
@@ -43,16 +41,18 @@ int Connection::RecBuf()
 		delete pkg;
 		return errCode;
 	}
-	std::list<AFNPackage* > ackLst;
-	m_areacode = pkg->userHeader.A1;
+	std::list<AFNPackage* > ackLst;	
 	if (pkg->userHeader.A3._A3.TAG == 0){
 		//单地址
-		m_number = pkg->userHeader.A2;
+		if (m_jzq){
+			m_jzq->m_areacode = pkg->userHeader.A1;
+			m_jzq->m_number = pkg->userHeader.A2;
+		}
 	}
 	if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 1  && pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 1) {
 		//单帧
 		nRet = AFNPackageBuilder::Instance().HandlePkg(pkg,ackLst);
-		if (nRet == YQER_OK){
+		if (nRet == YQER_OK && ackLst.size() > 0){
 			SendPkg(ackLst);
 		}
 		delete pkg;
@@ -73,7 +73,7 @@ int Connection::RecBuf()
 			//多帧，结束帧
 			YQLogInfo("rec mul pkg , end");
 			nRet = AFNPackageBuilder::Instance().HandlePkg(m_pkgList,ackLst);
-			if (nRet == YQER_OK){
+			if (nRet == YQER_OK && ackLst.size() > 0){
 				SendPkg(ackLst);
 			}	
 			ClearRecPkgList();			
@@ -105,24 +105,17 @@ void Connection::ClearRecPkgList()
 	}
 	m_pkgList.clear();
 }
-BOOL Connection::Compare(const string& name)
-{
-	return m_name==name;
-}
-BOOL Connection::Compare(const string& areaCode,const string& number)
-{
-	return TRUE;
-}
+
 BOOL Connection::Compare(struct bufferevent *_bev)
 {
 	return bev==_bev;
 }
-
-ZjqList* zjqList = NULL;
-ZjqList::~ZjqList()
+BYTE Jzq::s_MSA = 0x01;
+JzqList* g_JzqConList = NULL;
+JzqList::~JzqList()
 {
 	//清空连接
-	cIter it = begin();
+	conIter it = begin();
 	while (it != end()) {
 		Connection* con = (*it);
 		erase(it);
@@ -130,7 +123,47 @@ ZjqList::~ZjqList()
 		it = begin();
 	}
 }
-int ZjqList::newConnection(struct event_base *base,evutil_socket_t fd, struct sockaddr *sa)
+void JzqList::LoadJzq()
+{
+	//加载集中器
+	Jzq* p = new Jzq("test",0xffff,0xffff,0x01);
+	m_jzq.push_back(p);
+}
+/**
+libevent event
+*/
+void JzqList::conn_readcb(struct bufferevent *bev, void *user_data)
+{
+	Connection* p = g_JzqConList->getConnection(bev);
+	if (p){
+		p->RecBuf();
+	}
+	else{
+		YQLogMin("bev read, but no connection");/*XXX win32*/
+		bufferevent_free(bev);
+	}
+}
+void JzqList::conn_writecb(struct bufferevent *bev, void *user_data)
+{
+    struct evbuffer *output = bufferevent_get_output(bev);
+    if (evbuffer_get_length(output) == 0) {
+        ;//发送数据完成
+    }
+}
+
+void JzqList::conn_eventcb(struct bufferevent *bev, short events, void *user_data)
+{
+    if (events & BEV_EVENT_EOF)  {
+        YQLogInfo("Connection closed.");
+    } 
+    else if (events & BEV_EVENT_ERROR) {
+        YQLogMin("Got an error on the connection");/*XXX win32*/
+    }
+    /* None of the other events can happen here, since we haven't enabled
+     * timeouts */
+	g_JzqConList->delConnection(bev);
+}
+int JzqList::newConnection(struct event_base *base,evutil_socket_t fd, struct sockaddr *sa)
 {
 	struct bufferevent *bev;
     bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE);
@@ -150,82 +183,22 @@ int ZjqList::newConnection(struct event_base *base,evutil_socket_t fd, struct so
 	bufferevent_enable(bev, EV_PERSIST);
 	return YQER_OK;
 }
-/**
-libevent event
-*/
-void ZjqList::conn_readcb(struct bufferevent *bev, void *user_data)
+void JzqList::delConnection(struct bufferevent *bev)
 {
-	Connection* p = zjqList->getConnection(bev);
-	if (p){
-		p->RecBuf();
-	}
-	else{
-		YQLogMin("bev read, but no connection");/*XXX win32*/
-		bufferevent_free(bev);
-	}
-}
-void ZjqList::conn_writecb(struct bufferevent *bev, void *user_data)
-{
-    struct evbuffer *output = bufferevent_get_output(bev);
-    if (evbuffer_get_length(output) == 0) {
-        ;//发送数据完成
-    }
-}
-
-void ZjqList::conn_eventcb(struct bufferevent *bev, short events, void *user_data)
-{
-    if (events & BEV_EVENT_EOF)  {
-        YQLogInfo("Connection closed.");
-    } 
-    else if (events & BEV_EVENT_ERROR) {
-        YQLogMin("Got an error on the connection");/*XXX win32*/
-    }
-    /* None of the other events can happen here, since we haven't enabled
-     * timeouts */
-	zjqList->delConnection(bev);
-}
-void ZjqList::delConnection(const string& name)
-{
-	for (cIter it = zjqList->begin(); it != zjqList->end(); it++)
-	{
-		Connection* con = (*it);
-		if (con->Compare(name))
-		{			
-			zjqList->erase(it);			
-			delete con;
-			break;
-		}
-	}    
-}
-void ZjqList::delConnection(const string& areaCode,const string& number)
-{
-	for (cIter it = zjqList->begin(); it != zjqList->end(); it++)
-	{
-		Connection* con = (*it);
-		if (con->Compare(areaCode,number))
-		{			
-			zjqList->erase(it);			
-			delete con;
-			break;
-		}
-	}   
-}
-void ZjqList::delConnection(struct bufferevent *bev)
-{
-	for (cIter it = zjqList->begin(); it != zjqList->end(); it++)
+	for (conIter it = g_JzqConList->begin(); it != g_JzqConList->end(); it++)
 	{
 		Connection* con = (*it);
 		if (con->Compare(bev))
 		{			
-			zjqList->erase(it);			
+			g_JzqConList->erase(it);			
 			delete con;
 			break;
 		}
 	}    
 }
-Connection* ZjqList::getConnection(struct bufferevent *bev)
+Connection* JzqList::getConnection(struct bufferevent *bev)
 {
-	for (cIter it = zjqList->begin(); it != zjqList->end(); it++)
+	for (conIter it = g_JzqConList->begin(); it != g_JzqConList->end(); it++)
 	{
 		Connection* con = (*it);
 		if (con->Compare(bev))
@@ -235,4 +208,35 @@ Connection* ZjqList::getConnection(struct bufferevent *bev)
 		}
 	} 
 	return NULL;
+}
+void JzqList::ReportLoginState(BYTE _areacode,BYTE _number,int _Fn,int _pseq)
+{
+	Jzq *p = NULL;
+	for (jzqIter it = m_jzq.begin(); it != m_jzq.end(); it++){
+		if ((*it)->m_areacode == _areacode && (*it)->m_number == _number){			
+			p = (*it);
+			break;
+		}
+	}
+	if (!p){
+		YQLogInfo("new jzq");
+		p = new Jzq("",_areacode,_number,0x0);//Fn=1已登录,=0退出登录，未在数据库内配置
+		if (!p)
+			return;
+		m_jzq.push_back(p);
+	}
+	if (_Fn==1){
+		p->m_tag |= (0x1<<1);
+		p->m_PSEQ = _pseq;		
+		LogFile->FmtLog(LOG_INFORMATION,"jzq(%d,%d) login in",_areacode,_number);		
+	}
+	else if (_Fn == 2){
+		p->m_tag &= ~(0x1<<1);
+		LogFile->FmtLog(LOG_INFORMATION,"jzq(%d,%d) login out",_areacode,_number);
+	}
+	else if (_Fn==3){
+		p->m_tag |= (0x1<<1);
+		LogFile->FmtLog(LOG_INFORMATION,"jzq(%d,%d) heartbeat",_areacode,_number);
+	}
+	TYQUtils::TimeStart(p->m_heart);
 }

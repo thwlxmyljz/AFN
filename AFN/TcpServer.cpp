@@ -13,14 +13,14 @@ TcpServer::TcpServer(unsigned int port)
 	:m_svrPort(port),base(NULL),listener(NULL),signal_event(NULL)
 {
 	LogFile = new TLogFile("afn.log",16*1024*1024,"APN",VER);
-	zjqList = new ZjqList();	
+	g_JzqConList = new JzqList();	
 }
 TcpServer::~TcpServer(void)
 {
 	delete LogFile;
 	LogFile = NULL;
-	delete zjqList;
-	zjqList = NULL;
+	delete g_JzqConList;
+	g_JzqConList = NULL;
 }
 int TcpServer::Run()
 {
@@ -58,21 +58,6 @@ int TcpServer::Run()
     }
 	YQLogInfo("Server start ok");
 
-	//½â°ü²âÊÔ
-	/*
-	BYTE data[20] = {0x68,0x32,0x00,0x32,0x00,0x68,0xc9,0x00,0x10,0x4d,0x04,0x00,0x02,0x75,0x00,0x00,0x01,0x00,0xa2,0x16};
-	string hex = TYQUtils::Byte2Hex(data,20);
-	printf("%s\n",hex.c_str());
-
-	AFNPackage pkg;
-	pkg.ParseProto(data,20);
-	std::list<AFNPackage* > ackLst;
-	AFNPackageBuilder::Instance().HandlePkg(&pkg,ackLst);
-	AFNPackage* ackPkg = (*ackLst.begin());
-	*/
-	BYTE data[18] = {0x0B, 0xFF , 0xFF , 0xFF , 0xFF , 0x02 , 0x00 , 0x61 , 0x00 , 0x00 , 0x03 , 0x00 , 0x02 , 0x00 , 0x00 , 0x01 , 0x00 , 0x00};
-	BYTE cs = AFNPackage::GetCS(data,18);
-
     event_base_dispatch(base);
 
 	evconnlistener_free(listener);
@@ -96,5 +81,5 @@ void TcpServer::signal_cb(evutil_socket_t sig, short events, void *user_data)
 void TcpServer::listener_cb(struct evconnlistener *listener, evutil_socket_t fd,
     struct sockaddr *sa, int socklen, void *user_data)
 {
-	zjqList->newConnection((struct event_base *)user_data,fd,sa);
+	g_JzqConList->newConnection((struct event_base *)user_data,fd,sa);
 }

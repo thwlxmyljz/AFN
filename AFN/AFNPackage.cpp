@@ -3,9 +3,6 @@
 #include "YQErrCode.h"
 
 DWORD AFNPackage::s_pkgID = 1;
-BYTE AFNPackage::s_RSEQ = 0;
-BYTE AFNPackage::s_PSEQ = 0;
-BYTE AFNPackage::s_MSA = 0x01;
 
 AFNPackage::AFNPackage()
 	:m_nId(s_pkgID)

@@ -98,13 +98,13 @@ public:
 			
 			值			帧类型			服务功能
 			0			保留
-			1			发送/确认		复位命令
+			1			发送/确认		    复位命令
 			2-3			保留
 			4			发送/无回答		用户数据
 			5-8			保留
-			9			请求响应帧		链路测试
-			10			请求响应帧		请求1级数据
-			11			请求响应帧		请求2级数据
+			9			请求/响应帧		链路测试
+			10			请求/响应帧		请求1级数据
+			11			请求/响应帧		请求2级数据
 			12-15		保留
 			
 			PRM=0时（报文来自从动站）
@@ -320,9 +320,14 @@ public:
 附加信息域,分上下行
 */
 class Pkg_Afn_Aux : public Pkg_UserDataInterface{
+public:
+	BYTE hasTp;
 };
 class Pkg_Afn_Aux_Up : public Pkg_Afn_Aux {
 public:
+	Pkg_Afn_Aux_Up(BOOL _hasTp){
+		hasTp = _hasTp;
+	}
 	//上行,EC,2字节
 	struct {
 		BYTE EC1;//事件计数器EC1（重要事件计数器,范围0~255）,上行,ACD=1时有效
@@ -338,11 +343,16 @@ public:
 	virtual int PackData(BYTE* _data,DWORD _len);
 	virtual int GetDataLen()
 	{
-		return 8;
+		if (hasTp)
+			return 8;//1+1+1+4+1
+		return 2;
 	}
 };
-class Pkg_Afn_Aux_Down : Pkg_Afn_Aux {
+class Pkg_Afn_Aux_Down : public Pkg_Afn_Aux {
 public:
+	Pkg_Afn_Aux_Down(BOOL _hasTp){
+		hasTp = _hasTp;
+	}
 	//消息认证码PW,下行发送,由主站算法计算，如带此数据，则终端必须认证此数据，通过则响应命令，否则不响应命令
 	BYTE PW[16];
 	//时间戳,6字节
@@ -355,7 +365,9 @@ public:
 	virtual int PackData(BYTE* _data,DWORD _len);
 	virtual int GetDataLen()
 	{
-		return 22;
+		if (hasTp)
+			return 22;//16+1+4+1
+		return 16;
 	}
 };
 /*
@@ -379,7 +391,7 @@ public:
 	Pkg_Afn_Aux  *pAux;
 public:
 	Pkg_Afn();
-	~Pkg_Afn();
+	virtual ~Pkg_Afn();
 	Pkg_Afn(BYTE* _data,DWORD _len);	
 
 	virtual void unPackData(BYTE* _data,DWORD _len);
