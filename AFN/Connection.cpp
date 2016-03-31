@@ -211,7 +211,7 @@ Connection* JzqList::getConnection(struct bufferevent *bev)
 	} 
 	return NULL;
 }
-void JzqList::ReportLoginState(WORD _areacode,WORD _number,BYTE _Fn,BYTE _pseq)
+void JzqList::ReportLoginState(WORD _areacode,WORD _number,WORD _Fn,BYTE _pseq)
 {
 	Jzq *p = NULL;
 	for (jzqIter it = m_jzq.begin(); it != m_jzq.end(); it++){

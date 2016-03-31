@@ -111,7 +111,7 @@ public:
 	//获取连接对象
 	Connection* getConnection(struct bufferevent *bev);
 	//登录相关
-	void ReportLoginState(WORD _areacode,WORD _number,BYTE _Fn,BYTE _pseq);
+	void ReportLoginState(WORD _areacode,WORD _number,WORD _Fn,BYTE _pseq);
 	//获取集中器的RSEQ
 	BYTE GetRSEQ(WORD _areacode,WORD _number);
 public:

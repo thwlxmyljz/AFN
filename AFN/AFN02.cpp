@@ -35,15 +35,12 @@ int AFN02::HandleRequest(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& 
 	if (reqPkg->userHeader.C._C.FUN == Pkg_User_Header::UH_FUNC_MAIN9 && \
 		reqPkg->pAfn->afnHeader.AFN == Pkg_Afn_Header::AFN02)
 	{
-		//链路接口检测,发送响应帧,保存启动帧序号PSEQ为响应帧起始序号	
-		
-		if (reqPkg->pn = 0){
-			if (reqPkg->Fn == 1/*F1登录*/ || \
-				reqPkg->Fn == 2/*F2退出登录*/ || \
-				reqPkg->Fn == 3/*F3心跳,数据单元带终端时间*/)
+		//链路接口检测,发送响应帧,保存启动帧序号PSEQ为响应帧起始序号			
+		if (reqPkg->pn == 0){
+			if (reqPkg->Fn == 1/*F1登录*/ || reqPkg->Fn == 2/*F2退出登录*/ || reqPkg->Fn == 3/*F3心跳,数据单元带终端时间*/)
 			{
-				g_JzqConList->ReportLoginState(reqPkg->userHeader.A1,reqPkg->userHeader.A2,reqPkg->Fn,\
-											   reqPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ);
+				g_JzqConList->ReportLoginState(reqPkg->userHeader.A1,reqPkg->userHeader.A2,reqPkg->Fn,reqPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ);
+
 				if (reqPkg->pAfn->afnHeader.SEQ._SEQ.CON != Pkg_Afn_Header::SEQ_CON_MBANSWER){
 					//终端测试软件的CON=0，实际设备CON=1								
 					return YQER_OK;
@@ -69,8 +66,8 @@ int AFN02::HandleRequest(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& 
 				ackPkg->pAfn->afnHeader.SEQ._SEQ.TPV = Pkg_Afn_Header::SEQ_TPV_NO;						
 				ackPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ = g_JzqConList->GetRSEQ(reqPkg->userHeader.A1,reqPkg->userHeader.A2);	
 				ackPkg->pAfn->pAfnData = new AFN02Data_Ack(reqPkg->pAfn->pAfnData->m_Tag);
-				ackPkg->SetL();
-				ackPkg->CreateCS();
+				ackPkg->okPkg();
+
 				ackLst.push_back(ackPkg);
 				return YQER_OK;
 			}			
