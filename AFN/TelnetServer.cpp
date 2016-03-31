@@ -33,7 +33,7 @@ int split(const string& str, vector<string>& ret_, string sep)
 		}
 		else
 		{
-			tmp = str.substr(pos_begin);
+			tmp = str.substr(pos_begin);			
 			pos_begin = comma_pos;
 		}
 
@@ -45,12 +45,17 @@ int split(const string& str, vector<string>& ret_, string sep)
 	}
 	return 0;
 }
-char g_cmd[] = "cmd:\n"
-				"ls,send\n"
-				"ls:list all zjq\n"
-				"send [name] [afnxx]:send afnxx command to zjq name\n";
+
+//暂支持单客户登录,保存客户端命令
+std::string g_cmd = "";
+//命令说明
+char helpstr[] = "cmd:\r\n-----------------\r\n"
+				"ls,send\r\n-----------------\r\n"
+				"ls:list all zjq\r\n-----------------\r\n"
+				"send [name] [afnxx]:send afnxx command to zjq name\r\n$";
+//
 TelnetServer::TelnetServer(unsigned int port)
-	:m_svrPort(port),base(NULL),listener(NULL),signal_event(NULL)
+	:m_svrPort(port),base(NULL),listener(NULL)
 {
 }
 TelnetServer::~TelnetServer(void)
@@ -83,16 +88,10 @@ int TelnetServer::Run()
     if (!listener)  {
         YQLogInfo("TelnetServer Could not create a listener!");
         return YQER_SVR_Err(2);
-    }
-
-    signal_event = evsignal_new(base, SIGINT, TelnetServer::signal_cb, (void *)base);
-    if (!signal_event || event_add(signal_event, NULL)<0)  {
-        YQLogInfo("TelnetServer Could not create/add a signal event!");
-        return YQER_SVR_Err(3);
-    }
+	}
 	YQLogInfo("TelnetServer start ok");
 
-	//解包测试
+	//测试
 	/*
 	BYTE data[20] = {0x68,0x32,0x00,0x32,0x00,0x68,0xc9,0x00,0x10,0x4d,0x04,0x00,0x02,0x75,0x00,0x00,0x01,0x00,0xa2,0x16};
 	string hex = TYQUtils::Byte2Hex(data,20);
@@ -104,42 +103,91 @@ int TelnetServer::Run()
 	AFNPackageBuilder::Instance().HandlePkg(&pkg,ackLst);
 	AFNPackage* ackPkg = (*ackLst.begin());
 	*/
+	/*
 	BYTE data[18] = {0x0B, 0xFF , 0xFF , 0xFF , 0xFF , 0x02 , 0x00 , 0x61 , 0x00 , 0x00 , 0x03 , 0x00 , 0x02 , 0x00 , 0x00 , 0x01 , 0x00 , 0x00};
 	BYTE cs = AFNPackage::GetCS(data,18);
-
+	*/
+	
+	BYTE DT1;
+	BYTE DT2;
+	WORD Fn;
+	AFNPackage::GetDT(3,DT1,DT2);
+	Fn = AFNPackage::GetFn(DT1,DT2);
+	AFNPackage::GetDT(248,DT1,DT2);
+	Fn = AFNPackage::GetFn(DT1,DT2);
+	AFNPackage::GetDT(8,DT1,DT2);
+	Fn = AFNPackage::GetFn(DT1,DT2);
+	AFNPackage::GetDT(9,DT1,DT2);
+	Fn = AFNPackage::GetFn(DT1,DT2);
+	AFNPackage::GetDT(16,DT1,DT2);
+	Fn = AFNPackage::GetFn(DT1,DT2);
+	
+	/*
+	BYTE DT1;
+	BYTE DT2;
+	WORD Fn;
+	AFNPackage::GetDA(0,DT1,DT2);
+	Fn = AFNPackage::Getpn(DT1,DT2);
+	AFNPackage::GetDA(2041,DT1,DT2);
+	Fn = AFNPackage::Getpn(DT1,DT2);
+	AFNPackage::GetDA(3,DT1,DT2);
+	Fn = AFNPackage::Getpn(DT1,DT2);
+	AFNPackage::GetDA(248,DT1,DT2);
+	Fn = AFNPackage::Getpn(DT1,DT2);
+	AFNPackage::GetDA(8,DT1,DT2);
+	Fn = AFNPackage::Getpn(DT1,DT2);
+	AFNPackage::GetDA(9,DT1,DT2);
+	Fn = AFNPackage::Getpn(DT1,DT2);
+	AFNPackage::GetDA(16,DT1,DT2);
+	Fn = AFNPackage::Getpn(DT1,DT2);
+	AFNPackage::GetDA(2040,DT1,DT2);
+	Fn = AFNPackage::Getpn(DT1,DT2);
+	Fn = AFNPackage::Getpn(0xff,0x0);
+	*/
     event_base_dispatch(base);
 
 	evconnlistener_free(listener);
-    event_free(signal_event);
     event_base_free(base);
 
     YQLogInfo("TelnetServer shut down");
 	return 0;
 }
+
 void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 {
 	char cmd[512];
 	size_t len = bufferevent_read(bev, cmd, sizeof(cmd)-1 );
 	cmd[len] = '\0';
-	std::vector<string> params;
-	split(cmd,params," ");
-	if (params.size() <= 0)
-		return;
-	if (params[0] == "ls")
-	{
-		char msg[] = "ls ok\n";
-		bufferevent_write(bev, msg, strlen(msg));
-	}
-	else if (params[0] == "send")
-	{
-		char msg[] = "send ok\n";
-		bufferevent_write(bev, msg, strlen(msg));
-	}
-	else{
-		char msg[] = "not support command\n";
-		bufferevent_write(bev, msg, strlen(msg));		
-		bufferevent_write(bev, g_cmd, strlen(g_cmd));
-		//bufferevent_enable(bev, EV_WRITE);
+	g_cmd += cmd; 
+	if (g_cmd.find("\n") != std::string::npos){	
+		g_cmd = g_cmd.substr(0,g_cmd.length()-1);
+		std::vector<string> params;
+		split(g_cmd,params," ");
+		if (params.size() <= 0)
+			return;
+		for (unsigned int i = 0; i < params.size(); i++)
+		{
+			if (params[i][params[i].length()-1] == '\r'){
+				params[i][params[i].length()-1] = 0;
+			}
+		}
+		if (params[0] == "ls")
+		{
+			char msg[] = "ls ok\r\n$";
+			bufferevent_write(bev, msg, strlen(msg));
+		}
+		else if (params[0] == "send")
+		{
+			char msg[] = "send ok\r\n$";
+			bufferevent_write(bev, msg, strlen(msg));
+		}
+		else{
+			char msg[] = "not support command\r\n";
+			bufferevent_write(bev, msg, strlen(msg));		
+			bufferevent_write(bev, helpstr, strlen(helpstr));
+			//bufferevent_enable(bev, EV_WRITE);
+		}
+		g_cmd = "";
 	}
 }
 void TelnetServer::conn_writecb(struct bufferevent *bev, void *user_data)
@@ -156,16 +204,6 @@ void TelnetServer::conn_eventcb(struct bufferevent *bev, short events, void *use
         YQLogMin("Got an error on the connection");/*XXX win32*/
     }
 }
-//信号处理
-void TelnetServer::signal_cb(evutil_socket_t sig, short events, void *user_data)
-{
-    struct event_base *base = (struct event_base *)user_data;
-    struct timeval delay = { 2, 0 };
-
-    YQLogInfo("TelnetServer Caught an interrupt signal; exiting cleanly in two seconds");
-
-    event_base_loopexit(base, &delay);
-}
 //新客户端连接
 void TelnetServer::listener_cb(struct evconnlistener *listener, evutil_socket_t fd,
     struct sockaddr *sa, int socklen, void *user_data)
@@ -181,8 +219,7 @@ void TelnetServer::listener_cb(struct evconnlistener *listener, evutil_socket_t 
     bufferevent_setcb(bev, conn_readcb, conn_writecb, conn_eventcb, NULL);
 	//注册写事件
     bufferevent_enable(bev, EV_WRITE);
-	
-	bufferevent_write(bev, g_cmd, strlen(g_cmd));
+	bufferevent_write(bev, helpstr, strlen(helpstr));
 	//注册读事件
     bufferevent_enable(bev, EV_READ);
 	bufferevent_enable(bev, EV_PERSIST);

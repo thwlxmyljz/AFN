@@ -5,7 +5,7 @@
 DWORD AFNPackage::s_pkgID = 1;
 
 AFNPackage::AFNPackage()
-	:m_nId(s_pkgID)
+	:m_nId(s_pkgID),Fn(0x0),pn(0x0)
 {
 	pAfn = new Pkg_Afn();
 	pkgHeader.S1 = 0x68;
@@ -58,7 +58,10 @@ int AFNPackage::ParseProto(BYTE* data,DWORD len)
 
 	//生成用户数据区AFN对象,应用数据长度=用户数据长度-用户头长度
 	pAfn->unPackData(data,pkgHeader.L._L.LEN-PKG_USER_HEADLEN);
-	
+
+	pn = AFNPackage::Getpn(pAfn->pAfnData->m_Tag.DA1,pAfn->pAfnData->m_Tag.DA2);
+	Fn = AFNPackage::GetFn(pAfn->pAfnData->m_Tag.DT1,pAfn->pAfnData->m_Tag.DT2);
+
 	return YQER_OK;
 }
 int AFNPackage::Serialize(BYTE* buf,DWORD bufLen)

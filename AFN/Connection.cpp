@@ -222,7 +222,7 @@ void JzqList::ReportLoginState(WORD _areacode,WORD _number,BYTE _Fn,BYTE _pseq)
 	}
 	if (!p){
 		YQLogInfo("new jzq");
-		p = new Jzq("",_areacode,_number,0x0);//Fn=1已登录,=0退出登录，未在数据库内配置
+		p = new Jzq("",_areacode,_number,0x0);
 		if (!p)
 			return;
 		m_jzq.push_back(p);

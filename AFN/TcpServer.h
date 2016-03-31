@@ -18,7 +18,7 @@ class TcpServer
 public:
 	TcpServer(unsigned int port);
 	~TcpServer(void);
-	
+	//运行服务器
 	int Run();
 private:
 	//libevent回调

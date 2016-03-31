@@ -16,6 +16,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	TelnetThread telsvr;
 	telsvr.Start();
 	svr.Run();
+	telsvr.Stop();
 	return 0;
 }
 

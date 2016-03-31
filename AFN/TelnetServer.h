@@ -11,13 +11,14 @@
 #include "event2/util.h"
 #include "event2/event.h"
 
+#include <string>
 
 class TelnetServer
 {
 public:
 	TelnetServer(unsigned int port=5555);
 	~TelnetServer(void);
-	
+	//运行服务器
 	int Run();
 private:
 	//libevent回调
@@ -33,8 +34,7 @@ private:
 	unsigned int m_svrPort;
 	//libevent对象
 	struct event_base *base;
-    struct evconnlistener *listener;
-    struct event *signal_event;
+    struct evconnlistener *listener;	
 };
 
 class TelnetThread : public Thread
