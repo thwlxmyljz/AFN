@@ -26,6 +26,7 @@
 #define __PROTO_H__
 
 #include "YQDefs.h"
+#include <string.h>
 
 #pragma pack(1) //1字节对齐
 
@@ -318,10 +319,28 @@ public:
 */
 class Pkg_Afn_Aux : public Pkg_UserDataInterface{
 public:
+	Pkg_Afn_Aux(BOOL _hasTp):hasTp(_hasTp){
+		memset(&TP,0,sizeof(TP));
+	}
 	BYTE hasTp;
 	//时间戳,6字节
+	/*
+	时间标签Tp由启动站产生，并通过报文传送给从动站，从动站据此判决收到的报文的时序和时效性，如判别有效，从动站发送响应帧，并在响应帧中将时间标签Tp返回启动站。
+	启动帧帧序号计数器PFC：见本部分(4.3.4.3.5 b）。
+	启动帧发送时标：记录启动帧发送的时间。
+	允许发送传输延时时间：指启动帧从开始发送至从动站接收到报文之间启动站所允许的传输延时时间。
+	从动站的时效性判断规则：
+	a）	如从动站的当前时间与Tp中的启动帧发送时标之间的时间差大于Tp中的允许传输延时时间，从动站则舍弃该报文；
+	b）	如时间差不大于Tp中的允许传输延时时间，则做出响应；
+	c）	如Tp中的允许传输延时时间为“0”，则从动站不进行上述两项的判断。
+	*/
 	struct {
-		BYTE PFC;//启动帧计数器PFC,BIN编码,启动站每发送1帧数据则+1，从0～255循环增加，重发帧不变PFC
+		/*
+		(4.3.4.3.5 b）	启动帧帧序号计数器PFC
+		每一对启动站和从动站之间均有1个独立的、由1字节构成的计数范围为0～255的启动帧帧序号计数器PFC，
+		用于记录当前启动帧的序号。启动站每发送1帧报文，该计数器加1，从0～255循环加1递增；重发帧则不加1。
+		*/
+		BYTE PFC;
 		BYTE TM[4];//启动帧发送时标,记录启动帧发送的时间,单位秒分时日
 		BYTE DELAY;//允许发送传输延时时间,单位:分钟,BIN编码
 	} TP;
@@ -331,38 +350,27 @@ public:
 };
 class Pkg_Afn_Aux_Up : public Pkg_Afn_Aux {
 public:
-	Pkg_Afn_Aux_Up(BOOL _hasTp){
-		hasTp = _hasTp;
+	Pkg_Afn_Aux_Up(BOOL _hasTp):Pkg_Afn_Aux(_hasTp){
+		memset(&EC,0,sizeof(EC));
 	}
 	//上行,EC,2字节
 	struct {
 		BYTE EC1;//事件计数器EC1（重要事件计数器,范围0~255）,上行,ACD=1时有效
 		BYTE EC2;//事件计数器EC2（一般事件计数器,范围0~255）,上行,ACD=1时有效
 	} EC;
-	//时间戳,6字节
-	struct {
-		BYTE PFC;//启动帧计数器PFC,BIN编码,启动站每发送1帧数据则+1，从0～255循环增加，重发帧不变PFC
-		BYTE TM[4];//启动帧发送时标,记录启动帧发送的时间,单位秒分时日
-		BYTE DELAY;//允许发送传输延时时间,单位:分钟,BIN编码
-	} TP;
 	virtual void unPackData(BYTE* _data,DWORD _len);
 	virtual DWORD PackData(BYTE* _data,DWORD _len);
 	virtual DWORD GetDataLen();
 };
 class Pkg_Afn_Aux_Down : public Pkg_Afn_Aux {
 public:
-	Pkg_Afn_Aux_Down(BOOL _hasTp){
-		hasTp = _hasTp;
+	Pkg_Afn_Aux_Down(BOOL _hasTp,BOOL _hasPW):Pkg_Afn_Aux(_hasTp),hasPW(_hasPW){
+		memset(&PW,0,sizeof(PW));
 	}
+	BOOL hasPW;
 	//消息认证码PW,下行发送,由主站算法计算，如带此数据，则终端必须认证此数据，通过则响应命令，否则不响应命令
 	//MAC4字节（BIN编码）,12字节保留
 	BYTE PW[16];
-	//时间戳,6字节
-	struct {
-		BYTE PFC;//时间戳TPV(启动帧计数器PFC,BIN编码)
-		BYTE TM[4];//时间戳TPV(启动帧发送时标,记录启动帧发送的时间,单位秒分时日)
-		BYTE DELAY;//时间戳TPV(允许发送传输延时时间,单位:分钟,BIN编码)
-	} TP;
 	virtual void unPackData(BYTE* _data,DWORD _len);
 	virtual DWORD PackData(BYTE* _data,DWORD _len);
 	virtual DWORD GetDataLen();

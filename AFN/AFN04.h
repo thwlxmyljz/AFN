@@ -22,5 +22,5 @@ public:
 
 public:
 	//创建召测测量点包
-	int CreateF25(WORD pn);
+	int CreateF25(WORD pn,BOOL hasPW);
 };

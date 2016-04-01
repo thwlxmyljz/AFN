@@ -215,6 +215,17 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 				bufferevent_write(bev, os.str().c_str(), os.str().length());
 			}
 		}
+		else if (params[0] == "showclock"){
+			if (params.size() < 2){
+				ERR_PRINT()
+			}
+			else{
+				int ret = g_JzqConList->ShowClock(params[1]);
+				ostringstream os;
+				os << "showpoint return " << ret <<"\r\n$";	
+				bufferevent_write(bev, os.str().c_str(), os.str().length());
+			}
+		}
 		else{
 			char msg[] = "not support command\r\n";
 			bufferevent_write(bev, msg, strlen(msg));		

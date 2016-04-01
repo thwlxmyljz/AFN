@@ -23,7 +23,7 @@ public:
 	//分析收到的数据帧生产包
 	int ParseProto(BYTE* data,DWORD len);
 	//包序列化到帧buf中
-	int Serialize(BYTE* buf,DWORD bufLen);
+	int Serialize(BYTE* buf,DWORD bufLen) const;
 
 	//校验包合法性
 	BOOL valid();

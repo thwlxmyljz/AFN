@@ -71,6 +71,8 @@ public:
 	BYTE m_RSEQ;
 	//请求帧序号
 	BYTE m_PSEQ;
+	//启动帧帧序号计数器PFC
+	BYTE m_PFC;
 	//网络连接
 	Connection* m_conn;
 	//最近的心跳时间
@@ -119,6 +121,7 @@ public:
 	int SendCmd(Pkg_Afn_Header::AFN_CODE _code,WORD pn,WORD Fn){}
 	//召测测量点,pn测量点号,0所有测量点
 	int ShowPoint(std::string name,WORD pn);
+	int ShowClock(std::string name);
 public:
 	/*libevent事件处理*/
 	static void conn_writecb(struct bufferevent *bev, void *user_data);

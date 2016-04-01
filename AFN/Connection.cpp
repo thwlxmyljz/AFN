@@ -6,13 +6,16 @@
 #include "AFNPackageBuilder.h"
 #include <sstream>
 #include "AFN04.h"
+#include "AFN0C.h"
 
 #define BUF_SIZE 16384
 
 Connection::Connection(struct event_base *base,struct bufferevent *_bev,evutil_socket_t _fd,struct sockaddr *sa)
 	:bev(_bev),fd(_fd),m_remoteAddr((*(sockaddr_in*)sa)),m_jzq(NULL)
 {	
-	LogFile->FmtLog(LOG_INFORMATION,"new Connection(%s)",m_remoteAddr.Convert(true)); 
+	sockaddr_in * in = (sockaddr_in*)sa;
+	
+	LogFile->FmtLog(LOG_INFORMATION,"new Connection[%d,%d](%s)",in->sin_addr.S_un.S_addr,in->sin_port,m_remoteAddr.Convert(true)); 
 }
 Connection::~Connection(void)
 {
@@ -22,10 +25,19 @@ Connection::~Connection(void)
 
 int Connection::SendBuf(const void* cmd,unsigned int cmdlen)
 {
+	LogFile->FmtLog(LOG_INFORMATION,"snd pkg:%s", TYQUtils::Byte2Hex(cmd,cmdlen).c_str());
     return bufferevent_write(bev, cmd, cmdlen);
 }
 int Connection::SendPkg(const AFNPackage* pkg)
 {
+	BYTE sndBuf[BUF_SIZE];
+	DWORD size = pkg->Serialize(sndBuf,BUF_SIZE);
+	if (size > 0 && size < BUF_SIZE){
+		return SendBuf(sndBuf,size);
+	}
+	else{
+		LogFile->FmtLog(LOG_MINOR,"SendPkg Serialize error, error code:%d",size); 
+	}
 	return 0;
 }
 int Connection::RecBuf()
@@ -73,10 +85,11 @@ int Connection::RecBuf()
 	}
 	else if (pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 0) {
 		//多帧，中间帧
-		m_pkgList.push_back(pkg);
-		YQLogInfo("rec mul pkg , middle");
-		if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 1)
-		{
+		m_pkgList.push_back(pkg);		
+		if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 0){
+			YQLogInfo("rec mul pkg , middle");
+		}
+		else{
 			//多帧，结束帧
 			YQLogInfo("rec mul pkg , end");
 			nRet = AFNPackageBuilder::Instance().HandlePkg(m_pkgList,ackLst);
@@ -85,7 +98,7 @@ int Connection::RecBuf()
 			}	
 			ClearRecPkgList();			
 			return nRet;
-		}
+		}		
 	}
 	return nRet;
 }
@@ -119,11 +132,11 @@ BOOL Connection::Compare(struct bufferevent *_bev)
 }
 //------------------------------------------------------------------------------------
 Jzq::Jzq()
-	:m_name(""),m_areacode(0),m_number(0),m_tag(0),m_conn(NULL),m_heart(0),m_RSEQ(0x0),m_PSEQ(0x0)
+	:m_name(""),m_areacode(0),m_number(0),m_tag(0),m_conn(NULL),m_heart(0),m_RSEQ(0x0),m_PSEQ(0x0),m_PFC(0x0)
 {
 }
 Jzq::Jzq(string _name,WORD _areaCode,WORD _number,BYTE _tag)
-	:m_name(_name),m_areacode(_areaCode),m_number(_number),m_tag(_tag),m_conn(NULL),m_heart(0),m_RSEQ(0x0),m_PSEQ(0x0)
+	:m_name(_name),m_areacode(_areaCode),m_number(_number),m_tag(_tag),m_conn(NULL),m_heart(0),m_RSEQ(0x0),m_PSEQ(0x0),m_PFC(0x0)
 {
 }
 Jzq::~Jzq()
@@ -151,9 +164,9 @@ JzqList::~JzqList()
 void JzqList::LoadJzq()
 {
 	//加载集中器
-	Jzq* p = new Jzq("test",0xffff,0xffff,0x01);
+	Jzq* p = new Jzq("test01",0xffff,0xffff,0x01);
 	m_jzqList.push_back(p);
-	p = new Jzq("test01",0x1000,0x44d,0x01);
+	p = new Jzq("test",0x1000,0x44d,0x01);
 	m_jzqList.push_back(p);
 }
 std::string JzqList::printJzq()
@@ -164,8 +177,8 @@ std::string JzqList::printJzq()
 		Jzq* p = (*it);
 		std::ostringstream os;
 		os <<"name(" << p->m_name << "),areacode(" << p->m_areacode << "),address(" << p->m_number << "),state("\
-			<< ((p->m_tag&0x1)?"db:yes,":"db:no,") << ((p->m_tag&0x2)?"online:yes,":"online:no)\r\n");
-		os << "--------------------------------------------------------\r\n";
+			<< ((p->m_tag&0x1)?"db:yes,":"db:no,") << ((p->m_tag&0x2)?"online:yes)":"online:no)") ;
+		os << "\r\n--------------------------------------------------------\r\n";
 		ss += os.str();
 		it++;
 	}
@@ -328,7 +341,7 @@ int JzqList::ShowPoint(std::string name,WORD pn)
 		return YQER_JZQ_NOLOGIN;
 	}
 	AFN04* afnData = new AFN04();
-	afnData->CreateF25(pn);
+	afnData->CreateF25(pn,FALSE);
 
 	AFNPackage* ackPkg = new AFNPackage();	
 	ackPkg->userHeader.C._C.DIR = 0x00;
@@ -336,6 +349,34 @@ int JzqList::ShowPoint(std::string name,WORD pn)
 	ackPkg->userHeader.C._C.FCV = 0x00;
 	ackPkg->userHeader.C._C.FCB = 0x00;
 	ackPkg->userHeader.C._C.FUN = 11;//请求2级数据
+	ackPkg->userHeader.A3._A3.TAG = 0;//单地址
+	ackPkg->userHeader.A3._A3.MSA = Jzq::s_MSA;
+	ackPkg->userHeader.A1 = dev->m_areacode;
+	ackPkg->userHeader.A2 = dev->m_number;
+	ackPkg->pAfn = afnData;
+	ackPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ = g_JzqConList->GetRSEQ(ackPkg->userHeader.A1,ackPkg->userHeader.A2);	
+	ackPkg->okPkg();
+
+	return dev->m_conn->SendPkg(ackPkg);
+}
+int JzqList::ShowClock(std::string name)
+{
+	Jzq* dev = getJzq(name);
+	if (!dev){
+		return YQER_JZQ_NOTFOUND;
+	}
+	if (!dev->m_conn){
+		return YQER_JZQ_NOLOGIN;
+	}
+	AFN0C* afnData = new AFN0C();
+	afnData->CreateClock();
+
+	AFNPackage* ackPkg = new AFNPackage();	
+	ackPkg->userHeader.C._C.DIR = 0x00;
+	ackPkg->userHeader.C._C.PRM = 0x01;
+	ackPkg->userHeader.C._C.FCV = 0x00;
+	ackPkg->userHeader.C._C.FCB = 0x00;
+	ackPkg->userHeader.C._C.FUN = 10;//请求1级数据
 	ackPkg->userHeader.A3._A3.TAG = 0;//单地址
 	ackPkg->userHeader.A3._A3.MSA = Jzq::s_MSA;
 	ackPkg->userHeader.A1 = dev->m_areacode;

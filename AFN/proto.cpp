@@ -204,8 +204,10 @@ DWORD Pkg_Afn_Aux_Down::PackData(BYTE* _data,DWORD _len)
 {
 	DWORD myLen = GetDataLen();
 	if (_len >= myLen){
-		for (int i = 0; i < 16; i++){
-			_data[i] = PW[i];
+		if (hasPW){
+			for (int i = 0; i < 16; i++){
+				_data[i] = PW[i];
+			}
 		}
 		Pkg_Afn_Aux::PackData(_data+16,_len-16);
 	}
@@ -213,5 +215,7 @@ DWORD Pkg_Afn_Aux_Down::PackData(BYTE* _data,DWORD _len)
 }
 DWORD Pkg_Afn_Aux_Down::GetDataLen()
 {
-	return 16+Pkg_Afn_Aux::GetDataLen();
+	if (hasPW)
+		return 16+Pkg_Afn_Aux::GetDataLen();
+	return Pkg_Afn_Aux::GetDataLen();
 }

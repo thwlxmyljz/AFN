@@ -47,7 +47,7 @@ public:
     static const char*GetDataTimeStamp(char *buffer);
     static const char*GetDataStamp(char *buffer);
 
-	static string Byte2Hex(void* data,int len);
+	static string Byte2Hex(const void* data,unsigned int len);
 };
 //---------------------------------------------------------------------------
 #endif

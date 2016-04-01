@@ -138,6 +138,9 @@
     <ClInclude Include="AFN04.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="AFN0C.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -231,6 +234,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="AFN04.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="AFN0C.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

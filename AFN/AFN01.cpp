@@ -16,7 +16,6 @@ AFN01Req_Data::~AFN01Req_Data(void)
 AFN01::AFN01(WORD Fn)
 {
 	pAfnData = new AFN01Req_Data();
-	Pkg_Afn_Aux_Down* p = new Pkg_Afn_Aux_Down(FALSE);
-	memset(p->PW,sizeof(p->PW),0);
+	Pkg_Afn_Aux_Down* p = new Pkg_Afn_Aux_Down(FALSE,TRUE);
 	pAux = p;
 }

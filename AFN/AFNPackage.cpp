@@ -64,7 +64,7 @@ int AFNPackage::ParseProto(BYTE* data,DWORD len)
 
 	return YQER_OK;
 }
-int AFNPackage::Serialize(BYTE* buf,DWORD bufLen)
+int AFNPackage::Serialize(BYTE* buf,DWORD bufLen) const
 {
 	//°üÍ·
 	bufLen -= PKG_HEADLEN;

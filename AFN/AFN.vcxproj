@@ -86,6 +86,7 @@
     <ClInclude Include="AFN01.h" />
     <ClInclude Include="AFN02.h" />
     <ClInclude Include="AFN04.h" />
+    <ClInclude Include="AFN0C.h" />
     <ClInclude Include="AFNData.h" />
     <ClInclude Include="AFNPackage.h" />
     <ClInclude Include="AFNPackageBuilder.h" />
@@ -127,6 +128,7 @@
     <ClCompile Include="AFN01.cpp" />
     <ClCompile Include="AFN02.cpp" />
     <ClCompile Include="AFN04.cpp" />
+    <ClCompile Include="AFN0C.cpp" />
     <ClCompile Include="AFNData.cpp" />
     <ClCompile Include="AFNPackage.cpp" />
     <ClCompile Include="AFNPackageBuilder.cpp" />
