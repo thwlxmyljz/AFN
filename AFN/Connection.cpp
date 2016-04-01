@@ -4,6 +4,8 @@
 #include "LogFileu.h"
 #include "YQUtils.h"
 #include "AFNPackageBuilder.h"
+#include <sstream>
+#include "AFN04.h"
 
 #define BUF_SIZE 16384
 
@@ -44,9 +46,14 @@ int Connection::RecBuf()
 	std::list<AFNPackage* > ackLst;	
 	if (pkg->userHeader.A3._A3.TAG == 0){
 		//单地址
-		if (m_jzq){
-			m_jzq->m_areacode = pkg->userHeader.A1;
-			m_jzq->m_number = pkg->userHeader.A2;
+		if (!m_jzq){
+			//查找集中器，如果集中器配置在数据库内，则会查找到此集中器
+			//如果未配置在数据库内，在处理登录帧的时候，会加入到集中器列表，再下一帧数据过来的时候，会查找到此集中器
+			m_jzq = g_JzqConList->getJzq(pkg->userHeader.A1,pkg->userHeader.A2);
+			if (m_jzq){
+				//设置集中器的网络连接
+				m_jzq->m_conn = this;
+			}
 		}
 	}
 	if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 1  && pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 1) {
@@ -88,12 +95,12 @@ int Connection::SendPkg(std::list<AFNPackage*>& pkgLst)
 	for (Iter it = pkgLst.begin(); it != pkgLst.end(); it++){
 		int cnt = (*it)->Serialize(msg,BUF_SIZE);
 		if (cnt > 0 && cnt < BUF_SIZE){
-			LogFile->FmtLog(LOG_INFORMATION,"send pkg:%s",TYQUtils::Byte2Hex(msg,cnt).c_str());
+			LogFile->FmtLog(LOG_INFORMATION,"snd pkg:%s",TYQUtils::Byte2Hex(msg,cnt).c_str());
 			if (bufferevent_write(bev, msg, cnt) != 0){
-				YQLogMaj("send pkg, bufferevent_write error");
+				YQLogMaj("snd pkg, bufferevent_write error");
 			}
 		}else{
-			YQLogMaj("send pkg, Serialize pkg error");
+			YQLogMaj("snd pkg, Serialize pkg error");
 		}
 	}
 	return YQER_OK;
@@ -109,6 +116,22 @@ void Connection::ClearRecPkgList()
 BOOL Connection::Compare(struct bufferevent *_bev)
 {
 	return bev==_bev;
+}
+//------------------------------------------------------------------------------------
+Jzq::Jzq()
+	:m_name(""),m_areacode(0),m_number(0),m_tag(0),m_conn(NULL),m_heart(0),m_RSEQ(0x0),m_PSEQ(0x0)
+{
+}
+Jzq::Jzq(string _name,WORD _areaCode,WORD _number,BYTE _tag)
+	:m_name(_name),m_areacode(_areaCode),m_number(_number),m_tag(_tag),m_conn(NULL),m_heart(0),m_RSEQ(0x0),m_PSEQ(0x0)
+{
+}
+Jzq::~Jzq()
+{
+}
+BOOL Jzq::operator==(const Jzq& o)
+{
+	return (o.m_areacode == m_areacode && o.m_number == m_number);
 }
 //------------------------------------------------------------------------------------
 BYTE Jzq::s_MSA = 0x01;
@@ -129,7 +152,24 @@ void JzqList::LoadJzq()
 {
 	//加载集中器
 	Jzq* p = new Jzq("test",0xffff,0xffff,0x01);
-	m_jzq.push_back(p);
+	m_jzqList.push_back(p);
+	p = new Jzq("test01",0x1000,0x44d,0x01);
+	m_jzqList.push_back(p);
+}
+std::string JzqList::printJzq()
+{
+	std::string ss;
+	jzqIter it = m_jzqList.begin();
+	while (it != m_jzqList.end()){
+		Jzq* p = (*it);
+		std::ostringstream os;
+		os <<"name(" << p->m_name << "),areacode(" << p->m_areacode << "),address(" << p->m_number << "),state("\
+			<< ((p->m_tag&0x1)?"db:yes,":"db:no,") << ((p->m_tag&0x2)?"online:yes,":"online:no)\r\n");
+		os << "--------------------------------------------------------\r\n";
+		ss += os.str();
+		it++;
+	}
+	return ss;
 }
 /**
 libevent event
@@ -191,7 +231,11 @@ void JzqList::delConnection(struct bufferevent *bev)
 	{
 		Connection* con = (*it);
 		if (con->Compare(bev))
-		{			
+		{		
+			//清除集中器的网络连接
+			if (con->m_jzq){
+				con->m_jzq->m_conn = NULL;
+			}
 			g_JzqConList->erase(it);			
 			delete con;
 			break;
@@ -211,21 +255,37 @@ Connection* JzqList::getConnection(struct bufferevent *bev)
 	} 
 	return NULL;
 }
-void JzqList::ReportLoginState(WORD _areacode,WORD _number,WORD _Fn,BYTE _pseq)
+Jzq* JzqList::getJzq(WORD _areacode,WORD _number)
 {
 	Jzq *p = NULL;
-	for (jzqIter it = m_jzq.begin(); it != m_jzq.end(); it++){
+	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++){
 		if ((*it)->m_areacode == _areacode && (*it)->m_number == _number){			
 			p = (*it);
 			break;
 		}
 	}
+	return p;
+}
+Jzq* JzqList::getJzq(std::string _name)
+{
+	Jzq *p = NULL;
+	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++){
+		if ((*it)->m_name == _name){			
+			p = (*it);
+			break;
+		}
+	}
+	return p;
+}
+void JzqList::ReportLoginState(WORD _areacode,WORD _number,WORD _Fn,BYTE _pseq)
+{
+	Jzq *p = getJzq(_areacode,_number);
 	if (!p){
 		YQLogInfo("new jzq");
 		p = new Jzq("",_areacode,_number,0x0);
 		if (!p)
 			return;
-		m_jzq.push_back(p);
+		m_jzqList.push_back(p);
 	}
 	if (_Fn==1){
 		p->m_tag |= (0x1<<1);
@@ -244,7 +304,7 @@ void JzqList::ReportLoginState(WORD _areacode,WORD _number,WORD _Fn,BYTE _pseq)
 }
 BYTE JzqList::GetRSEQ(WORD _areacode,WORD _number)
 {
-	for (jzqIter it = m_jzq.begin(); it != m_jzq.end(); it++)
+	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++)
 	{
 		Jzq* p = (*it);
 		if (p->m_areacode == _areacode && p->m_number == _number)
@@ -257,4 +317,32 @@ BYTE JzqList::GetRSEQ(WORD _areacode,WORD _number)
 		}
 	}
 	return 0x0;
+}
+int JzqList::ShowPoint(std::string name,WORD pn)
+{
+	Jzq* dev = getJzq(name);
+	if (!dev){
+		return YQER_JZQ_NOTFOUND;
+	}
+	if (!dev->m_conn){
+		return YQER_JZQ_NOLOGIN;
+	}
+	AFN04* afnData = new AFN04();
+	afnData->CreateF25(pn);
+
+	AFNPackage* ackPkg = new AFNPackage();	
+	ackPkg->userHeader.C._C.DIR = 0x00;
+	ackPkg->userHeader.C._C.PRM = 0x01;
+	ackPkg->userHeader.C._C.FCV = 0x00;
+	ackPkg->userHeader.C._C.FCB = 0x00;
+	ackPkg->userHeader.C._C.FUN = 11;//请求2级数据
+	ackPkg->userHeader.A3._A3.TAG = 0;//单地址
+	ackPkg->userHeader.A3._A3.MSA = Jzq::s_MSA;
+	ackPkg->userHeader.A1 = dev->m_areacode;
+	ackPkg->userHeader.A2 = dev->m_number;
+	ackPkg->pAfn = afnData;
+	ackPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ = g_JzqConList->GetRSEQ(ackPkg->userHeader.A1,ackPkg->userHeader.A2);	
+	ackPkg->okPkg();
+
+	return dev->m_conn->SendPkg(ackPkg);
 }

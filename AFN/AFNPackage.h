@@ -27,7 +27,7 @@ public:
 
 	//校验包合法性
 	BOOL valid();
-	//填写长度以及CS
+	//填写长度以及CS,封包最后一步
 	void okPkg();
 
 	//计算CS值

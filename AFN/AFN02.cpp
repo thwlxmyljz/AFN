@@ -47,9 +47,6 @@ int AFN02::HandleRequest(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& 
 				}
 				//数据按F3回应，ERR定义如下，=0正确，=1其他错误，=2表地址重复，3~255备用
 				AFNPackage* ackPkg = new AFNPackage();
-				if (!ackPkg){
-					return YQER_NOMEMORY;
-				}
 				ackPkg->userHeader.C._C.DIR = 0x00;
 				ackPkg->userHeader.C._C.PRM = 0x00;
 				ackPkg->userHeader.C._C.FCV = 0x00;

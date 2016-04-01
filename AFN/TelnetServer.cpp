@@ -9,8 +9,12 @@
 #include "stdafx.h"
 #include <vector>
 #include <string>
+#include <sstream>
 
 using namespace std;
+
+#define ERR_PRINT() char errmsg[] = "param error\r\n$"; \
+			bufferevent_write(bev, errmsg, strlen(errmsg));
 
 int split(const string& str, vector<string>& ret_, string sep)
 {
@@ -49,9 +53,10 @@ int split(const string& str, vector<string>& ret_, string sep)
 //暂支持单客户登录,保存客户端命令
 std::string g_cmd = "";
 //命令说明
-char helpstr[] = "cmd:\r\n-----------------\r\n"
-				"ls,send\r\n-----------------\r\n"
+char helpstr[] = "cmd:\r\n+++++++++++++++++++++++\r\n"
+				"ls,send,showpoint\r\n+++++++++++++++++++++++\r\n"
 				"ls:list all zjq\r\n-----------------\r\n"
+				"showpoint [name] [pn]:\r\n-----------------\r\n"
 				"send [name] [afnxx]:send afnxx command to zjq name\r\n$";
 //
 TelnetServer::TelnetServer(unsigned int port)
@@ -107,7 +112,7 @@ int TelnetServer::Run()
 	BYTE data[18] = {0x0B, 0xFF , 0xFF , 0xFF , 0xFF , 0x02 , 0x00 , 0x61 , 0x00 , 0x00 , 0x03 , 0x00 , 0x02 , 0x00 , 0x00 , 0x01 , 0x00 , 0x00};
 	BYTE cs = AFNPackage::GetCS(data,18);
 	*/
-	
+	/*
 	BYTE DT1;
 	BYTE DT2;
 	WORD Fn;
@@ -121,7 +126,7 @@ int TelnetServer::Run()
 	Fn = AFNPackage::GetFn(DT1,DT2);
 	AFNPackage::GetDT(16,DT1,DT2);
 	Fn = AFNPackage::GetFn(DT1,DT2);
-	
+	*/
 	/*
 	BYTE DT1;
 	BYTE DT2;
@@ -158,34 +163,62 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 	char cmd[512];
 	size_t len = bufferevent_read(bev, cmd, sizeof(cmd)-1 );
 	cmd[len] = '\0';
-	g_cmd += cmd; 
-	if (g_cmd.find("\n") != std::string::npos){	
+	if (cmd[len-1] == '\b'){
+		//backspace
 		g_cmd = g_cmd.substr(0,g_cmd.length()-1);
+		char msg[512];
+		sprintf_s(msg,"\r\n$%s",g_cmd.c_str());
+		bufferevent_write(bev, msg, strlen(msg));
+		return;
+	}
+	g_cmd += cmd; 
+	if (g_cmd.find("\n") != std::string::npos){
+		//执行命令
 		std::vector<string> params;
-		split(g_cmd,params," ");
-		if (params.size() <= 0)
-			return;
-		for (unsigned int i = 0; i < params.size(); i++)
+		std::size_t pos = 0;
+		std::string tmp;
+		while (pos < g_cmd.size())
 		{
-			if (params[i][params[i].length()-1] == '\r'){
-				params[i][params[i].length()-1] = 0;
+			if (g_cmd[pos] == ' ' || g_cmd[pos] == '\t' || g_cmd[pos] == '\r'|| g_cmd[pos] == '\n'){
+				if (tmp != "")
+					params.push_back(tmp);
+				tmp = "";
 			}
+			else{
+				tmp += g_cmd[pos];
+			}
+			pos++;
 		}
-		if (params[0] == "ls")
-		{
-			char msg[] = "ls ok\r\n$";
+		if (params.size() == 0){
+			return;		
+		}
+		if (params[0] == "ls"){			
+			std::string ss = g_JzqConList->printJzq();
+			ss += "$";
+			char msg[] = "ls ok\r\n";
 			bufferevent_write(bev, msg, strlen(msg));
+			bufferevent_write(bev, ss.c_str(), ss.size());
 		}
-		else if (params[0] == "send")
-		{
+		else if (params[0] == "send"){
 			char msg[] = "send ok\r\n$";
 			bufferevent_write(bev, msg, strlen(msg));
+		}
+		else if (params[0] == "showpoint"){
+			//召测测量点
+			if (params.size() < 3){
+				ERR_PRINT()
+			}
+			else{
+				int ret = g_JzqConList->ShowPoint(params[1],atoi(params[2].c_str()));
+				ostringstream os;
+				os << "showpoint return " << ret <<"\r\n$";	
+				bufferevent_write(bev, os.str().c_str(), os.str().length());
+			}
 		}
 		else{
 			char msg[] = "not support command\r\n";
 			bufferevent_write(bev, msg, strlen(msg));		
-			bufferevent_write(bev, helpstr, strlen(helpstr));
-			//bufferevent_enable(bev, EV_WRITE);
+			bufferevent_write(bev, helpstr, strlen(helpstr));			
 		}
 		g_cmd = "";
 	}

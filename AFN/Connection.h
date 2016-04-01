@@ -5,6 +5,7 @@
 #include "event2/util.h"
 #include "event2/event.h"
 #include "thirdparty/Ipv4Address.h"
+#include "proto.h"
 
 #include <list>
 #include <map>
@@ -22,6 +23,8 @@ class Connection
 public:
 	Connection(struct event_base *base,struct bufferevent *_bev,evutil_socket_t _fd,struct sockaddr *sa);
 	virtual ~Connection(void);
+	//集中器
+	Jzq* m_jzq;
 
 public:
 	//读取连接数据包
@@ -34,13 +37,13 @@ public:
 
 	//判断是否此连接
 	BOOL Compare(struct bufferevent *_bev);
+
 protected:
 	void ClearRecPkgList();
+
 private:
 	//libevent数据通道
-	struct bufferevent *bev;
-	//集中器
-	Jzq* m_jzq;
+	struct bufferevent *bev;	
 	//fd
 	evutil_socket_t fd;
 	//对端地址
@@ -75,33 +78,25 @@ public:
 	//主站MSA值
 	static BYTE s_MSA;
 public:
-	Jzq():m_name(""),m_areacode(0),m_number(0),m_tag(0),m_conn(NULL),m_heart(0)
-	{
-		m_RSEQ = 0x0;
-		m_PSEQ = 0x0;
-	}
-	Jzq(string _name,WORD _areaCode,WORD _number,BYTE _tag)
-		:m_name(_name),m_areacode(_areaCode),m_number(_number),m_tag(_tag),m_conn(NULL),m_heart(0)
-	{
-		m_RSEQ = 0x0;
-		m_PSEQ = 0x0;
-	}
-	BOOL operator==(const Jzq& o)
-	{
-		return (o.m_areacode == m_areacode && o.m_number == m_number);
-	}
+	Jzq();
+	Jzq(string _name,WORD _areaCode,WORD _number,BYTE _tag);
+	~Jzq();
+	BOOL operator==(const Jzq& o);
 };
 //------------------------------------------------------------------------------------
 /*
-集中器管理列表
+集中器管理列表,连接链表+集中器链表
 */
 class JzqList : public list<Connection*>
 {
-public:
-	virtual ~JzqList();
+private:
+	//集中器列表
+	list<Jzq*> m_jzqList;
+public:	
 	typedef list<Connection*>::iterator conIter;
 	typedef list<Jzq*>::iterator jzqIter;
 public:
+	virtual ~JzqList();
 	//从数据库加载集中器
 	void LoadJzq();
 	//新的集中器连接
@@ -110,16 +105,24 @@ public:
 	void delConnection(struct bufferevent *bev);
 	//获取连接对象
 	Connection* getConnection(struct bufferevent *bev);
+	//获取集中器对象
+	Jzq* getJzq(WORD _areacode,WORD _number);
+	Jzq* getJzq(std::string _name);
 	//登录相关
 	void ReportLoginState(WORD _areacode,WORD _number,WORD _Fn,BYTE _pseq);
 	//获取集中器的RSEQ
 	BYTE GetRSEQ(WORD _areacode,WORD _number);
+	//集中器列表打印
+	std::string printJzq();
+public:
+	//下达命令到集中器
+	int SendCmd(Pkg_Afn_Header::AFN_CODE _code,WORD pn,WORD Fn){}
+	//召测测量点,pn测量点号,0所有测量点
+	int ShowPoint(std::string name,WORD pn);
 public:
 	/*libevent事件处理*/
 	static void conn_writecb(struct bufferevent *bev, void *user_data);
 	static void conn_readcb(struct bufferevent *bev, void *user_data);
 	static void conn_eventcb(struct bufferevent *bev, short events, void *user_data);
-private:
-	list<Jzq*> m_jzq;
 };
 extern JzqList* g_JzqConList;
