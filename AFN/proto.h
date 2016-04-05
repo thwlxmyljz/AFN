@@ -318,7 +318,7 @@ public:
 附加信息域,分上下行
 */
 class Pkg_Afn_Aux : public Pkg_UserDataInterface{
-public:
+protected:
 	Pkg_Afn_Aux(BOOL _hasTp):hasTp(_hasTp){
 		memset(&TP,0,sizeof(TP));
 	}
@@ -334,6 +334,7 @@ public:
 	b）	如时间差不大于Tp中的允许传输延时时间，则做出响应；
 	c）	如Tp中的允许传输延时时间为“0”，则从动站不进行上述两项的判断。
 	*/
+public:
 	struct {
 		/*
 		(4.3.4.3.5 b）	启动帧帧序号计数器PFC
@@ -344,6 +345,7 @@ public:
 		BYTE TM[4];//启动帧发送时标,记录启动帧发送的时间,单位秒分时日
 		BYTE DELAY;//允许发送传输延时时间,单位:分钟,BIN编码
 	} TP;
+
 	virtual void unPackData(BYTE* _data,DWORD _len);
 	virtual DWORD PackData(BYTE* _data,DWORD _len);
 	virtual DWORD GetDataLen();

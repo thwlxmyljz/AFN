@@ -11,11 +11,11 @@ static const int PORT = 9027;
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	TcpServer svr(PORT);
+	TcpServer tcpsvr(PORT);
 	AFNPackageBuilder::Instance().Register(Pkg_Afn_Header::AFN02,&AFN02::HandleRequest,NULL);
 	TelnetThread telsvr;
 	telsvr.Start();
-	svr.Run();
+	tcpsvr.Run();
 	telsvr.Stop();
 	return 0;
 }

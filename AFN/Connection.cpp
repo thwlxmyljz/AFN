@@ -4,6 +4,7 @@
 #include "LogFileu.h"
 #include "YQUtils.h"
 #include "AFNPackageBuilder.h"
+#include "Lock.h"
 #include <sstream>
 #include "AFN04.h"
 #include "AFN0C.h"
@@ -13,16 +14,21 @@
 Connection::Connection(struct event_base *base,struct bufferevent *_bev,evutil_socket_t _fd,struct sockaddr *sa)
 	:bev(_bev),fd(_fd),m_remoteAddr((*(sockaddr_in*)sa)),m_jzq(NULL)
 {	
-	sockaddr_in * in = (sockaddr_in*)sa;
-	
-	LogFile->FmtLog(LOG_INFORMATION,"new Connection[%d,%d](%s)",in->sin_addr.S_un.S_addr,in->sin_port,m_remoteAddr.Convert(true)); 
+	in_addr addr;   
+	memcpy(&addr, &m_remoteAddr.sin_addr.S_un.S_addr, sizeof(m_remoteAddr.sin_addr.S_un.S_addr));   
+	string strIp = inet_ntoa(addr); 
+
+	LogFile->FmtLog(LOG_INFORMATION,"new Connection[%s,%d]",strIp.c_str(),m_remoteAddr.sin_port); 
 }
 Connection::~Connection(void)
 {
-	LogFile->FmtLog(LOG_INFORMATION,"delete Connection(%s)",m_remoteAddr.Convert(true)); 
+	in_addr addr;   
+	memcpy(&addr, &m_remoteAddr.sin_addr.S_un.S_addr, sizeof(m_remoteAddr.sin_addr.S_un.S_addr));   
+	string strIp = inet_ntoa(addr); 
+
+	LogFile->FmtLog(LOG_INFORMATION,"delete Connection[%s,%d]",strIp.c_str(),m_remoteAddr.sin_port); 
 	bufferevent_free(bev);
 }
-
 int Connection::SendBuf(const void* cmd,unsigned int cmdlen)
 {
 	LogFile->FmtLog(LOG_INFORMATION,"snd pkg:%s", TYQUtils::Byte2Hex(cmd,cmdlen).c_str());
@@ -42,6 +48,7 @@ int Connection::SendPkg(const AFNPackage* pkg)
 }
 int Connection::RecBuf()
 {
+	//每帧响应确认模式
 	int nRet = YQER_OK;
 	BYTE msg[BUF_SIZE];
 	size_t len = bufferevent_read(bev, msg, sizeof(msg)-1 );
@@ -104,17 +111,8 @@ int Connection::RecBuf()
 }
 int Connection::SendPkg(std::list<AFNPackage*>& pkgLst)
 {
-	BYTE msg[BUF_SIZE];
 	for (Iter it = pkgLst.begin(); it != pkgLst.end(); it++){
-		int cnt = (*it)->Serialize(msg,BUF_SIZE);
-		if (cnt > 0 && cnt < BUF_SIZE){
-			LogFile->FmtLog(LOG_INFORMATION,"snd pkg:%s",TYQUtils::Byte2Hex(msg,cnt).c_str());
-			if (bufferevent_write(bev, msg, cnt) != 0){
-				YQLogMaj("snd pkg, bufferevent_write error");
-			}
-		}else{
-			YQLogMaj("snd pkg, Serialize pkg error");
-		}
+		SendPkg(*it);
 	}
 	return YQER_OK;
 }
@@ -163,7 +161,7 @@ JzqList::~JzqList()
 }
 void JzqList::LoadJzq()
 {
-	//加载集中器
+	//数据库加载集中器
 	Jzq* p = new Jzq("test01",0xffff,0xffff,0x01);
 	m_jzqList.push_back(p);
 	p = new Jzq("test",0x1000,0x44d,0x01);
@@ -194,16 +192,18 @@ void JzqList::conn_readcb(struct bufferevent *bev, void *user_data)
 		p->RecBuf();
 	}
 	else{
-		YQLogMin("bev read, but no connection");/*XXX win32*/
+		YQLogMin("bev read, but no connection,Free bev");/*XXX win32*/
 		bufferevent_free(bev);
 	}
 }
 void JzqList::conn_writecb(struct bufferevent *bev, void *user_data)
 {
+	/*
     struct evbuffer *output = bufferevent_get_output(bev);
     if (evbuffer_get_length(output) == 0) {
-        ;//发送数据完成
+        ;
     }
+	*/
 }
 
 void JzqList::conn_eventcb(struct bufferevent *bev, short events, void *user_data)
@@ -214,14 +214,12 @@ void JzqList::conn_eventcb(struct bufferevent *bev, short events, void *user_dat
     else if (events & BEV_EVENT_ERROR) {
         YQLogMin("Got an error on the connection");/*XXX win32*/
     }
-    /* None of the other events can happen here, since we haven't enabled
-     * timeouts */
 	g_JzqConList->delConnection(bev);
 }
 int JzqList::newConnection(struct event_base *base,evutil_socket_t fd, struct sockaddr *sa)
 {
 	struct bufferevent *bev;
-    bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE);
+    bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_THREADSAFE);
     if (!bev)  {
 		YQLogMaj("Error constructing bufferevent!");        
         return YQER_CON_Err(1);
@@ -229,19 +227,15 @@ int JzqList::newConnection(struct event_base *base,evutil_socket_t fd, struct so
 
 	Connection* con = new Connection(base,bev,fd,sa);
 	push_back(con);	
-
     bufferevent_setcb(bev, conn_readcb, conn_writecb, conn_eventcb, NULL);
-	//注册写事件
-    //bufferevent_enable(bev, EV_WRITE);
-	//注册读事件
-    bufferevent_enable(bev, EV_READ);
-	bufferevent_enable(bev, EV_PERSIST);
+    bufferevent_enable(bev, EV_READ|EV_WRITE);
+
 	return YQER_OK;
 }
 void JzqList::delConnection(struct bufferevent *bev)
 {
-	for (conIter it = g_JzqConList->begin(); it != g_JzqConList->end(); it++)
-	{
+	Lock lock(m_mutex);
+	for (conIter it = g_JzqConList->begin(); it != g_JzqConList->end(); it++){
 		Connection* con = (*it);
 		if (con->Compare(bev))
 		{		
@@ -257,8 +251,7 @@ void JzqList::delConnection(struct bufferevent *bev)
 }
 Connection* JzqList::getConnection(struct bufferevent *bev)
 {
-	for (conIter it = g_JzqConList->begin(); it != g_JzqConList->end(); it++)
-	{
+	for (conIter it = g_JzqConList->begin(); it != g_JzqConList->end(); it++){
 		Connection* con = (*it);
 		if (con->Compare(bev))
 		{			
@@ -315,7 +308,7 @@ void JzqList::ReportLoginState(WORD _areacode,WORD _number,WORD _Fn,BYTE _pseq)
 	}
 	TYQUtils::TimeStart(p->m_heart);
 }
-BYTE JzqList::GetRSEQ(WORD _areacode,WORD _number)
+BYTE JzqList::GetRSEQ(WORD _areacode,WORD _number,BOOL _increase)
 {
 	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++)
 	{
@@ -323,16 +316,36 @@ BYTE JzqList::GetRSEQ(WORD _areacode,WORD _number)
 		if (p->m_areacode == _areacode && p->m_number == _number)
 		{			
 			BYTE n = p->m_RSEQ;
-			if (++p->m_RSEQ > 15){
-				p->m_RSEQ = 0;
+			if (_increase){
+				if (++p->m_RSEQ > 15){
+					p->m_RSEQ = 0;
+				}
 			}
 			return n;
 		}
 	}
 	return 0x0;
 }
+BYTE JzqList::GetPSEQ(WORD _areacode,WORD _number,BOOL _increase)
+{
+	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++)
+	{
+		Jzq* p = (*it);
+		if (p->m_areacode == _areacode && p->m_number == _number)
+		{			
+			BYTE n = p->m_PFC;
+			if (_increase){
+				++p->m_PFC;				
+			}
+			return n&0x0f;
+		}
+	}
+	return 0x0;
+}
 int JzqList::ShowPoint(std::string name,WORD pn)
 {
+	Lock lock(m_mutex);
+
 	Jzq* dev = getJzq(name);
 	if (!dev){
 		return YQER_JZQ_NOTFOUND;
@@ -354,13 +367,15 @@ int JzqList::ShowPoint(std::string name,WORD pn)
 	ackPkg->userHeader.A1 = dev->m_areacode;
 	ackPkg->userHeader.A2 = dev->m_number;
 	ackPkg->pAfn = afnData;
-	ackPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ = g_JzqConList->GetRSEQ(ackPkg->userHeader.A1,ackPkg->userHeader.A2);	
+	ackPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ = g_JzqConList->GetPSEQ(ackPkg->userHeader.A1,ackPkg->userHeader.A2);	
 	ackPkg->okPkg();
-
+	
 	return dev->m_conn->SendPkg(ackPkg);
 }
 int JzqList::ShowClock(std::string name)
 {
+	Lock lock(m_mutex);
+
 	Jzq* dev = getJzq(name);
 	if (!dev){
 		return YQER_JZQ_NOTFOUND;
@@ -382,7 +397,7 @@ int JzqList::ShowClock(std::string name)
 	ackPkg->userHeader.A1 = dev->m_areacode;
 	ackPkg->userHeader.A2 = dev->m_number;
 	ackPkg->pAfn = afnData;
-	ackPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ = g_JzqConList->GetRSEQ(ackPkg->userHeader.A1,ackPkg->userHeader.A2);	
+	ackPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ = g_JzqConList->GetPSEQ(ackPkg->userHeader.A1,ackPkg->userHeader.A2);	
 	ackPkg->okPkg();
 
 	return dev->m_conn->SendPkg(ackPkg);

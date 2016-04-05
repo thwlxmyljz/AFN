@@ -4,9 +4,9 @@
 #include "event2/buffer.h"
 #include "event2/util.h"
 #include "event2/event.h"
-#include "thirdparty/Ipv4Address.h"
-#include "proto.h"
 
+#include "proto.h"
+#include "Mutex.h"
 #include <list>
 #include <map>
 #include <string>
@@ -33,7 +33,7 @@ public:
 	//发送数据包
 	int SendBuf(const void* cmd,unsigned int cmdlen);
 	int SendPkg(const AFNPackage* pkg);
-	int SendPkg(std::list<AFNPackage*>& pkgLst);	
+	int SendPkg(std::list<AFNPackage*>& pkgLst);
 
 	//判断是否此连接
 	BOOL Compare(struct bufferevent *_bev);
@@ -47,7 +47,7 @@ private:
 	//fd
 	evutil_socket_t fd;
 	//对端地址
-	Ipv4Address m_remoteAddr;
+	sockaddr_in m_remoteAddr;
 	//接收到报文列表(多帧)
 	std::list<AFNPackage*> m_pkgList;
 	typedef std::list<AFNPackage*>::iterator Iter;
@@ -94,6 +94,7 @@ class JzqList : public list<Connection*>
 private:
 	//集中器列表
 	list<Jzq*> m_jzqList;
+	Mutex m_mutex;
 public:	
 	typedef list<Connection*>::iterator conIter;
 	typedef list<Jzq*>::iterator jzqIter;
@@ -112,15 +113,18 @@ public:
 	Jzq* getJzq(std::string _name);
 	//登录相关
 	void ReportLoginState(WORD _areacode,WORD _number,WORD _Fn,BYTE _pseq);
-	//获取集中器的RSEQ
-	BYTE GetRSEQ(WORD _areacode,WORD _number);
+	//获取集中器的响应RSEQ
+	BYTE GetRSEQ(WORD _areacode,WORD _number,BOOL _increase=TRUE);
+	//获取集中器的请求PSEQ
+	BYTE GetPSEQ(WORD _areacode,WORD _number,BOOL _increase=TRUE);
+
+public:	
+	/*下列为写请求，在应用线程同步调用*/
 	//集中器列表打印
 	std::string printJzq();
-public:
-	//下达命令到集中器
-	int SendCmd(Pkg_Afn_Header::AFN_CODE _code,WORD pn,WORD Fn){}
 	//召测测量点,pn测量点号,0所有测量点
 	int ShowPoint(std::string name,WORD pn);
+	//获取集中器时钟
 	int ShowClock(std::string name);
 public:
 	/*libevent事件处理*/

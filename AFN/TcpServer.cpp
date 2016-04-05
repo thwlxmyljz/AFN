@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "event2/thread.h"
 #include "TcpServer.h"
 #include "YQErrCode.h"
 #include "LogFileu.h"
@@ -32,12 +33,16 @@ int TcpServer::Run()
     struct sockaddr_in sin;
     WSADATA wsa_data;
     WSAStartup(0x0201, &wsa_data);
-	
+
+	evthread_use_windows_threads();//win…œ…Ë÷√
+
     base = event_base_new();
     if (!base) {
         YQLogInfo("Could not initialize libevent!");
         return YQER_SVR_Err(1);
     }
+	evthread_make_base_notifiable(base);
+
     memset(&sin, 0, sizeof(sin));
     sin.sin_family = AF_INET;
 	sin.sin_port = htons(m_svrPort);

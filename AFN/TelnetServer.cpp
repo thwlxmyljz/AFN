@@ -57,6 +57,7 @@ char helpstr[] = "cmd:\r\n+++++++++++++++++++++++\r\n"
 				"ls,send,showpoint\r\n+++++++++++++++++++++++\r\n"
 				"ls:list all zjq\r\n-----------------\r\n"
 				"showpoint [name] [pn]:\r\n-----------------\r\n"
+				"showclock [name]:\r\n-----------------\r\n"
 				"send [name] [afnxx]:send afnxx command to zjq name\r\n$";
 //
 TelnetServer::TelnetServer(unsigned int port)
@@ -222,9 +223,15 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 			else{
 				int ret = g_JzqConList->ShowClock(params[1]);
 				ostringstream os;
-				os << "showpoint return " << ret <<"\r\n$";	
+				os << "showclock return " << ret <<"\r\n$";	
 				bufferevent_write(bev, os.str().c_str(), os.str().length());
 			}
+		}
+		else if (params[0] == "sc0"){
+			int ret = g_JzqConList->ShowClock("test");
+				ostringstream os;
+				os << "sc0 return " << ret <<"\r\n$";	
+				bufferevent_write(bev, os.str().c_str(), os.str().length());
 		}
 		else{
 			char msg[] = "not support command\r\n";
@@ -248,7 +255,6 @@ void TelnetServer::conn_eventcb(struct bufferevent *bev, short events, void *use
         YQLogMin("Got an error on the connection");/*XXX win32*/
     }
 }
-//新客户端连接
 void TelnetServer::listener_cb(struct evconnlistener *listener, evutil_socket_t fd,
     struct sockaddr *sa, int socklen, void *user_data)
 {
@@ -266,7 +272,6 @@ void TelnetServer::listener_cb(struct evconnlistener *listener, evutil_socket_t 
 	bufferevent_write(bev, helpstr, strlen(helpstr));
 	//注册读事件
     bufferevent_enable(bev, EV_READ);
-	bufferevent_enable(bev, EV_PERSIST);
 }
 void TelnetThread::Run()
 {
