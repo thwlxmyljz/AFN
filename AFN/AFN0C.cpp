@@ -3,6 +3,7 @@
 #include "AFNPackage.h"
 #include "YQErrCode.h"
 #include "AFNData.h"
+#include "AFNPackageBuilder.h"
 
 #define GO() p += len;\
 		left -= len;
@@ -27,7 +28,7 @@ int AFN0CAck_Data_AllKwh::HandleData()
 		int left = m_nLen;
 		BYTE* p = m_pData;
 		
-		int len = parseDateTime(p,left,dt);
+		int len = AFNData::parseDateTime(p,left,dt);
 		if (len <= 0){return YQER_PKG_DATA_Err(2);}
 		GO()
 
@@ -37,45 +38,45 @@ int AFN0CAck_Data_AllKwh::HandleData()
 		if (m <1 ||m > 12){return YQER_PKG_DATA_Err(3);}
 		GO()
 
-		len = parseFormat14(p,left,userkwh);
+		len = AFNData::parseTable14(p,left,userkwh);
 		if (len <= 0){return YQER_PKG_DATA_Err(2);}
 		GO()
 
 		userkwh_fee = new float[m];
 		for (int i = 0; i < m; i++){
-			len = parseFormat14(p,left,userkwh_fee[i]);
+			len = AFNData::parseTable14(p,left,userkwh_fee[i]);
 			if (len <= 0){return YQER_PKG_DATA_Err(2);}
 			GO()
 		}
 
-		len = parseFormat11(p,left,devkwh);
+		len = AFNData::parseTable11(p,left,devkwh);
 		GO()
 
 		devkwh_fee = new float[m];
 		for (int i = 0; i < m; i++){
-			len = parseFormat11(p,left,devkwh_fee[i]);
+			len = AFNData::parseTable11(p,left,devkwh_fee[i]);
 			if (len <= 0){return YQER_PKG_DATA_Err(2);}
 			GO()
 		}
 
-		len = parseFormat11(p,left,onekwh);
+		len = AFNData::parseTable11(p,left,onekwh);
 		if (len <= 0){return YQER_PKG_DATA_Err(2);}
 		GO()
 
 		onekwh_fee = new float[m];
 		for (int i = 0; i < m; i++){
-			len = parseFormat11(p,left,onekwh_fee[i]);
+			len = AFNData::parseTable11(p,left,onekwh_fee[i]);
 			if (len <= 0){return YQER_PKG_DATA_Err(2);}
 			GO()
 		}
 
-		len = parseFormat11(p,left,fourkwh);
+		len = AFNData::parseTable11(p,left,fourkwh);
 		if (len <= 0){return YQER_PKG_DATA_Err(2);}
 		GO()
 
 		fourkwh_fee = new float[m];
 		for (int i = 0; i < m; i++){
-			len = parseFormat11(p,left,fourkwh_fee[i]);
+			len = AFNData::parseTable11(p,left,fourkwh_fee[i]);
 			if (len <= 0){return YQER_PKG_DATA_Err(2);}
 			GO()
 		}
@@ -108,16 +109,26 @@ int AFN0C::HandleAck(std::list<AFNPackage*>& ackLst)
 			{
 				case 33:
 					//当前正向有/无功电能示值、一/四象限无功电能示值（总、费率1～M，1≤M≤12）
-					pData = ackPkg->pAfn->pAfnData->New();			
+					pData = new AFN0CAck_Data_AllKwh(ackPkg->pAfn->pAfnData);			
 				default:
 					break;
 			} 
 			if (pData){
 				pData->HandleData();
+				AppCall call;
+				call.AFN = ackPkg->pAfn->afnHeader.AFN;
+				call.m_areacode = ackPkg->userHeader.A1;
+				call.m_areacode = ackPkg->userHeader.A2;
+				AFNPackageBuilder::Instance().Notify(call,pData);
 			}
 		}
 		else if(ackPkg->userHeader.C._C.FUN == Pkg_User_Header::UH_FUNC_SUB9){
 			//否认：无所召唤的数据
+			AppCall call;
+			call.AFN = ackPkg->pAfn->afnHeader.AFN;
+			call.m_areacode = ackPkg->userHeader.A1;
+			call.m_areacode = ackPkg->userHeader.A2;
+			AFNPackageBuilder::Instance().Notify(call,(Pkg_Afn_Data*)-1);
 		}
 	}
 	return -1;

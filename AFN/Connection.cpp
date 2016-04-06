@@ -78,13 +78,14 @@ int Connection::RecBuf()
 		nRet = AFNPackageBuilder::Instance().HandlePkg(pkg,ackLst);
 		if (nRet == YQER_OK && ackLst.size() > 0){
 			SendPkg(ackLst);
+			ClearPkgList(ackLst);
 		}
 		delete pkg;
 		return nRet;
 	}
 	else if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 0  && pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 1) {
 		//¶àÖ¡£¬µÚÒ»Ö¡
-		ClearRecPkgList();
+		ClearPkgList(m_pkgList);
 		YQLogInfo("rec mul pkg , first");
 		m_pkgList.push_back(pkg);
 	}
@@ -100,8 +101,9 @@ int Connection::RecBuf()
 			nRet = AFNPackageBuilder::Instance().HandlePkg(m_pkgList,ackLst);
 			if (nRet == YQER_OK && ackLst.size() > 0){
 				SendPkg(ackLst);
+				ClearPkgList(ackLst);
 			}	
-			ClearRecPkgList();			
+			ClearPkgList(m_pkgList);			
 			return nRet;
 		}		
 	}
@@ -118,12 +120,12 @@ int Connection::SendPkg(std::list<AFNPackage*>& pkgLst)
 	}
 	return ret;
 }
-void Connection::ClearRecPkgList()
+void Connection::ClearPkgList(std::list<AFNPackage*>& lst)
 {
-	for (Iter it = m_pkgList.begin();  it != m_pkgList.end(); it++){
+	for (Iter it = lst.begin();  it != lst.end(); it++){
 		delete (*it);
 	}
-	m_pkgList.clear();
+	lst.clear();
 }
 
 BOOL Connection::Compare(struct bufferevent *_bev)

@@ -27,6 +27,7 @@
 
 #include "YQDefs.h"
 #include <string.h>
+#include <string>
 
 #pragma pack(1) //1字节对齐
 
@@ -308,7 +309,8 @@ public:
 	virtual DWORD GetDataLen();
 
 	virtual Pkg_Afn_Data* New(){return NULL;}
-	virtual int HandleData(){}
+	virtual int HandleData(){return 0;}
+	virtual std::string toString(){return "";}
 };
 /*
 附加信息域,分上下行

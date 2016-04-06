@@ -208,9 +208,16 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 				ERR_PRINT()
 			}
 			else{
-				int ret = BUD().setpointparams(params[1],atoi(params[2].c_str()));
+				Pkg_Afn_Data* p = NULL;
+				int ret = BUD().setpointparams(&p,params[1],atoi(params[2].c_str()));
 				ostringstream os;
-				os << "setpointparams return " << ret <<"\r\n$";	
+				os << "setpointparams return " << ret <<"\r\n";	
+				if (p){
+					os << "data string:" << p->toString() <<"\r\n$";
+				}
+				else{
+					os << "$";
+				}
 				bufferevent_write(bev, os.str().c_str(), os.str().length());
 			}
 		}
@@ -219,9 +226,16 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 				ERR_PRINT()
 			}
 			else{
-				int ret = BUD().setpointstatus(params[1]);
+				Pkg_Afn_Data* p = NULL;
+				int ret = BUD().setpointstatus(&p,params[1]);
 				ostringstream os;
-				os << "setpointstatus return " << ret <<"\r\n$";	
+				os << "setpointstatus return " << ret <<"\r\n";	
+				if (p){
+					os << "data string:" << p->toString() <<"\r\n$";
+				}
+				else{
+					os << "$";
+				}
 				bufferevent_write(bev, os.str().c_str(), os.str().length());
 			}
 		}
@@ -230,9 +244,16 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 				ERR_PRINT()
 			}
 			else{
-				int ret = BUD().getclock(params[1]);
+				Pkg_Afn_Data* p = NULL;
+				int ret = BUD().getclock(&p,params[1]);
 				ostringstream os;
-				os << "getclock return " << ret <<"\r\n$";	
+				os << "getclock return " << ret <<"\r\n";
+				if (p){
+					os << "data string:" << p->toString() <<"\r\n$";
+				}
+				else{
+					os << "$";
+				}
 				bufferevent_write(bev, os.str().c_str(), os.str().length());
 			}
 		}
@@ -241,9 +262,16 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 				ERR_PRINT()
 			}
 			else{
-				int ret = BUD().getstatus(params[1]);
+				Pkg_Afn_Data* p = NULL;
+				int ret = BUD().getstatus(&p,params[1]);
 				ostringstream os;
-				os << "getstatus return " << ret <<"\r\n$";	
+				os << "getstatus return " << ret <<"\r\n";	
+				if (p){
+					os << "data string:" << p->toString() <<"\r\n$";
+				}
+				else{
+					os << "$";
+				}
 				bufferevent_write(bev, os.str().c_str(), os.str().length());
 			}
 		}
@@ -252,9 +280,16 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 				ERR_PRINT()
 			}
 			else{
-				int ret = BUD().getallkwh(params[1],atoi(params[2].c_str()));
+				Pkg_Afn_Data* p = NULL;
+				int ret = BUD().getallkwh(&p,params[1],atoi(params[2].c_str()));
 				ostringstream os;
-				os << "getallkwh return " << ret <<"\r\n$";	
+				os << "getallkwh return " << ret <<"\r\n";	
+				if (p){
+					os << "data string:" << p->toString() <<"\r\n$";
+				}
+				else{
+					os << "$";
+				}
 				bufferevent_write(bev, os.str().c_str(), os.str().length());
 			}
 		}

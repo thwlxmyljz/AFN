@@ -39,7 +39,7 @@ public:
 	BOOL Compare(struct bufferevent *_bev);
 
 protected:
-	void ClearRecPkgList();
+	void ClearPkgList(std::list<AFNPackage*>& lst);
 
 private:
 	//libevent数据通道
