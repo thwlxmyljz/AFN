@@ -21,6 +21,10 @@ public:
 	static int HandleRequest(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& ackLst);
 
 public:
-	//创建召测测量点包
-	int CreateF25(WORD pn,BOOL hasPW);
+	int Create(WORD pn,WORD Fn);
+
+	//5.5.1.3.24　F25：测量点基本参数
+	int CreatePointBaseSetting(WORD pn,BOOL hasPW);
+	//5.5.1.3.66　F150：测量点状态
+	int CreatePointStatus();
 };

@@ -16,6 +16,8 @@ using namespace std;
 #define ERR_PRINT() char errmsg[] = "param error\r\n$"; \
 			bufferevent_write(bev, errmsg, strlen(errmsg));
 
+#define BUD() AFNPackageBuilder::Instance()
+
 int split(const string& str, vector<string>& ret_, string sep)
 {
 	if (str.empty())
@@ -52,13 +54,6 @@ int split(const string& str, vector<string>& ret_, string sep)
 
 //暂支持单客户登录,保存客户端命令
 std::string g_cmd = "";
-//命令说明
-char helpstr[] = "cmd:\r\n+++++++++++++++++++++++\r\n"
-				"ls,send,showpoint\r\n+++++++++++++++++++++++\r\n"
-				"ls:list all zjq\r\n-----------------\r\n"
-				"showpoint [name] [pn]:\r\n-----------------\r\n"
-				"showclock [name]:\r\n-----------------\r\n"
-				"send [name] [afnxx]:send afnxx command to zjq name\r\n$";
 //
 TelnetServer::TelnetServer(unsigned int port)
 	:m_svrPort(port),base(NULL),listener(NULL)
@@ -158,7 +153,16 @@ int TelnetServer::Run()
     YQLogInfo("TelnetServer shut down");
 	return 0;
 }
-
+//命令说明
+char helpstr[] = "cmd:\r\n+++++++++++++++++++++++\r\n"
+				"ls,setpointparams,setpointstatus,getclock,getstatus\r\n+++++++++++++++++++++++\r\n"
+				"1,ls:list all zjq\r\n-----------------\r\n"
+				"2,setpointparams [name] [pn]:\r\n-----------------\r\n"				
+				"3,setpointstatus [name]:\r\n-----------------\r\n"
+				"4,getclock [name]:\r\n-----------------\r\n"
+				"5,getstatus [name]:\r\n-----------------\r\n"
+				"6,getallkwh [name] [pn]:\r\n-----------------\r\n"
+				"\r\n$";
 void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 {
 	char cmd[512];
@@ -196,42 +200,63 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 		if (params[0] == "ls"){			
 			std::string ss = g_JzqConList->printJzq();
 			ss += "$";
-			char msg[] = "ls ok\r\n";
-			bufferevent_write(bev, msg, strlen(msg));
 			bufferevent_write(bev, ss.c_str(), ss.size());
 		}
-		else if (params[0] == "send"){
-			char msg[] = "send ok\r\n$";
-			bufferevent_write(bev, msg, strlen(msg));
-		}
-		else if (params[0] == "showpoint"){
+		else if (params[0] == "setpointparams"){
 			//召测测量点
 			if (params.size() < 3){
 				ERR_PRINT()
 			}
 			else{
-				int ret = g_JzqConList->ShowPoint(params[1],atoi(params[2].c_str()));
+				int ret = BUD().setpointparams(params[1],atoi(params[2].c_str()));
 				ostringstream os;
-				os << "showpoint return " << ret <<"\r\n$";	
+				os << "setpointparams return " << ret <<"\r\n$";	
 				bufferevent_write(bev, os.str().c_str(), os.str().length());
 			}
 		}
-		else if (params[0] == "showclock"){
+		else if (params[0] == "setpointstatus"){
 			if (params.size() < 2){
 				ERR_PRINT()
 			}
 			else{
-				int ret = g_JzqConList->ShowClock(params[1]);
+				int ret = BUD().setpointstatus(params[1]);
 				ostringstream os;
-				os << "showclock return " << ret <<"\r\n$";	
+				os << "setpointstatus return " << ret <<"\r\n$";	
 				bufferevent_write(bev, os.str().c_str(), os.str().length());
 			}
 		}
-		else if (params[0] == "sc0"){
-			int ret = g_JzqConList->ShowClock("test");
+		else if (params[0] == "getclock"){
+			if (params.size() < 2){
+				ERR_PRINT()
+			}
+			else{
+				int ret = BUD().getclock(params[1]);
 				ostringstream os;
-				os << "sc0 return " << ret <<"\r\n$";	
+				os << "getclock return " << ret <<"\r\n$";	
 				bufferevent_write(bev, os.str().c_str(), os.str().length());
+			}
+		}
+		else if (params[0] == "getstatus"){
+			if (params.size() < 2){
+				ERR_PRINT()
+			}
+			else{
+				int ret = BUD().getstatus(params[1]);
+				ostringstream os;
+				os << "getstatus return " << ret <<"\r\n$";	
+				bufferevent_write(bev, os.str().c_str(), os.str().length());
+			}
+		}
+		else if (params[0] == "getallkwh"){
+			if (params.size() < 3){
+				ERR_PRINT()
+			}
+			else{
+				int ret = BUD().getallkwh(params[1],atoi(params[2].c_str()));
+				ostringstream os;
+				os << "getallkwh return " << ret <<"\r\n$";	
+				bufferevent_write(bev, os.str().c_str(), os.str().length());
+			}
 		}
 		else{
 			char msg[] = "not support command\r\n";
@@ -267,11 +292,8 @@ void TelnetServer::listener_cb(struct evconnlistener *listener, evutil_socket_t 
 	}
 
     bufferevent_setcb(bev, conn_readcb, conn_writecb, conn_eventcb, NULL);
-	//注册写事件
-    bufferevent_enable(bev, EV_WRITE);
+    bufferevent_enable(bev, EV_WRITE|EV_READ);
 	bufferevent_write(bev, helpstr, strlen(helpstr));
-	//注册读事件
-    bufferevent_enable(bev, EV_READ);
 }
 void TelnetThread::Run()
 {

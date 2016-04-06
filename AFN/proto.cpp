@@ -83,6 +83,12 @@ Pkg_Afn_Data::Pkg_Afn_Data()
 		:m_pData(NULL),m_nLen(0)
 {
 }
+Pkg_Afn_Data::Pkg_Afn_Data(const Pkg_Afn_Data& _origin)
+{
+	m_Tag = _origin.m_Tag;
+	m_pData = _origin.m_pData;
+	m_nLen = _origin.m_nLen;
+}
 Pkg_Afn_Data::~Pkg_Afn_Data()
 {
 	delete m_pData;
@@ -95,10 +101,6 @@ Pkg_Afn_Data::Pkg_Afn_Data(BYTE* _data,DWORD _len)
 	unPackData(_data,_len);
 }
 
-int Pkg_Afn_Data::HandleData()
-{
-	return YQER_OK;
-}
 void Pkg_Afn_Data::unPackData(BYTE* _data,DWORD _len)
 {
 	if (_len >= PKG_AFN_DATATAGLEN){

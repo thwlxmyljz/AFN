@@ -38,5 +38,8 @@ enum LOGCLS
 //½â°ü´íÎó
 #define YQER_PKG_Base               -300
 #define YQER_PKG_Err(x)			(YQER_PKG_Base - (x))
+
+#define YQER_PKG_DATA_Base           -400
+#define YQER_PKG_DATA_Err(x)	(YQER_PKG_DATA_Base - (x))
 #endif
 

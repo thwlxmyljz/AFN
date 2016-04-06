@@ -1,11 +1,13 @@
 #pragma once
 
 #include "proto.h"
+#include <string>
 
 class AFNData 
 {
 public:
-	AFNData(void);
-	virtual ~AFNData(void);
+	static int parseDateTime(const BYTE* _data,int _len,std::string& dt);
+	static int parseTable14(const BYTE* _data,int _len,float& val);
+	static int parseTable11(const BYTE* _data,int _len,float& val);
 };
 

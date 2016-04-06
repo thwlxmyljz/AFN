@@ -94,7 +94,6 @@ class JzqList : public list<Connection*>
 private:
 	//集中器列表
 	list<Jzq*> m_jzqList;
-	Mutex m_mutex;
 public:	
 	typedef list<Connection*>::iterator conIter;
 	typedef list<Jzq*>::iterator jzqIter;
@@ -102,6 +101,8 @@ public:
 	virtual ~JzqList();
 	//从数据库加载集中器
 	void LoadJzq();
+	//集中器列表打印
+	std::string printJzq();
 	//新的集中器连接
 	int newConnection(struct event_base *base,evutil_socket_t fd, struct sockaddr *sa);
 	//删除集中器连接
@@ -117,19 +118,11 @@ public:
 	BYTE GetRSEQ(WORD _areacode,WORD _number,BOOL _increase=TRUE);
 	//获取集中器的请求PSEQ
 	BYTE GetPSEQ(WORD _areacode,WORD _number,BOOL _increase=TRUE);
-
-public:	
-	/*下列为写请求，在应用线程同步调用*/
-	//集中器列表打印
-	std::string printJzq();
-	//召测测量点,pn测量点号,0所有测量点
-	int ShowPoint(std::string name,WORD pn);
-	//获取集中器时钟
-	int ShowClock(std::string name);
 public:
 	/*libevent事件处理*/
 	static void conn_writecb(struct bufferevent *bev, void *user_data);
 	static void conn_readcb(struct bufferevent *bev, void *user_data);
 	static void conn_eventcb(struct bufferevent *bev, short events, void *user_data);
 };
+extern Mutex g_JzqConListMutex;
 extern JzqList* g_JzqConList;

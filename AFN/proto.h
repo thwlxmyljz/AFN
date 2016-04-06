@@ -195,11 +195,6 @@ public:
 	0x0F		文件传输
 	0x10		数据转发
 	0x11-0xFF	备用
-
-	AFN=0x02时
-		F1:登录
-		F2:退出登录
-		F3:心跳
 	*/
 	BYTE AFN;
 	enum AFN_CODE{
@@ -265,15 +260,15 @@ public:
 	DA1,DA2共表示8*255=2040个信息点，记为pn,(n=[0~2040]),p0表示终端信息点,p1开始表示确切信息点
 	DA1=0xff,DA2=0x00表示所有有效测量点(不包含p0)
 	*/
-	BYTE DA1;//数据单元标识DA1，按位表示每个信息点组的（0-8个）信息点元
-	BYTE DA2;//数据单元标识DA2，按值（0-255）表示信息点组
+	BYTE DA1;//数据单元标识DA1，按位表示每个信息点组的[1-8个]信息点元
+	BYTE DA2;//数据单元标识DA2，按值[1-255]表示信息点组
 	
 	/*
 	DT数据单元标识,2字节
 	DT1,DT2共表示8*31=248个信息类型，记为Fn,(n=[1~248]),终端无数据时,DT位清0，部分无数据时，将数据项缺失内容填写0xEE	
 	*/
-	BYTE DT1;//数据单元标识DT1,按位表示每个信息类组的(0-8种)信息类元
-	BYTE DT2;//数据单元标识DT2,按值(只取0-31)表示信息类组
+	BYTE DT1;//数据单元标识DT1,按位表示每个信息类组的[1-8]种信息类元
+	BYTE DT2;//数据单元标识DT2,按值(只取[0-30])表示信息类组
 };
 /*
 数据单元接口
@@ -304,15 +299,16 @@ public:
 
 public:
 	Pkg_Afn_Data();
+	Pkg_Afn_Data(const Pkg_Afn_Data& _origin);
 	virtual ~Pkg_Afn_Data();
 	Pkg_Afn_Data(BYTE* _data,DWORD _len);
-
-	//数据处理
-	virtual int HandleData();
 
 	virtual void unPackData(BYTE* _data,DWORD _len);
 	virtual DWORD PackData(BYTE* _data,DWORD _len);
 	virtual DWORD GetDataLen();
+
+	virtual Pkg_Afn_Data* New(){return NULL;}
+	virtual int HandleData(){}
 };
 /*
 附加信息域,分上下行
@@ -380,7 +376,7 @@ public:
 /*
 应用数据区包格式
 */
-class Pkg_Afn {
+class Pkg_Afn : public Pkg_UserDataInterface {
 public:
 	/*
 	功能码+SEQ,2字节

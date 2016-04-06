@@ -2,15 +2,87 @@
 #include "AFN0C.h"
 #include "AFNPackage.h"
 #include "YQErrCode.h"
+#include "AFNData.h"
 
-AFN0CAck_Data::AFN0CAck_Data(void)
+#define GO() p += len;\
+		left -= len;
+AFN0CAck_Data_AllKwh::AFN0CAck_Data_AllKwh()
+	:Pkg_Afn_Data()
 {
 }
-
-AFN0CAck_Data::~AFN0CAck_Data(void)
+AFN0CAck_Data_AllKwh::AFN0CAck_Data_AllKwh(const Pkg_Afn_Data* _origin)
+	:Pkg_Afn_Data(*_origin)
 {
 }
+AFN0CAck_Data_AllKwh::~AFN0CAck_Data_AllKwh(void)
+{
+}
+AFN0CAck_Data_AllKwh* AFN0CAck_Data_AllKwh::New()
+{
+	return new AFN0CAck_Data_AllKwh();
+}
+int AFN0CAck_Data_AllKwh::HandleData()
+{
+	do{
+		int left = m_nLen;
+		BYTE* p = m_pData;
+		
+		int len = parseDateTime(p,left,dt);
+		if (len <= 0){return YQER_PKG_DATA_Err(2);}
+		GO()
 
+		if (left < 1){return YQER_PKG_DATA_Err(2);}
+		m = p[0];
+		len = 1;
+		if (m <1 ||m > 12){return YQER_PKG_DATA_Err(3);}
+		GO()
+
+		len = parseFormat14(p,left,userkwh);
+		if (len <= 0){return YQER_PKG_DATA_Err(2);}
+		GO()
+
+		userkwh_fee = new float[m];
+		for (int i = 0; i < m; i++){
+			len = parseFormat14(p,left,userkwh_fee[i]);
+			if (len <= 0){return YQER_PKG_DATA_Err(2);}
+			GO()
+		}
+
+		len = parseFormat11(p,left,devkwh);
+		GO()
+
+		devkwh_fee = new float[m];
+		for (int i = 0; i < m; i++){
+			len = parseFormat11(p,left,devkwh_fee[i]);
+			if (len <= 0){return YQER_PKG_DATA_Err(2);}
+			GO()
+		}
+
+		len = parseFormat11(p,left,onekwh);
+		if (len <= 0){return YQER_PKG_DATA_Err(2);}
+		GO()
+
+		onekwh_fee = new float[m];
+		for (int i = 0; i < m; i++){
+			len = parseFormat11(p,left,onekwh_fee[i]);
+			if (len <= 0){return YQER_PKG_DATA_Err(2);}
+			GO()
+		}
+
+		len = parseFormat11(p,left,fourkwh);
+		if (len <= 0){return YQER_PKG_DATA_Err(2);}
+		GO()
+
+		fourkwh_fee = new float[m];
+		for (int i = 0; i < m; i++){
+			len = parseFormat11(p,left,fourkwh_fee[i]);
+			if (len <= 0){return YQER_PKG_DATA_Err(2);}
+			GO()
+		}
+	}while (FALSE);
+	
+	return YQER_OK;
+}
 
 AFN0C::AFN0C(void)
 {
@@ -20,6 +92,37 @@ AFN0C::AFN0C(void)
 AFN0C::~AFN0C(void)
 {
 }
+int AFN0C::HandleAck(std::list<AFNPackage*>& ackLst)
+{	
+	if (ackLst.size() == 0){
+		return YQER_OK;
+	}
+	//AFN0C响应帧
+	AFNPackage* ackPkg = *(ackLst.begin());	
+	if (ackPkg->pAfn->afnHeader.AFN == Pkg_Afn_Header::AFN0C)
+	{
+		if (ackPkg->userHeader.C._C.FUN == Pkg_User_Header::UH_FUNC_SUB8){
+			//用户数据
+			Pkg_Afn_Data* pData = NULL;
+			switch (ackPkg->Fn)
+			{
+				case 33:
+					//当前正向有/无功电能示值、一/四象限无功电能示值（总、费率1～M，1≤M≤12）
+					pData = ackPkg->pAfn->pAfnData->New();			
+				default:
+					break;
+			} 
+			if (pData){
+				pData->HandleData();
+			}
+		}
+		else if(ackPkg->userHeader.C._C.FUN == Pkg_User_Header::UH_FUNC_SUB9){
+			//否认：无所召唤的数据
+		}
+	}
+	return -1;
+}
+
 int AFN0C::Create(WORD pn,WORD Fn)
 {
 	afnHeader.AFN = Pkg_Afn_Header::AFN0C;
@@ -32,11 +135,39 @@ int AFN0C::Create(WORD pn,WORD Fn)
 	AFNPackage::GetDA(pn,pAfnData->m_Tag.DA1,pAfnData->m_Tag.DA2);
 	AFNPackage::GetDT(Fn,pAfnData->m_Tag.DT1,pAfnData->m_Tag.DT2);
 	
-	Pkg_Afn_Aux_Down* p = new Pkg_Afn_Aux_Down(FALSE,FALSE);
+	Pkg_Afn_Aux_Down* p = new Pkg_Afn_Aux_Down(FALSE,TRUE);
 	pAux = p;
 	return YQER_OK;
 }
 int AFN0C::CreateClock()
 {
-	return Create(0,2);
+	return Create(0/*p0*/,2);
+}
+int AFN0C::CreateRunStatus()
+{
+	return Create(0/*p0*/,11);
+}
+int AFN0C::CreateCurTotalKwh()
+{
+	return Create(0/*总加组号?*/,17);
+}		
+int AFN0C::CreateCurTotalKvarh()
+{
+	return Create(0/*总加组号?*/,18);
+}
+int AFN0C::CreateCurABCTotal(WORD pn)
+{
+	return Create(pn,25);
+}
+int AFN0C::CreateCurABCTotal(WORD* pN,int len)
+{
+	return 0;
+}
+int AFN0C::CreateAllKwh(WORD pn)
+{
+	return Create(pn,33);
+}
+int AFN0C::CreateAllKwh(WORD* pN,int len)
+{
+	return 0;
 }

@@ -1,6 +1,30 @@
 #include "stdafx.h"
+#include "Connection.h"
 #include "AFNPackageBuilder.h"
 #include "YQErrCode.h"
+#include "Lock.h"
+#include "AFN04.h"
+#include "AFN0C.h"
+
+#define LOCK_GETDEV() Lock lock(g_JzqConListMutex);\
+	Jzq* dev = g_JzqConList->getJzq(name);\
+	if (!dev){\
+		return YQER_JZQ_NOTFOUND;\
+	}\
+	if (!dev->m_conn){\
+		return YQER_JZQ_NOLOGIN;\
+	}
+
+#define SET_COMMPARAMS(ackPkg,dev,afnData) ackPkg->userHeader.C._C.DIR = 0x00;\
+	ackPkg->userHeader.C._C.PRM = 0x01;\
+	ackPkg->userHeader.C._C.FCV = 0x00;\
+	ackPkg->userHeader.C._C.FCB = 0x00;\
+	ackPkg->userHeader.A3._A3.TAG = 0;\
+	ackPkg->userHeader.A3._A3.MSA = Jzq::s_MSA;\
+	ackPkg->userHeader.A1 = dev->m_areacode;\
+	ackPkg->userHeader.A2 = dev->m_number;\
+	ackPkg->pAfn = afnData;\
+	ackPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ = g_JzqConList->GetPSEQ(ackPkg->userHeader.A1,ackPkg->userHeader.A2);
 
 AFNPackageBuilder* AFNPackageBuilder::single = NULL;
 AFNPackageBuilder::AFNPackageBuilder(void)
@@ -30,7 +54,7 @@ int AFNPackageBuilder::HandlePkg(std::list<AFNPackage*>& reqLst,std::list<AFNPac
 			return DoHandleRequest(reqLst,ackLst);
 		}
 		else{
-			return DoHandleAck(reqLst,ackLst);
+			return DoHandleAck(reqLst);
 		}
 	}
 	return YQER_PARAMERR;
@@ -40,22 +64,76 @@ int AFNPackageBuilder::DoHandleRequest(std::list<AFNPackage*>& reqLst,std::list<
 	AFNPackage* reqPkg = *(reqLst.begin());	
 	for (mapIter it = handlerMap.begin(); it != handlerMap.end(); it++){
 		PkgHandler& h = (*it).second;
-		if ((*it).first == reqPkg->pAfn->afnHeader.AFN){
+		if (h.reqHander && (*it).first == reqPkg->pAfn->afnHeader.AFN){
 			return h.reqHander(reqLst,ackLst);		
 		}
 	}
 	return -1;
 }
 
-int AFNPackageBuilder::DoHandleAck(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& ackLst)
+int AFNPackageBuilder::DoHandleAck(std::list<AFNPackage*>& reqLst)
 {
 	AFNPackage* reqPkg = *(reqLst.begin());	
 	for (mapIter it = handlerMap.begin(); it != handlerMap.end(); it++){
 		PkgHandler& h = (*it).second;
-		if ((*it).first == reqPkg->pAfn->afnHeader.AFN){
-			return h.ackHandler(reqLst,ackLst);
+		if (h.ackHandler && (*it).first == reqPkg->pAfn->afnHeader.AFN){
+			return h.ackHandler(reqLst);
 		}
 	}
 	return -1;
 }
-
+int AFNPackageBuilder::setpointparams(std::string name,WORD pn)
+{
+	LOCK_GETDEV()
+	AFN04* afnData = new AFN04();
+	afnData->CreatePointBaseSetting(pn,TRUE);
+	AFNPackage* ackPkg = new AFNPackage();	
+	SET_COMMPARAMS(ackPkg,dev,afnData)
+	ackPkg->userHeader.C._C.FUN = 11;//请求2级数据		
+	ackPkg->okPkg();
+	return dev->m_conn->SendPkg(ackPkg);
+}
+int AFNPackageBuilder::setpointstatus(std::string name)
+{
+	LOCK_GETDEV()
+	AFN04* afnData = new AFN04();
+	afnData->CreatePointStatus();
+	AFNPackage* ackPkg = new AFNPackage();	
+	SET_COMMPARAMS(ackPkg,dev,afnData)
+	ackPkg->userHeader.C._C.FUN = 10;//请求1级数据		
+	ackPkg->okPkg();
+	return dev->m_conn->SendPkg(ackPkg);
+}
+int AFNPackageBuilder::getclock(std::string name)
+{
+	LOCK_GETDEV()
+	AFN0C* afnData = new AFN0C();
+	afnData->CreateClock();
+	AFNPackage* ackPkg = new AFNPackage();	
+	SET_COMMPARAMS(ackPkg,dev,afnData)
+	ackPkg->userHeader.C._C.FUN = 10;//请求1级数据	
+	ackPkg->okPkg();
+	return dev->m_conn->SendPkg(ackPkg);
+}
+int AFNPackageBuilder::getstatus(std::string name)
+{
+	LOCK_GETDEV()
+	AFN0C* afnData = new AFN0C();
+	afnData->CreateRunStatus();
+	AFNPackage* ackPkg = new AFNPackage();	
+	SET_COMMPARAMS(ackPkg,dev,afnData)
+	ackPkg->userHeader.C._C.FUN = 10;//请求1级数据	
+	ackPkg->okPkg();
+	return dev->m_conn->SendPkg(ackPkg);
+}
+int AFNPackageBuilder::getallkwh(std::string name,WORD pn)
+{
+	LOCK_GETDEV()
+	AFN0C* afnData = new AFN0C();
+	afnData->CreateAllKwh(pn);
+	AFNPackage* ackPkg = new AFNPackage();	
+	SET_COMMPARAMS(ackPkg,dev,afnData)
+	ackPkg->userHeader.C._C.FUN = 10;//请求1级数据	
+	ackPkg->okPkg();
+	return dev->m_conn->SendPkg(ackPkg);
+}

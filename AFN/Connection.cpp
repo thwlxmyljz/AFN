@@ -6,8 +6,6 @@
 #include "AFNPackageBuilder.h"
 #include "Lock.h"
 #include <sstream>
-#include "AFN04.h"
-#include "AFN0C.h"
 
 #define BUF_SIZE 16384
 
@@ -37,14 +35,14 @@ int Connection::SendBuf(const void* cmd,unsigned int cmdlen)
 int Connection::SendPkg(const AFNPackage* pkg)
 {
 	BYTE sndBuf[BUF_SIZE];
-	DWORD size = pkg->Serialize(sndBuf,BUF_SIZE);
+	int size = pkg->Serialize(sndBuf,BUF_SIZE);
 	if (size > 0 && size < BUF_SIZE){
 		return SendBuf(sndBuf,size);
 	}
 	else{
 		LogFile->FmtLog(LOG_MINOR,"SendPkg Serialize error, error code:%d",size); 
 	}
-	return 0;
+	return size;
 }
 int Connection::RecBuf()
 {
@@ -111,10 +109,14 @@ int Connection::RecBuf()
 }
 int Connection::SendPkg(std::list<AFNPackage*>& pkgLst)
 {
+	int ret = YQER_OK;
 	for (Iter it = pkgLst.begin(); it != pkgLst.end(); it++){
-		SendPkg(*it);
+		int as;
+		if ((as=SendPkg(*it)) != YQER_OK){
+			ret = as;
+		}
 	}
-	return YQER_OK;
+	return ret;
 }
 void Connection::ClearRecPkgList()
 {
@@ -130,11 +132,27 @@ BOOL Connection::Compare(struct bufferevent *_bev)
 }
 //------------------------------------------------------------------------------------
 Jzq::Jzq()
-	:m_name(""),m_areacode(0),m_number(0),m_tag(0),m_conn(NULL),m_heart(0),m_RSEQ(0x0),m_PSEQ(0x0),m_PFC(0x0)
+	:m_name(""),
+	m_areacode(0),
+	m_number(0),
+	m_tag(0),
+	m_conn(NULL),
+	m_heart(0),
+	m_RSEQ(0x0),
+	m_PSEQ(0x0),
+	m_PFC(0x0)
 {
 }
 Jzq::Jzq(string _name,WORD _areaCode,WORD _number,BYTE _tag)
-	:m_name(_name),m_areacode(_areaCode),m_number(_number),m_tag(_tag),m_conn(NULL),m_heart(0),m_RSEQ(0x0),m_PSEQ(0x0),m_PFC(0x0)
+	:m_name(_name),
+	m_areacode(_areaCode),
+	m_number(_number),
+	m_tag(_tag),
+	m_conn(NULL),
+	m_heart(0),
+	m_RSEQ(0x0),
+	m_PSEQ(0x0),
+	m_PFC(0x0)
 {
 }
 Jzq::~Jzq()
@@ -147,6 +165,7 @@ BOOL Jzq::operator==(const Jzq& o)
 //------------------------------------------------------------------------------------
 BYTE Jzq::s_MSA = 0x01;
 //------------------------------------------------------------------------------------
+Mutex g_JzqConListMutex;
 JzqList* g_JzqConList = NULL;
 JzqList::~JzqList()
 {
@@ -234,7 +253,7 @@ int JzqList::newConnection(struct event_base *base,evutil_socket_t fd, struct so
 }
 void JzqList::delConnection(struct bufferevent *bev)
 {
-	Lock lock(m_mutex);
+	Lock lock(g_JzqConListMutex);
 	for (conIter it = g_JzqConList->begin(); it != g_JzqConList->end(); it++){
 		Connection* con = (*it);
 		if (con->Compare(bev))
@@ -341,64 +360,4 @@ BYTE JzqList::GetPSEQ(WORD _areacode,WORD _number,BOOL _increase)
 		}
 	}
 	return 0x0;
-}
-int JzqList::ShowPoint(std::string name,WORD pn)
-{
-	Lock lock(m_mutex);
-
-	Jzq* dev = getJzq(name);
-	if (!dev){
-		return YQER_JZQ_NOTFOUND;
-	}
-	if (!dev->m_conn){
-		return YQER_JZQ_NOLOGIN;
-	}
-	AFN04* afnData = new AFN04();
-	afnData->CreateF25(pn,FALSE);
-
-	AFNPackage* ackPkg = new AFNPackage();	
-	ackPkg->userHeader.C._C.DIR = 0x00;
-	ackPkg->userHeader.C._C.PRM = 0x01;
-	ackPkg->userHeader.C._C.FCV = 0x00;
-	ackPkg->userHeader.C._C.FCB = 0x00;
-	ackPkg->userHeader.C._C.FUN = 11;//请求2级数据
-	ackPkg->userHeader.A3._A3.TAG = 0;//单地址
-	ackPkg->userHeader.A3._A3.MSA = Jzq::s_MSA;
-	ackPkg->userHeader.A1 = dev->m_areacode;
-	ackPkg->userHeader.A2 = dev->m_number;
-	ackPkg->pAfn = afnData;
-	ackPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ = g_JzqConList->GetPSEQ(ackPkg->userHeader.A1,ackPkg->userHeader.A2);	
-	ackPkg->okPkg();
-	
-	return dev->m_conn->SendPkg(ackPkg);
-}
-int JzqList::ShowClock(std::string name)
-{
-	Lock lock(m_mutex);
-
-	Jzq* dev = getJzq(name);
-	if (!dev){
-		return YQER_JZQ_NOTFOUND;
-	}
-	if (!dev->m_conn){
-		return YQER_JZQ_NOLOGIN;
-	}
-	AFN0C* afnData = new AFN0C();
-	afnData->CreateClock();
-
-	AFNPackage* ackPkg = new AFNPackage();	
-	ackPkg->userHeader.C._C.DIR = 0x00;
-	ackPkg->userHeader.C._C.PRM = 0x01;
-	ackPkg->userHeader.C._C.FCV = 0x00;
-	ackPkg->userHeader.C._C.FCB = 0x00;
-	ackPkg->userHeader.C._C.FUN = 10;//请求1级数据
-	ackPkg->userHeader.A3._A3.TAG = 0;//单地址
-	ackPkg->userHeader.A3._A3.MSA = Jzq::s_MSA;
-	ackPkg->userHeader.A1 = dev->m_areacode;
-	ackPkg->userHeader.A2 = dev->m_number;
-	ackPkg->pAfn = afnData;
-	ackPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ = g_JzqConList->GetPSEQ(ackPkg->userHeader.A1,ackPkg->userHeader.A2);	
-	ackPkg->okPkg();
-
-	return dev->m_conn->SendPkg(ackPkg);
 }
