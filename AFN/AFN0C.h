@@ -15,6 +15,7 @@ public:
 public:
 	virtual AFN0CAck_Data_AllKwh* New();
 	virtual int HandleData();
+	std::string toString();
 	/*
 	终端抄表时间	见附录A.15	分时日月年	5
 	费率数M（1≤M≤12）	BIN	个	1

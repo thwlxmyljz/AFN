@@ -47,7 +47,9 @@ class AFNPackageBuilder
 	//app call request list
 	std::map<AppCall,Pkg_Afn_Data*> cmdMap;
 	typedef std::map<AppCall,Pkg_Afn_Data*>::iterator CmdMapIter;
-
+	//
+	CRITICAL_SECTION CritSection;
+	CONDITION_VARIABLE ConditionVar;
 public:		
 	//×¢²á´¦Àíº¯Êý
 	void Register(Pkg_Afn_Header::AFN_CODE code,pfnDoHandleRequest reqHandler,pfnDoHandleAck ackHandler);
@@ -78,6 +80,8 @@ public:
 	static AFNPackageBuilder& Instance(){
 		if (single == NULL){
 			single = new AFNPackageBuilder;
+			InitializeConditionVariable(&single->ConditionVar);
+			InitializeCriticalSection(&single->CritSection);
 		}
 		return (*single);
 	}	

@@ -213,7 +213,7 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 				ostringstream os;
 				os << "setpointparams return " << ret <<"\r\n";	
 				if (p){
-					os << "data string:" << p->toString() <<"\r\n$";
+					os << p->toString() <<"\r\n$";
 				}
 				else{
 					os << "$";
@@ -231,7 +231,7 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 				ostringstream os;
 				os << "setpointstatus return " << ret <<"\r\n";	
 				if (p){
-					os << "data string:" << p->toString() <<"\r\n$";
+					os << p->toString() <<"\r\n$";
 				}
 				else{
 					os << "$";
@@ -249,7 +249,7 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 				ostringstream os;
 				os << "getclock return " << ret <<"\r\n";
 				if (p){
-					os << "data string:" << p->toString() <<"\r\n$";
+					os << p->toString() <<"\r\n$";
 				}
 				else{
 					os << "$";
@@ -267,7 +267,7 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 				ostringstream os;
 				os << "getstatus return " << ret <<"\r\n";	
 				if (p){
-					os << "data string:" << p->toString() <<"\r\n$";
+					os  << p->toString() <<"\r\n$";
 				}
 				else{
 					os << "$";
@@ -285,7 +285,7 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 				ostringstream os;
 				os << "getallkwh return " << ret <<"\r\n";	
 				if (p){
-					os << "data string:" << p->toString() <<"\r\n$";
+					os << p->toString() <<"\r\n$";
 				}
 				else{
 					os << "$";

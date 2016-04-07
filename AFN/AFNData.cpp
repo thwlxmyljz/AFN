@@ -11,6 +11,7 @@ int AFNData::parseDateTime(const BYTE* _data,int _len,std::string& dt)
 		int hour = ((_data[1]>>4)&0x0f)*10+(_data[1]&0x0f);
 		int min = ((_data[0]>>4)&0x0f)*10+(_data[0]&0x0f);
 		sprintf_s(buf,"%02d-%02d-%02d %02d:%02d:00",year,mon,day,hour,min);
+		dt = buf;
 		return 5;
 	}
 	return 0;

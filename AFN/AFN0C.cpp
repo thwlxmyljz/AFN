@@ -4,6 +4,7 @@
 #include "YQErrCode.h"
 #include "AFNData.h"
 #include "AFNPackageBuilder.h"
+#include <sstream>
 
 #define GO() p += len;\
 		left -= len;
@@ -84,6 +85,28 @@ int AFN0CAck_Data_AllKwh::HandleData()
 	
 	return YQER_OK;
 }
+std::string AFN0CAck_Data_AllKwh::toString()
+{
+	std::ostringstream os;
+	os << "终端抄表时间:" << dt << "\r\n";
+	os << "当前正向有功总电能示值:"<< userkwh << "\r\n";
+	for (int i = 0;  i < m ; i++){
+		os << "  当前费率" << i+1 << "正向有功总电能示值:"<<userkwh_fee[i]<<"\r\n";
+	}
+	os << "当前正向无功（组合无功1）总电能示值:"<< devkwh << "\r\n";
+	for (int i = 0;  i < m ; i++){
+		os << "  当前费率" << i+1 << "正向无功（组合无功1）总电能示值:"<<devkwh_fee[i]<<"\r\n";
+	}
+	os << "当前一象限无功总电能示值:"<< onekwh << "\r\n";
+	for (int i = 0;  i < m ; i++){
+		os << "  当前一象限费率" << i+1 << "无功电能示值:"<<onekwh_fee[i]<<"\r\n";
+	}
+	os << "当前四象限无功总电能示值:"<< fourkwh << "\r\n";
+	for (int i = 0;  i < m ; i++){
+		os << "  当前四象限费率" << i+1 << "无功电能示值:"<<fourkwh_fee[i]<<"\r\n";
+	}
+	return os.str();
+}
 
 AFN0C::AFN0C(void)
 {
@@ -118,7 +141,7 @@ int AFN0C::HandleAck(std::list<AFNPackage*>& ackLst)
 				AppCall call;
 				call.AFN = ackPkg->pAfn->afnHeader.AFN;
 				call.m_areacode = ackPkg->userHeader.A1;
-				call.m_areacode = ackPkg->userHeader.A2;
+				call.m_number = ackPkg->userHeader.A2;
 				AFNPackageBuilder::Instance().Notify(call,pData);
 			}
 		}
@@ -127,7 +150,7 @@ int AFN0C::HandleAck(std::list<AFNPackage*>& ackLst)
 			AppCall call;
 			call.AFN = ackPkg->pAfn->afnHeader.AFN;
 			call.m_areacode = ackPkg->userHeader.A1;
-			call.m_areacode = ackPkg->userHeader.A2;
+			call.m_number = ackPkg->userHeader.A2;
 			AFNPackageBuilder::Instance().Notify(call,(Pkg_Afn_Data*)-1);
 		}
 	}

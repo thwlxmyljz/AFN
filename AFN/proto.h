@@ -308,6 +308,7 @@ public:
 	virtual DWORD PackData(BYTE* _data,DWORD _len);
 	virtual DWORD GetDataLen();
 
+	//应用数据实现
 	virtual Pkg_Afn_Data* New(){return NULL;}
 	virtual int HandleData(){return 0;}
 	virtual std::string toString(){return "";}

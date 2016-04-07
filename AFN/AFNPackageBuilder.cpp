@@ -39,8 +39,7 @@
 						(*val) = p;\
 					}\
 					return ret;
-CRITICAL_SECTION CritSection;
-CONDITION_VARIABLE ConditionVar;
+
 
 AFNPackageBuilder* AFNPackageBuilder::single = NULL;
 AFNPackageBuilder::AFNPackageBuilder(void)
@@ -105,7 +104,7 @@ Pkg_Afn_Data* AFNPackageBuilder::Wait(const AppCall& call)
 	cmdMap[call] = NULL;
 	while( cmdMap[call] == NULL )
 	{
-		if (SleepConditionVariableCS(&ConditionVar, &CritSection, 1000) == 0){
+		if (SleepConditionVariableCS(&ConditionVar, &CritSection, 2000) == 0){
 			break;
 		}
 	}
