@@ -190,7 +190,8 @@ extern "C" {
 #ifdef _EVENT_ssize_t
 #define ev_ssize_t _EVENT_ssize_t
 #else
-#define ev_ssize_t ssize_t
+//#define ev_ssize_t ssize_t
+#define ev_ssize_t unsigned int
 #endif
 
 #ifdef WIN32

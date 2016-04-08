@@ -497,7 +497,11 @@ std::string Json::ToString(bool quote) const
 	case TYPE_REAL:
 	{
 		char slask[100];
+#ifdef _WIN32
 		sprintf_s(slask, "%f", m_d_value);
+#else
+		sprintf(slask, "%f", m_d_value);
+#endif
 		return slask;
 	}
 	case TYPE_STRING:

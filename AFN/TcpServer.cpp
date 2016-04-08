@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "event2/thread.h"
 #include "TcpServer.h"
 #include "YQErrCode.h"
@@ -30,12 +29,13 @@ int TcpServer::Run()
 		YQLogInfo("Server has already run!");
 		return 0;
 	}
-    struct sockaddr_in sin;
+
+#ifdef _WIN32    
     WSADATA wsa_data;
     WSAStartup(0x0201, &wsa_data);
-
 	evthread_use_windows_threads();//win…œ…Ë÷√
-
+#endif
+	struct sockaddr_in sin;
     base = event_base_new();
     if (!base) {
         YQLogInfo("Could not initialize libevent!");

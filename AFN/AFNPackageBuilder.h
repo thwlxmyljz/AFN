@@ -3,6 +3,13 @@
 #include "AFNPackage.h"
 #include <map>
 
+#ifndef _WIN32
+#include <pthread.h>
+#include <errno.h>
+#else
+#include <windows.h>
+#endif
+
 typedef int (*pfnDoHandleRequest)(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& ackLst);
 typedef int (*pfnDoHandleAck)(std::list<AFNPackage*>& ackLst);
 
@@ -48,8 +55,13 @@ class AFNPackageBuilder
 	std::map<AppCall,Pkg_Afn_Data*> cmdMap;
 	typedef std::map<AppCall,Pkg_Afn_Data*>::iterator CmdMapIter;
 	//
+#ifdef _WIN32
 	CRITICAL_SECTION CritSection;
 	CONDITION_VARIABLE ConditionVar;
+#else
+	pthread_mutex_t CritSection;  
+	pthread_cond_t ConditionVar; 
+#endif
 public:		
 	//×¢²á´¦Àíº¯Êý
 	void Register(Pkg_Afn_Header::AFN_CODE code,pfnDoHandleRequest reqHandler,pfnDoHandleAck ackHandler);
@@ -80,8 +92,13 @@ public:
 	static AFNPackageBuilder& Instance(){
 		if (single == NULL){
 			single = new AFNPackageBuilder;
+#ifdef _WIN32
 			InitializeConditionVariable(&single->ConditionVar);
 			InitializeCriticalSection(&single->CritSection);
+#else
+			pthread_mutex_init(&single->CritSection,NULL);  
+			pthread_cond_init(&single->ConditionVar,NULL);
+#endif
 		}
 		return (*single);
 	}	

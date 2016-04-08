@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Connection.h"
 #include "AFNPackageBuilder.h"
 #include "YQErrCode.h"
@@ -47,6 +46,11 @@ AFNPackageBuilder::AFNPackageBuilder(void)
 }
 AFNPackageBuilder::~AFNPackageBuilder(void)
 {
+#ifdef _WIN32
+#else
+	pthread_mutex_destroy(&CritSection);  
+	pthread_cond_destroy(&ConditionVar);  
+#endif
 }
 void AFNPackageBuilder::Register(Pkg_Afn_Header::AFN_CODE code,pfnDoHandleRequest reqHandler,pfnDoHandleAck ackHandler)
 {
@@ -99,6 +103,7 @@ int AFNPackageBuilder::DoHandleAck(std::list<AFNPackage*>& reqLst)
 }
 Pkg_Afn_Data* AFNPackageBuilder::Wait(const AppCall& call)
 {
+#ifdef _WIN32
 	Pkg_Afn_Data* p = NULL;
 	EnterCriticalSection(&CritSection);
 	cmdMap[call] = NULL;
@@ -112,20 +117,55 @@ Pkg_Afn_Data* AFNPackageBuilder::Wait(const AppCall& call)
 	cmdMap.erase(call);
 	LeaveCriticalSection(&CritSection);
 	return p;
+#else
+	Pkg_Afn_Data* p = NULL;
+	struct timeval now;
+	struct timespec outtime;		
+	pthread_mutex_lock(&CritSection);
+	cmdMap[call] = NULL;
+	while( cmdMap[call] == NULL )
+	{
+		gettimeofday(&now, NULL);
+		outtime.tv_sec = now.tv_sec + 2;
+		outtime.tv_nsec = now.tv_usec * 1000;
+		if (pthread_cond_timedwait(&ConditionVar,&CritSection,&outtime) == ETIMEDOUT){
+			break;
+		}
+	}
+	p = cmdMap[call];
+	cmdMap.erase(call);
+	pthread_mutex_unlock(&CritSection);
+	return p;
+#endif
 }
+
 int AFNPackageBuilder::Notify(const AppCall& call,Pkg_Afn_Data* data)
 {
+#ifdef _WIN32
 	EnterCriticalSection(&CritSection);
 	if (cmdMap.find(call) != cmdMap.end()){
-		cmdMap[call] = data;
-		LeaveCriticalSection(&CritSection);
+		cmdMap[call] = data;		
 		WakeAllConditionVariable(&ConditionVar);
+		LeaveCriticalSection(&CritSection);
 		return 0;
 	}
 	else{
 		LeaveCriticalSection(&CritSection);
 	}
 	return 0;
+#else
+	pthread_mutex_lock(&CritSection);
+	if (cmdMap.find(call) != cmdMap.end()){
+		cmdMap[call] = data;
+		pthread_cond_broadcast(&ConditionVar);
+		pthread_mutex_unlock(&CritSection);
+		return 0;
+	}
+	else{
+		pthread_mutex_unlock(&CritSection);
+	}
+	return 0;
+#endif
 }
 int AFNPackageBuilder::setpointparams(Pkg_Afn_Data** val,std::string name,WORD pn)
 {

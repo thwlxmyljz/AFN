@@ -345,19 +345,27 @@ WORD TYQUtils::IsAllNumber(LPCSTR Str)
 }
 BOOL TYQUtils::IsSameNet(LPCSTR NetMask, LPCSTR CallerRegIP, LPCSTR CalledRegIP)
 {
+#ifdef _WIN32
 	unsigned long iNetMask, iCallerRegIP, iCalledRegIP;
 	iNetMask = inet_addr(NetMask);
 	iCallerRegIP = inet_addr(CallerRegIP);
 	iCalledRegIP = inet_addr(CalledRegIP);
 	return ((iCallerRegIP & iNetMask) == (iCalledRegIP & iNetMask));
+#else
+	return FALSE;
+#endif
 }
 BOOL TYQUtils::IsSameNet(LPCSTR CallerAddr,unsigned long  CallerMask,
 					LPCSTR CalledAddr, unsigned long CalledMask)
 {
+#ifdef _WIN32
 	DWORD CallerIP  = inet_addr(CallerAddr);
 	DWORD CalledIP  = inet_addr(CalledAddr);
 
 	return((CallerIP & CallerMask) == (CalledIP & CalledMask));
+#else
+	return FALSE;
+#endif
 }
 string TYQUtils::Byte2Hex(const void* data,unsigned int len)
 {

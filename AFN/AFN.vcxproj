@@ -94,7 +94,6 @@
     <ClInclude Include="DBManager.h" />
     <ClInclude Include="LogFileu.h" />
     <ClInclude Include="proto.h" />
-    <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TcpServer.h" />
     <ClInclude Include="TelnetServer.h" />
@@ -113,6 +112,7 @@
     <ClInclude Include="thirdparty\Parse.h" />
     <ClInclude Include="thirdparty\Semaphore.h" />
     <ClInclude Include="thirdparty\SocketAddress.h" />
+    <ClInclude Include="thirdparty\sockets-config.h" />
     <ClInclude Include="thirdparty\socket_include.h" />
     <ClInclude Include="thirdparty\Thread.h" />
     <ClInclude Include="thirdparty\Utility.h" />
@@ -136,10 +136,6 @@
     <ClCompile Include="DBManager.cpp" />
     <ClCompile Include="LogFileu.cpp" />
     <ClCompile Include="proto.cpp" />
-    <ClCompile Include="stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="TcpServer.cpp" />
     <ClCompile Include="TelnetServer.cpp" />
     <ClCompile Include="thirdparty\Base64.cpp" />

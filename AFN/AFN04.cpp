@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "AFN04.h"
 #include "AFNPackage.h"
 #include "YQErrCode.h"

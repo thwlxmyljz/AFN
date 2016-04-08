@@ -2,7 +2,7 @@
 #ifndef LogFileuH
 #define LogFileuH
 //---------------------------------------------------------------------------
-//#include "YQCommon.h"
+#include "YQDefs.h"
 #include "YQErrCode.h"
 //---------------------------------------------------------------------------
 #ifndef _LOGMSG

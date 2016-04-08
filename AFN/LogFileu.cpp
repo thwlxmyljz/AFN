@@ -1,9 +1,16 @@
 //---------------------------------------------------------------------------
-#include "stdafx.h"
 #include "LogFileu.h"
 #include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <memory.h>
+#include <stdarg.h>
 
+#ifdef _WIN32
 #pragma warning(disable:4996)
+#endif
+
 //---------------------------------------------------------------------------
 TLogFile* LogFile = NULL;
 TLogFile* TLogFile::ThisPtr = NULL;

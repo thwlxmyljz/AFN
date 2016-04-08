@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "AFNPackage.h"
 #include "YQErrCode.h"
 
@@ -41,7 +40,7 @@ int AFNPackage::ParseProto(BYTE* data,DWORD len)
 		//包标识字符非法
 		return YQER_PKG_Err(2);
 	}
-	if (len != pkgHeader.L._L.LEN+PKG_HEADLEN+PKG_TAILLEN){
+	if ((int)len != (int)pkgHeader.L._L.LEN+PKG_HEADLEN+PKG_TAILLEN){
 		//包长度不正确
 		return YQER_PKG_Err(3);
 	}

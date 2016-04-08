@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "AFNData.h"
 
 int AFNData::parseDateTime(const BYTE* _data,int _len,std::string& dt)
@@ -10,7 +9,11 @@ int AFNData::parseDateTime(const BYTE* _data,int _len,std::string& dt)
 		int day = ((_data[2]>>4)&0x0f)*10+(_data[2]&0x0f);
 		int hour = ((_data[1]>>4)&0x0f)*10+(_data[1]&0x0f);
 		int min = ((_data[0]>>4)&0x0f)*10+(_data[0]&0x0f);
+#ifdef _WIN32
 		sprintf_s(buf,"%02d-%02d-%02d %02d:%02d:00",year,mon,day,hour,min);
+#else
+		sprintf(buf,"%02d-%02d-%02d %02d:%02d:00",year,mon,day,hour,min);
+#endif
 		dt = buf;
 		return 5;
 	}

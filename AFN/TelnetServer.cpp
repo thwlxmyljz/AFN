@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "event2/thread.h"
 #include "TelnetServer.h"
 #include "YQErrCode.h"
 #include "LogFileu.h"
@@ -6,10 +6,10 @@
 #include "AFNPackage.h"
 #include "YQUtils.h"
 #include "AFNPackageBuilder.h"
-#include "stdafx.h"
 #include <vector>
 #include <string>
 #include <sstream>
+#include <stdlib.h>
 
 using namespace std;
 
@@ -68,10 +68,12 @@ int TelnetServer::Run()
 		YQLogInfo("TelnetServer has already run!");
 		return 0;
 	}
-    struct sockaddr_in sin;
+#ifdef _WIN32    
     WSADATA wsa_data;
     WSAStartup(0x0201, &wsa_data);
-	
+	evthread_use_windows_threads();//win…œ…Ë÷√
+#endif
+	struct sockaddr_in sin;
     base = event_base_new();
     if (!base) {
         YQLogInfo("TelnetServer Could not initialize libevent!");
@@ -172,7 +174,11 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 		//backspace
 		g_cmd = g_cmd.substr(0,g_cmd.length()-1);
 		char msg[512];
+#ifdef _WIN32
 		sprintf_s(msg,"\r\n$%s",g_cmd.c_str());
+#else
+		sprintf(msg,"\r\n$%s",g_cmd.c_str());
+#endif
 		bufferevent_write(bev, msg, strlen(msg));
 		return;
 	}

@@ -1,6 +1,4 @@
-#include "stdafx.h"
 #include "AFN01.h"
-
 
 AFN01Req_Data::AFN01Req_Data(void)
 {

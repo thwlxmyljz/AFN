@@ -1,7 +1,5 @@
 // AFN.cpp : 定义控制台应用程序的入口点。
 //
-
-#include "stdafx.h"
 #include "TcpServer.h"
 #include "AFN01.h"
 #include "AFN02.h"
@@ -11,8 +9,12 @@
 #include "TelnetServer.h"
 
 static const int PORT = 9027;
-
+#ifdef _WIN32
+#include <tchar.h>
 int _tmain(int argc, _TCHAR* argv[])
+#else
+int main()
+#endif
 {
 	TcpServer tcpsvr(PORT);
 	AFNPackageBuilder::Instance().Register(Pkg_Afn_Header::AFN02,&AFN02::HandleRequest,NULL);

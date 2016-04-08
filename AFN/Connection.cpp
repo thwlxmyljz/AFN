@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Connection.h"
 #include "AFNPackage.h"
 #include "LogFileu.h"
@@ -10,21 +9,29 @@
 #define BUF_SIZE 16384
 
 Connection::Connection(struct event_base *base,struct bufferevent *_bev,evutil_socket_t _fd,struct sockaddr *sa)
-	:bev(_bev),fd(_fd),m_remoteAddr((*(sockaddr_in*)sa)),m_jzq(NULL)
+	:m_jzq(NULL),bev(_bev),fd(_fd),m_remoteAddr((*(sockaddr_in*)sa))
 {	
-	in_addr addr;   
+#ifdef _WIN32
+	in_addr addr; 
 	memcpy(&addr, &m_remoteAddr.sin_addr.S_un.S_addr, sizeof(m_remoteAddr.sin_addr.S_un.S_addr));   
 	string strIp = inet_ntoa(addr); 
 
 	LogFile->FmtLog(LOG_INFORMATION,"new Connection[%s,%d]",strIp.c_str(),m_remoteAddr.sin_port); 
+#else
+	LogFile->FmtLog(LOG_INFORMATION,"new Connection"); 
+#endif
 }
 Connection::~Connection(void)
 {
+#ifdef _WIN32
 	in_addr addr;   
 	memcpy(&addr, &m_remoteAddr.sin_addr.S_un.S_addr, sizeof(m_remoteAddr.sin_addr.S_un.S_addr));   
 	string strIp = inet_ntoa(addr); 
 
 	LogFile->FmtLog(LOG_INFORMATION,"delete Connection[%s,%d]",strIp.c_str(),m_remoteAddr.sin_port); 
+#else
+	LogFile->FmtLog(LOG_INFORMATION,"delete Connection"); 
+#endif
 	bufferevent_free(bev);
 }
 int Connection::SendBuf(const void* cmd,unsigned int cmdlen)
@@ -142,11 +149,11 @@ Jzq::Jzq()
 	m_areacode(0),
 	m_number(0),
 	m_tag(0),
-	m_conn(NULL),
-	m_heart(0),
 	m_RSEQ(0x0),
 	m_PSEQ(0x0),
-	m_PFC(0x0)
+	m_PFC(0x0),
+	m_conn(NULL),
+	m_heart(0)
 {
 }
 Jzq::Jzq(string _name,WORD _areaCode,WORD _number,BYTE _tag)
@@ -154,11 +161,11 @@ Jzq::Jzq(string _name,WORD _areaCode,WORD _number,BYTE _tag)
 	m_areacode(_areaCode),
 	m_number(_number),
 	m_tag(_tag),
-	m_conn(NULL),
-	m_heart(0),
 	m_RSEQ(0x0),
 	m_PSEQ(0x0),
-	m_PFC(0x0)
+	m_PFC(0x0),
+	m_conn(NULL),
+	m_heart(0)
 {
 }
 Jzq::~Jzq()
