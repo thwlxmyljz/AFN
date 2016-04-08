@@ -52,62 +52,66 @@ int Connection::RecBuf()
 	size_t len = bufferevent_read(bev, msg, sizeof(msg)-1 );
 	msg[len] = '\0';
 	LogFile->FmtLog(LOG_INFORMATION,"rec pkg:%s", TYQUtils::Byte2Hex(msg,len).c_str());
-
-	AFNPackage* pkg = new AFNPackage();
-	int errCode = pkg->ParseProto(msg,len);
-	if (errCode != YQER_OK){		
-		YQLogMin("RecBuf, pkg invalid!");
-		delete pkg;
-		return errCode;
-	}
-	std::list<AFNPackage* > ackLst;	
-	if (pkg->userHeader.A3._A3.TAG == 0){
-		//单地址
-		if (!m_jzq){
-			//查找集中器，如果集中器配置在数据库内，则会查找到此集中器
-			//如果未配置在数据库内，在处理登录帧的时候，会加入到集中器列表，再下一帧数据过来的时候，会查找到此集中器
-			m_jzq = g_JzqConList->getJzq(pkg->userHeader.A1,pkg->userHeader.A2);
-			if (m_jzq){
-				//设置集中器的网络连接
-				m_jzq->m_conn = this;
+	BYTE* pMsg = msg;
+	do 
+	{
+		AFNPackage* pkg = new AFNPackage();
+		int errCode = pkg->ParseProto(pMsg,len);	
+		if (errCode != YQER_OK){		
+			YQLogMin("RecBuf, pkg invalid!");
+			delete pkg;
+			return errCode;
+		}
+		pMsg += pkg->GetFrameL();
+		len -= pkg->GetFrameL();
+		std::list<AFNPackage* > ackLst;	
+		if (pkg->userHeader.A3._A3.TAG == 0){
+			//单地址
+			if (!m_jzq){
+				//查找集中器，如果集中器配置在数据库内，则会查找到此集中器
+				//如果未配置在数据库内，在处理登录帧的时候，会加入到集中器列表，再下一帧数据过来的时候，会查找到此集中器
+				m_jzq = g_JzqConList->getJzq(pkg->userHeader.A1,pkg->userHeader.A2);
+				if (m_jzq){
+					//设置集中器的网络连接
+					m_jzq->m_conn = this;
+				}
 			}
 		}
-	}
-	if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 1  && pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 1) {
-		//单帧
-		nRet = AFNPackageBuilder::Instance().HandlePkg(pkg,ackLst);
-		if (nRet == YQER_OK && ackLst.size() > 0){
-			SendPkg(ackLst);
-			ClearPkgList(ackLst);
-		}
-		delete pkg;
-		return nRet;
-	}
-	else if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 0  && pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 1) {
-		//多帧，第一帧
-		ClearPkgList(m_pkgList);
-		YQLogInfo("rec mul pkg , first");
-		m_pkgList.push_back(pkg);
-	}
-	else if (pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 0) {
-		//多帧，中间帧
-		m_pkgList.push_back(pkg);		
-		if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 0){
-			YQLogInfo("rec mul pkg , middle");
-		}
-		else{
-			//多帧，结束帧
-			YQLogInfo("rec mul pkg , end");
-			nRet = AFNPackageBuilder::Instance().HandlePkg(m_pkgList,ackLst);
+		if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 1  && pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 1) {
+			//单帧
+			nRet = AFNPackageBuilder::Instance().HandlePkg(pkg,ackLst);
 			if (nRet == YQER_OK && ackLst.size() > 0){
 				SendPkg(ackLst);
 				ClearPkgList(ackLst);
-			}	
-			ClearPkgList(m_pkgList);			
-			return nRet;
-		}		
-	}
-	return nRet;
+			}
+			delete pkg;
+		}
+		else if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 0  && pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 1) {
+			//多帧，第一帧
+			ClearPkgList(m_pkgList);
+			YQLogInfo("rec mul pkg , first");
+			m_pkgList.push_back(pkg);
+		}
+		else if (pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 0) {
+			//多帧，中间帧
+			m_pkgList.push_back(pkg);		
+			if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 0){
+				YQLogInfo("rec mul pkg , middle");
+			}
+			else{
+				//多帧，结束帧
+				YQLogInfo("rec mul pkg , end");
+				nRet = AFNPackageBuilder::Instance().HandlePkg(m_pkgList,ackLst);
+				if (nRet == YQER_OK && ackLst.size() > 0){
+					SendPkg(ackLst);
+					ClearPkgList(ackLst);
+				}	
+				ClearPkgList(m_pkgList);
+			}		
+		}
+	}while(len > 0);
+
+	return YQER_OK;
 }
 int Connection::SendPkg(std::list<AFNPackage*>& pkgLst)
 {

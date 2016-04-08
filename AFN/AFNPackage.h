@@ -14,8 +14,10 @@ class AFNPackage : public Pkg
 	void SetReqType2ZJQ();
 	//生产CS校验
 	void CreateCS();
-	//设置长度
+	//设置用户数据长度
 	void SetL();
+	//获取序列化后帧长度
+	int GetFrameL(){return PKG_HEADLEN+pkgHeader.L._L.LEN+PKG_TAILLEN;}
 public:
 	AFNPackage(void);
 	~AFNPackage(void);
