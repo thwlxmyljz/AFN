@@ -32,7 +32,7 @@ Connection::~Connection(void)
 #else
 	LogFile->FmtLog(LOG_INFORMATION,"delete Connection"); 
 #endif
-	bufferevent_free(bev);
+	//bufferevent_free(bev);
 }
 int Connection::SendBuf(const void* cmd,unsigned int cmdlen)
 {
@@ -201,18 +201,16 @@ void JzqList::LoadJzq()
 }
 std::string JzqList::printJzq()
 {
-	std::string ss;
+	std::ostringstream os;
 	jzqIter it = m_jzqList.begin();
 	while (it != m_jzqList.end()){
 		Jzq* p = (*it);
-		std::ostringstream os;
 		os <<"name(" << p->m_name << "),areacode(" << p->m_areacode << "),address(" << p->m_number << "),state("\
 			<< ((p->m_tag&0x1)?"db:yes,":"db:no,") << ((p->m_tag&0x2)?"online:yes)":"online:no)") ;
 		os << "\r\n--------------------------------------------------------\r\n";
-		ss += os.str();
 		it++;
 	}
-	return ss;
+	return os.str();
 }
 /**
 libevent event
@@ -251,7 +249,11 @@ void JzqList::conn_eventcb(struct bufferevent *bev, short events, void *user_dat
 int JzqList::newConnection(struct event_base *base,evutil_socket_t fd, struct sockaddr *sa)
 {
 	struct bufferevent *bev;
+#ifdef _WIN32	
     bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_THREADSAFE);
+#else
+	bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE);
+#endif
     if (!bev)  {
 		YQLogMaj("Error constructing bufferevent!");        
         return YQER_CON_Err(1);

@@ -88,21 +88,21 @@ std::string AFN0CAck_Data_AllKwh::toString()
 {
 	std::ostringstream os;
 	os << "终端抄表时间:" << dt << "\r\n";
-	os << "当前正向有功总电能示值:"<< userkwh << "\r\n";
+	os << "当前正向有功总电能示值:"<< userkwh << "kWh\r\n";
 	for (int i = 0;  i < m ; i++){
-		os << "  当前费率" << i+1 << "正向有功总电能示值:"<<userkwh_fee[i]<<"\r\n";
+		os << "  当前费率" << i+1 << "正向有功总电能示值:"<<userkwh_fee[i]<<"kWh\r\n";
 	}
-	os << "当前正向无功（组合无功1）总电能示值:"<< devkwh << "\r\n";
+	os << "当前正向无功（组合无功1）总电能示值:"<< devkwh << "kvarh\r\n";
 	for (int i = 0;  i < m ; i++){
-		os << "  当前费率" << i+1 << "正向无功（组合无功1）总电能示值:"<<devkwh_fee[i]<<"\r\n";
+		os << "  当前费率" << i+1 << "正向无功（组合无功1）总电能示值:"<<devkwh_fee[i]<<"kvarh\r\n";
 	}
-	os << "当前一象限无功总电能示值:"<< onekwh << "\r\n";
+	os << "当前一象限无功总电能示值:"<< onekwh << "kvarh\r\n";
 	for (int i = 0;  i < m ; i++){
-		os << "  当前一象限费率" << i+1 << "无功电能示值:"<<onekwh_fee[i]<<"\r\n";
+		os << "  当前一象限费率" << i+1 << "无功电能示值:"<<onekwh_fee[i]<<"kvarh\r\n";
 	}
-	os << "当前四象限无功总电能示值:"<< fourkwh << "\r\n";
+	os << "当前四象限无功总电能示值:"<< fourkwh << "kvarh\r\n";
 	for (int i = 0;  i < m ; i++){
-		os << "  当前四象限费率" << i+1 << "无功电能示值:"<<fourkwh_fee[i]<<"\r\n";
+		os << "  当前四象限费率" << i+1 << "无功电能示值:"<<fourkwh_fee[i]<<"kvarh\r\n";
 	}
 	return os.str();
 }

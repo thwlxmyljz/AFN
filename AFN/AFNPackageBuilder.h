@@ -46,11 +46,12 @@ class AFNPackageBuilder
 	AFNPackageBuilder(void);
 	~AFNPackageBuilder(void);
 
-	//Builder单一对象
 	static AFNPackageBuilder* single;
-	//报文处理MAP
+
+	//帧处理MAP
 	std::map< Pkg_Afn_Header::AFN_CODE,PkgHandler> handlerMap;
 	typedef std::map< Pkg_Afn_Header::AFN_CODE,PkgHandler>::iterator mapIter;
+
 	//app call request list
 	std::map<AppCall,Pkg_Afn_Data*> cmdMap;
 	typedef std::map<AppCall,Pkg_Afn_Data*>::iterator CmdMapIter;
@@ -62,11 +63,12 @@ class AFNPackageBuilder
 	pthread_mutex_t CritSection;  
 	pthread_cond_t ConditionVar; 
 #endif
+
 public:		
 	//注册处理函数
 	void Register(Pkg_Afn_Header::AFN_CODE code,pfnDoHandleRequest reqHandler,pfnDoHandleAck ackHandler);
 
-	/*
+	/*-------------------------------------------------------
 	接受帧处理,tcpserver main thread call
 	*/
 	//reqLst:多帧请求，ackLst:返回响应帧（可能0～多帧）,如果返回了响应帧，则需要发送到终端
@@ -74,7 +76,7 @@ public:
 	int HandlePkg(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& ackLst);
 	int Notify(const AppCall& call,Pkg_Afn_Data* data);
 
-	/*
+	/*--------------------------------------------------------
 	构造请求帧,app thread call
 	*/
 	Pkg_Afn_Data* Wait(const AppCall& call);
@@ -106,6 +108,6 @@ protected:
 	//请求帧处理
 	int DoHandleRequest(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& ackLst);
 	//响应帧处理
-	int DoHandleAck(std::list<AFNPackage*>& reqLst);
+	int DoHandleAck(std::list<AFNPackage*>& ackLst);
 };
 

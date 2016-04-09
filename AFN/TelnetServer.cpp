@@ -156,15 +156,16 @@ int TelnetServer::Run()
 	return 0;
 }
 //命令说明
-char helpstr[] = "cmd:\r\n+++++++++++++++++++++++\r\n"
-				"ls,setpointparams,setpointstatus,getclock,getstatus\r\n+++++++++++++++++++++++\r\n"
-				"1,ls:list all zjq\r\n-----------------\r\n"
-				"2,setpointparams [name] [pn]:\r\n-----------------\r\n"				
-				"3,setpointstatus [name]:\r\n-----------------\r\n"
-				"4,getclock [name]:\r\n-----------------\r\n"
-				"5,getstatus [name]:\r\n-----------------\r\n"
-				"6,getallkwh [name] [pn]:\r\n-----------------\r\n"
-				"\r\n$";
+char helpstr[] = "\r\n+++++++++++++++++++++++\r\n"
+				"command: ls,quit,setpointparams,setpointstatus,getclock,getstatus\r\n+++++++++++++++++++++++\r\n\r\n"
+				"1, ls: list all zjq\r\n-----------------\r\n"
+				"2, quit: quit\r\n-----------------\r\n"
+				"3, setpointparams [name] [pn]:no descript\r\n-----------------\r\n"				
+				"4, setpointstatus [name]:no descript\r\n-----------------\r\n"
+				"5, getclock [name]:no descript\r\n-----------------\r\n"
+				"6, getstatus [name]:no descript\r\n-----------------\r\n"
+				"7, getallkwh [name] [pn]:读取电表数据,测试命令(getallkwh test 1)\r\n-----------------\r\n"
+				"\r\n\r\n$";
 void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 {
 	char cmd[512];
@@ -207,6 +208,9 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 			std::string ss = g_JzqConList->printJzq();
 			ss += "$";
 			bufferevent_write(bev, ss.c_str(), ss.size());
+		}
+		else if (params[0] == "quit"){			
+			bufferevent_free(bev);
 		}
 		else if (params[0] == "setpointparams"){
 			//召测测量点

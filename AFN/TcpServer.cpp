@@ -18,10 +18,10 @@ TcpServer::TcpServer(unsigned int port)
 }
 TcpServer::~TcpServer(void)
 {
-	delete LogFile;
-	LogFile = NULL;
 	delete g_JzqConList;
 	g_JzqConList = NULL;
+	delete LogFile;
+	LogFile = NULL;
 }
 int TcpServer::Run()
 {
@@ -34,14 +34,14 @@ int TcpServer::Run()
     WSADATA wsa_data;
     WSAStartup(0x0201, &wsa_data);
 	evthread_use_windows_threads();//win…œ…Ë÷√
+	evthread_make_base_notifiable(base);
 #endif
 	struct sockaddr_in sin;
     base = event_base_new();
     if (!base) {
         YQLogInfo("Could not initialize libevent!");
         return YQER_SVR_Err(1);
-    }
-	evthread_make_base_notifiable(base);
+    }	
 
     memset(&sin, 0, sizeof(sin));
     sin.sin_family = AF_INET;

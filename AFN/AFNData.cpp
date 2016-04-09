@@ -1,4 +1,6 @@
 #include "AFNData.h"
+#include <stdlib.h>
+#include <stdio.h>
 
 int AFNData::parseDateTime(const BYTE* _data,int _len,std::string& dt)
 {

@@ -90,13 +90,13 @@ int AFNPackageBuilder::DoHandleRequest(std::list<AFNPackage*>& reqLst,std::list<
 	return -1;
 }
 
-int AFNPackageBuilder::DoHandleAck(std::list<AFNPackage*>& reqLst)
+int AFNPackageBuilder::DoHandleAck(std::list<AFNPackage*>& ackLst)
 {
-	AFNPackage* reqPkg = *(reqLst.begin());	
+	AFNPackage* ackPkg = *(ackLst.begin());	
 	for (mapIter it = handlerMap.begin(); it != handlerMap.end(); it++){
 		PkgHandler& h = (*it).second;
-		if (h.ackHandler && (*it).first == reqPkg->pAfn->afnHeader.AFN){
-			return h.ackHandler(reqLst);
+		if (h.ackHandler && (*it).first == ackPkg->pAfn->afnHeader.AFN){
+			return h.ackHandler(ackLst);
 		}
 	}
 	return -1;
@@ -146,24 +146,16 @@ int AFNPackageBuilder::Notify(const AppCall& call,Pkg_Afn_Data* data)
 	if (cmdMap.find(call) != cmdMap.end()){
 		cmdMap[call] = data;		
 		WakeAllConditionVariable(&ConditionVar);
-		LeaveCriticalSection(&CritSection);
-		return 0;
 	}
-	else{
-		LeaveCriticalSection(&CritSection);
-	}
+	LeaveCriticalSection(&CritSection);
 	return 0;
 #else
 	pthread_mutex_lock(&CritSection);
 	if (cmdMap.find(call) != cmdMap.end()){
 		cmdMap[call] = data;
 		pthread_cond_broadcast(&ConditionVar);
-		pthread_mutex_unlock(&CritSection);
-		return 0;
 	}
-	else{
-		pthread_mutex_unlock(&CritSection);
-	}
+	pthread_mutex_unlock(&CritSection);
 	return 0;
 #endif
 }
