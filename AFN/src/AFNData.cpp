@@ -1,10 +1,13 @@
 #include "AFNData.h"
 #include <stdlib.h>
 #include <stdio.h>
-
-int AFNData::parseDateTime(const BYTE* _data,int _len,std::string& dt)
+int AFNData::parseDateTime5(const BYTE* _data,int _len,std::string& dt)
 {
 	if (_len >= 5){
+		if (_data[0] == 0xee){
+			dt = "00-00-00 00:00:00";
+			return 5;
+		}
 		char buf[64];
 		int year = ((_data[4]>>4)&0x0f)*10+(_data[4]&0x0f);
 		int mon = ((_data[3]>>4)&0x0f)*10+(_data[3]&0x0f);
@@ -18,6 +21,30 @@ int AFNData::parseDateTime(const BYTE* _data,int _len,std::string& dt)
 #endif
 		dt = buf;
 		return 5;
+	}
+	return 0;
+}
+int AFNData::parseDateTime6(const BYTE* _data,int _len,std::string& dt)
+{
+	if (_len >= 6){
+		if (_data[0] == 0xee){
+			dt = "00-00-00 00:00:00";
+			return 6;
+		}
+		char buf[64];
+		int year = ((_data[5]>>4)&0x0f)*10+(_data[5]&0x0f);
+		int mon = ((_data[4]>>4)&0x1)*10+(_data[4]&0x0f);
+		int day = ((_data[3]>>4)&0x0f)*10+(_data[3]&0x0f);
+		int hour = ((_data[2]>>4)&0x0f)*10+(_data[2]&0x0f);
+		int min = ((_data[1]>>4)&0x0f)*10+(_data[1]&0x0f);
+		int sec = ((_data[0]>>4)&0x0f)*10+(_data[0]&0x0f);
+#ifdef _WIN32
+		sprintf_s(buf,"%02d-%02d-%02d %02d:%02d:%02d",year,mon,day,hour,min,sec);
+#else
+		sprintf(buf,"%02d-%02d-%02d %02d:%02d:%02d",year,mon,day,hour,min,sec);
+#endif
+		dt = buf;
+		return 6;
 	}
 	return 0;
 }

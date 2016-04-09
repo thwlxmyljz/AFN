@@ -94,59 +94,6 @@ int TelnetServer::Run()
 	}
 	YQLogInfo("TelnetServer start ok");
 
-	//≤‚ ‘
-	/*
-	BYTE data[20] = {0x68,0x32,0x00,0x32,0x00,0x68,0xc9,0x00,0x10,0x4d,0x04,0x00,0x02,0x75,0x00,0x00,0x01,0x00,0xa2,0x16};
-	string hex = TYQUtils::Byte2Hex(data,20);
-	printf("%s\n",hex.c_str());
-
-	AFNPackage pkg;
-	pkg.ParseProto(data,20);
-	std::list<AFNPackage* > ackLst;
-	AFNPackageBuilder::Instance().HandlePkg(&pkg,ackLst);
-	AFNPackage* ackPkg = (*ackLst.begin());
-	*/
-	/*
-	BYTE data[18] = {0x0B, 0xFF , 0xFF , 0xFF , 0xFF , 0x02 , 0x00 , 0x61 , 0x00 , 0x00 , 0x03 , 0x00 , 0x02 , 0x00 , 0x00 , 0x01 , 0x00 , 0x00};
-	BYTE cs = AFNPackage::GetCS(data,18);
-	*/
-	/*
-	BYTE DT1;
-	BYTE DT2;
-	WORD Fn;
-	AFNPackage::GetDT(3,DT1,DT2);
-	Fn = AFNPackage::GetFn(DT1,DT2);
-	AFNPackage::GetDT(248,DT1,DT2);
-	Fn = AFNPackage::GetFn(DT1,DT2);
-	AFNPackage::GetDT(8,DT1,DT2);
-	Fn = AFNPackage::GetFn(DT1,DT2);
-	AFNPackage::GetDT(9,DT1,DT2);
-	Fn = AFNPackage::GetFn(DT1,DT2);
-	AFNPackage::GetDT(16,DT1,DT2);
-	Fn = AFNPackage::GetFn(DT1,DT2);
-	*/
-	/*
-	BYTE DT1;
-	BYTE DT2;
-	WORD Fn;
-	AFNPackage::GetDA(0,DT1,DT2);
-	Fn = AFNPackage::Getpn(DT1,DT2);
-	AFNPackage::GetDA(2041,DT1,DT2);
-	Fn = AFNPackage::Getpn(DT1,DT2);
-	AFNPackage::GetDA(3,DT1,DT2);
-	Fn = AFNPackage::Getpn(DT1,DT2);
-	AFNPackage::GetDA(248,DT1,DT2);
-	Fn = AFNPackage::Getpn(DT1,DT2);
-	AFNPackage::GetDA(8,DT1,DT2);
-	Fn = AFNPackage::Getpn(DT1,DT2);
-	AFNPackage::GetDA(9,DT1,DT2);
-	Fn = AFNPackage::Getpn(DT1,DT2);
-	AFNPackage::GetDA(16,DT1,DT2);
-	Fn = AFNPackage::Getpn(DT1,DT2);
-	AFNPackage::GetDA(2040,DT1,DT2);
-	Fn = AFNPackage::Getpn(DT1,DT2);
-	Fn = AFNPackage::Getpn(0xff,0x0);
-	*/
     event_base_dispatch(base);
 
 	evconnlistener_free(listener);
@@ -160,10 +107,10 @@ char helpstr[] = "\r\n+++++++++++++++++++++++\r\n"
 				"command: ls,quit,setpointparams,setpointstatus,getclock,getstatus\r\n+++++++++++++++++++++++\r\n\r\n"
 				"1, ls: list all zjq\r\n-----------------\r\n"
 				"2, quit: quit\r\n-----------------\r\n"
-				"3, setpointparams [name] [pn]:no descript\r\n-----------------\r\n"				
-				"4, setpointstatus [name]:no descript\r\n-----------------\r\n"
-				"5, getclock [name]:no descript\r\n-----------------\r\n"
-				"6, getstatus [name]:no descript\r\n-----------------\r\n"
+				"3, setpointparams [name] [pn]:not implement\r\n-----------------\r\n"				
+				"4, setpointstatus [name]:not implement\r\n-----------------\r\n"
+				"5, getclock [name]:÷’∂À»’¿˙ ±÷”Œ¥œ‘ æ–«∆⁄£¨≤‚ ‘√¸¡Ó(getclock test)\r\n-----------------\r\n"
+				"6, getstatus [name]:÷’∂ÀºØ÷–≥≠±Ì◊¥Ã¨–≈œ¢£¨≤‚ ‘√¸¡Ó(getstatus test)\r\n-----------------\r\n"
 				"7, getallkwh [name] [pn]:∂¡»°µÁ±Ì ˝æ›,≤‚ ‘√¸¡Ó(getallkwh test 1)\r\n-----------------\r\n"
 				"\r\n\r\n$";
 void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
@@ -224,6 +171,7 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 				os << "setpointparams return " << ret <<"\r\n";	
 				if (p){
 					os << p->toString() <<"\r\n$";
+					delete p;
 				}
 				else{
 					os << "$";
@@ -242,6 +190,7 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 				os << "setpointstatus return " << ret <<"\r\n";	
 				if (p){
 					os << p->toString() <<"\r\n$";
+					delete p;
 				}
 				else{
 					os << "$";
@@ -260,6 +209,7 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 				os << "getclock return " << ret <<"\r\n";
 				if (p){
 					os << p->toString() <<"\r\n$";
+					delete p;
 				}
 				else{
 					os << "$";
@@ -278,6 +228,7 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 				os << "getstatus return " << ret <<"\r\n";	
 				if (p){
 					os  << p->toString() <<"\r\n$";
+					delete p;
 				}
 				else{
 					os << "$";
@@ -296,6 +247,7 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 				os << "getallkwh return " << ret <<"\r\n";	
 				if (p){
 					os << p->toString() <<"\r\n$";
+					delete p;
 				}
 				else{
 					os << "$";

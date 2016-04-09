@@ -110,6 +110,7 @@ Pkg_Afn_Data* AFNPackageBuilder::Wait(const AppCall& call)
 	while( cmdMap[call] == NULL )
 	{
 		if (SleepConditionVariableCS(&ConditionVar, &CritSection, 2000) == 0){
+			YQLogInfo("SleepConditionVariableCS timeout");
 			break;
 		}
 	}
@@ -129,6 +130,7 @@ Pkg_Afn_Data* AFNPackageBuilder::Wait(const AppCall& call)
 		outtime.tv_sec = now.tv_sec + 2;
 		outtime.tv_nsec = now.tv_usec * 1000;
 		if (pthread_cond_timedwait(&ConditionVar,&CritSection,&outtime) == ETIMEDOUT){
+			YQLogInfo("pthread_cond_timedwait timeout");
 			break;
 		}
 	}
@@ -147,6 +149,10 @@ int AFNPackageBuilder::Notify(const AppCall& call,Pkg_Afn_Data* data)
 		cmdMap[call] = data;		
 		WakeAllConditionVariable(&ConditionVar);
 	}
+	else{		
+		YQLogInfo("Notify ,but not found call");
+		delete data;
+	}
 	LeaveCriticalSection(&CritSection);
 	return 0;
 #else
@@ -154,6 +160,10 @@ int AFNPackageBuilder::Notify(const AppCall& call,Pkg_Afn_Data* data)
 	if (cmdMap.find(call) != cmdMap.end()){
 		cmdMap[call] = data;
 		pthread_cond_broadcast(&ConditionVar);
+	}
+	else{		
+		YQLogInfo("Notify ,but not found call");
+		delete data;
 	}
 	pthread_mutex_unlock(&CritSection);
 	return 0;

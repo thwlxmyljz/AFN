@@ -1,22 +1,123 @@
 #include "AFN0C.h"
 #include "AFNPackage.h"
 #include "YQErrCode.h"
-#include "AFNData.h"
 #include "AFNPackageBuilder.h"
 #include <sstream>
 
 #define GO() p += len;\
 		left -= len;
-AFN0CAck_Data_AllKwh::AFN0CAck_Data_AllKwh()
+
+AFN0CAck_Data_GetClock::AFN0CAck_Data_GetClock()
 	:Pkg_Afn_Data()
 {
 }
-AFN0CAck_Data_AllKwh::AFN0CAck_Data_AllKwh(const Pkg_Afn_Data* _origin)
+AFN0CAck_Data_GetClock::AFN0CAck_Data_GetClock(Pkg_Afn_Data* _origin)
 	:Pkg_Afn_Data(*_origin)
+{
+}
+AFN0CAck_Data_GetClock::~AFN0CAck_Data_GetClock(void)
+{
+}
+AFN0CAck_Data_GetClock* AFN0CAck_Data_GetClock::New()
+{
+	return new AFN0CAck_Data_GetClock();
+}
+int AFN0CAck_Data_GetClock::HandleData()
+{
+	return AFNData::parseDateTime6(m_pData,m_nLen,dt);
+}
+std::string AFN0CAck_Data_GetClock::toString()
+{
+	return dt;
+}
+//---------------------------------------------------------------------------------
+int AFN0CAck_Data_GetRunStatus::Block::parse(const BYTE*p, int len)
+{
+	if (len >= 19){
+		port = p[0];
+		memcpy(&num,p+1,2);
+		status = p[3];
+		memcpy(&success,p+4,2);
+		success_import = p[6];
+		AFNData::parseDateTime6(p+7,6,sdt);
+		AFNData::parseDateTime6(p+13,6,edt);
+		return 19;
+	}
+	return 0;
+}
+std::string AFN0CAck_Data_GetRunStatus::Block::toString()
+{
+	std::ostringstream os;
+	os << "  终端通信端口号:" << (int)port << "\r\n";
+	os << "  要抄电表总数:" << num << "\r\n";
+	os << "  当前抄表工作状态标志:" << ((status&0x01)?"正在抄表,":"未抄表,") << ((status&0x02)?"时段内完成":"时段内未完成") << "\r\n";
+	os << "  抄表成功块数:" << success << "\r\n";
+	os << "  抄重点表成功块数:" << (int)success_import << "\r\n";
+	os << "  抄表开始时间:" << sdt << "\r\n";
+	os << "  抄表结束时间:" << edt << "\r\n";
+	return os.str();
+}
+AFN0CAck_Data_GetRunStatus::AFN0CAck_Data_GetRunStatus()
+	:Pkg_Afn_Data(),pBlock(NULL)
+{
+}
+AFN0CAck_Data_GetRunStatus::AFN0CAck_Data_GetRunStatus(Pkg_Afn_Data* _origin)
+	:Pkg_Afn_Data(*_origin),pBlock(NULL)
+{
+}
+AFN0CAck_Data_GetRunStatus::~AFN0CAck_Data_GetRunStatus(void)
+{
+	delete[] pBlock;
+}
+AFN0CAck_Data_GetRunStatus* AFN0CAck_Data_GetRunStatus::New()
+{
+	return new AFN0CAck_Data_GetRunStatus();
+}
+int AFN0CAck_Data_GetRunStatus::HandleData()
+{
+	int left = m_nLen;
+	BYTE* p = m_pData;
+		
+	if (left < 1){return YQER_PKG_DATA_Err(2);}
+	n = p[0];
+	int len = 1;
+	if (n <1 ||n > 31){return YQER_PKG_DATA_Err(3);}
+	GO()
+
+	pBlock = new Block[n];
+	for (int i = 0; i < n; i++){
+		len = pBlock[i].parse(p,left);
+		if (len == 0)
+			return YQER_PKG_DATA_Err(3);
+		GO()
+	}
+	return YQER_OK;
+}
+std::string AFN0CAck_Data_GetRunStatus::toString()
+{
+	std::ostringstream os;
+	os << "本项数据块个数:" << n << "\r\n";
+	for (int i = 0;  i < n ; i++){
+		os << "第"<<i+1 <<"数据块" << "\r\n";
+		os << pBlock[i].toString();
+	}
+	return os.str();
+}
+//---------------------------------------------------------------------------------
+AFN0CAck_Data_AllKwh::AFN0CAck_Data_AllKwh()
+	:Pkg_Afn_Data(),userkwh_fee(NULL),devkwh_fee(NULL),onekwh_fee(NULL),fourkwh_fee(NULL)
+{
+}
+AFN0CAck_Data_AllKwh::AFN0CAck_Data_AllKwh(Pkg_Afn_Data* _origin)
+	:Pkg_Afn_Data(*_origin),userkwh_fee(NULL),devkwh_fee(NULL),onekwh_fee(NULL),fourkwh_fee(NULL)
 {
 }
 AFN0CAck_Data_AllKwh::~AFN0CAck_Data_AllKwh(void)
 {
+	delete[] userkwh_fee;
+	delete[] devkwh_fee;
+	delete[] onekwh_fee;
+	delete[] fourkwh_fee;
 }
 AFN0CAck_Data_AllKwh* AFN0CAck_Data_AllKwh::New()
 {
@@ -24,63 +125,61 @@ AFN0CAck_Data_AllKwh* AFN0CAck_Data_AllKwh::New()
 }
 int AFN0CAck_Data_AllKwh::HandleData()
 {
-	do{
-		int left = m_nLen;
-		BYTE* p = m_pData;
+	int left = m_nLen;
+	BYTE* p = m_pData;
 		
-		int len = AFNData::parseDateTime(p,left,dt);
+	int len = AFNData::parseDateTime5(p,left,dt);
+	if (len <= 0){return YQER_PKG_DATA_Err(2);}
+	GO()
+
+	if (left < 1){return YQER_PKG_DATA_Err(2);}
+	m = p[0];
+	len = 1;
+	if (m <1 ||m > 12){return YQER_PKG_DATA_Err(3);}
+	GO()
+
+	len = AFNData::parseTable14(p,left,userkwh);
+	if (len <= 0){return YQER_PKG_DATA_Err(2);}
+	GO()
+
+	userkwh_fee = new float[m];
+	for (int i = 0; i < m; i++){
+		len = AFNData::parseTable14(p,left,userkwh_fee[i]);
 		if (len <= 0){return YQER_PKG_DATA_Err(2);}
 		GO()
+	}
 
-		if (left < 1){return YQER_PKG_DATA_Err(2);}
-		m = p[0];
-		len = 1;
-		if (m <1 ||m > 12){return YQER_PKG_DATA_Err(3);}
-		GO()
+	len = AFNData::parseTable11(p,left,devkwh);
+	GO()
 
-		len = AFNData::parseTable14(p,left,userkwh);
+	devkwh_fee = new float[m];
+	for (int i = 0; i < m; i++){
+		len = AFNData::parseTable11(p,left,devkwh_fee[i]);
 		if (len <= 0){return YQER_PKG_DATA_Err(2);}
 		GO()
+	}
 
-		userkwh_fee = new float[m];
-		for (int i = 0; i < m; i++){
-			len = AFNData::parseTable14(p,left,userkwh_fee[i]);
-			if (len <= 0){return YQER_PKG_DATA_Err(2);}
-			GO()
-		}
+	len = AFNData::parseTable11(p,left,onekwh);
+	if (len <= 0){return YQER_PKG_DATA_Err(2);}
+	GO()
 
-		len = AFNData::parseTable11(p,left,devkwh);
-		GO()
-
-		devkwh_fee = new float[m];
-		for (int i = 0; i < m; i++){
-			len = AFNData::parseTable11(p,left,devkwh_fee[i]);
-			if (len <= 0){return YQER_PKG_DATA_Err(2);}
-			GO()
-		}
-
-		len = AFNData::parseTable11(p,left,onekwh);
+	onekwh_fee = new float[m];
+	for (int i = 0; i < m; i++){
+		len = AFNData::parseTable11(p,left,onekwh_fee[i]);
 		if (len <= 0){return YQER_PKG_DATA_Err(2);}
 		GO()
+	}
 
-		onekwh_fee = new float[m];
-		for (int i = 0; i < m; i++){
-			len = AFNData::parseTable11(p,left,onekwh_fee[i]);
-			if (len <= 0){return YQER_PKG_DATA_Err(2);}
-			GO()
-		}
+	len = AFNData::parseTable11(p,left,fourkwh);
+	if (len <= 0){return YQER_PKG_DATA_Err(2);}
+	GO()
 
-		len = AFNData::parseTable11(p,left,fourkwh);
+	fourkwh_fee = new float[m];
+	for (int i = 0; i < m; i++){
+		len = AFNData::parseTable11(p,left,fourkwh_fee[i]);
 		if (len <= 0){return YQER_PKG_DATA_Err(2);}
 		GO()
-
-		fourkwh_fee = new float[m];
-		for (int i = 0; i < m; i++){
-			len = AFNData::parseTable11(p,left,fourkwh_fee[i]);
-			if (len <= 0){return YQER_PKG_DATA_Err(2);}
-			GO()
-		}
-	}while (FALSE);
+	}
 	
 	return YQER_OK;
 }
@@ -106,12 +205,11 @@ std::string AFN0CAck_Data_AllKwh::toString()
 	}
 	return os.str();
 }
+//---------------------------------------------------------------------------------
 
 AFN0C::AFN0C(void)
 {
 }
-
-
 AFN0C::~AFN0C(void)
 {
 }
@@ -129,20 +227,27 @@ int AFN0C::HandleAck(std::list<AFNPackage*>& ackLst)
 			Pkg_Afn_Data* pData = NULL;
 			switch (ackPkg->Fn)
 			{
-				case 33:
+				case 2://F2
+					pData = new AFN0CAck_Data_GetClock(ackPkg->pAfn->pAfnData);
+					break;
+				case 11://F11
+					pData = new AFN0CAck_Data_GetRunStatus(ackPkg->pAfn->pAfnData);
+					break;
+				case 33://F33
 					//当前正向有/无功电能示值、一/四象限无功电能示值（总、费率1～M，1≤M≤12）
-					pData = new AFN0CAck_Data_AllKwh(ackPkg->pAfn->pAfnData);			
+					pData = new AFN0CAck_Data_AllKwh(ackPkg->pAfn->pAfnData);
+					break;
 				default:
 					break;
 			} 
 			if (pData){
 				pData->HandleData();
-				AppCall call;
-				call.AFN = ackPkg->pAfn->afnHeader.AFN;
-				call.m_areacode = ackPkg->userHeader.A1;
-				call.m_number = ackPkg->userHeader.A2;
-				AFNPackageBuilder::Instance().Notify(call,pData);
 			}
+			AppCall call;
+			call.AFN = ackPkg->pAfn->afnHeader.AFN;
+			call.m_areacode = ackPkg->userHeader.A1;
+			call.m_number = ackPkg->userHeader.A2;
+			AFNPackageBuilder::Instance().Notify(call,pData);
 		}
 		else if(ackPkg->userHeader.C._C.FUN == Pkg_User_Header::UH_FUNC_SUB9){
 			//否认：无所召唤的数据
@@ -150,7 +255,7 @@ int AFN0C::HandleAck(std::list<AFNPackage*>& ackLst)
 			call.AFN = ackPkg->pAfn->afnHeader.AFN;
 			call.m_areacode = ackPkg->userHeader.A1;
 			call.m_number = ackPkg->userHeader.A2;
-			AFNPackageBuilder::Instance().Notify(call,(Pkg_Afn_Data*)-1);
+			AFNPackageBuilder::Instance().Notify(call,(Pkg_Afn_Data*)0);
 		}
 	}
 	return -1;

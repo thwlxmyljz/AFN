@@ -297,10 +297,11 @@ public:
 	//单元数据内容
 	BYTE* m_pData;
 	DWORD m_nLen;
-
+	//m_pData引用计数
+	int m_DataUsed;
 public:
 	Pkg_Afn_Data();
-	Pkg_Afn_Data(const Pkg_Afn_Data& _origin);
+	Pkg_Afn_Data(Pkg_Afn_Data& _origin);
 	virtual ~Pkg_Afn_Data();
 	Pkg_Afn_Data(BYTE* _data,DWORD _len);
 

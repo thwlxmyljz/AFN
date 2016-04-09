@@ -3,13 +3,67 @@
 #include "proto.h"
 #include <list>
 #include <string>
+#include "AFNData.h"
 
 class AFNPackage;
+//--------------------------------------------------------------------------
+class AFN0CAck_Data_GetClock : public Pkg_Afn_Data
+{
+public:
+	AFN0CAck_Data_GetClock(Pkg_Afn_Data* _origin);
+	AFN0CAck_Data_GetClock();
+	~AFN0CAck_Data_GetClock(void);
 
+	virtual AFN0CAck_Data_GetClock* New();
+	virtual int HandleData();
+	std::string toString();
+public:
+	std::string dt;
+};
+//--------------------------------------------------------------------------
+class AFN0CAck_Data_GetRunStatus : public Pkg_Afn_Data
+{
+public:
+	AFN0CAck_Data_GetRunStatus(Pkg_Afn_Data* _origin);
+	AFN0CAck_Data_GetRunStatus();
+	~AFN0CAck_Data_GetRunStatus(void);
+
+	virtual AFN0CAck_Data_GetRunStatus* New();
+	virtual int HandleData();
+	std::string toString();
+public:
+	/*
+	本项数据块个数n	BIN	1
+
+	终端通信端口号	BIN	1
+	要抄电表总数	BIN	2
+	当前抄表工作状态标志	BS8	1
+	抄表成功块数	BIN	2
+	抄重点表成功块数	BIN	1
+	抄表开始时间	见附录A.1	6
+	抄表结束时间	见附录A.1	6
+	*/
+	int n;
+	class Block{
+	public:
+		BYTE port;
+		short num;
+		BYTE status;
+		short success;
+		BYTE success_import;
+		std::string sdt;
+		std::string edt;
+
+		int parse(const BYTE*p, int len);
+		std::string toString();
+	};
+	Block* pBlock;
+};
+//--------------------------------------------------------------------------
 class AFN0CAck_Data_AllKwh : public Pkg_Afn_Data
 {
 public:
-	AFN0CAck_Data_AllKwh(const Pkg_Afn_Data* _origin);
+	AFN0CAck_Data_AllKwh(Pkg_Afn_Data* _origin);
 	AFN0CAck_Data_AllKwh();
 	~AFN0CAck_Data_AllKwh(void);
 public:
@@ -47,7 +101,7 @@ public:
 	float fourkwh;
 	float* fourkwh_fee;
 };
-
+//--------------------------------------------------------------------------
 class AFN0C : public Pkg_Afn {
 public:
 	AFN0C(void);
