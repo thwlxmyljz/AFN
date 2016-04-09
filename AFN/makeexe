@@ -4,8 +4,8 @@ cc=g++
 debug=-c -Wall -g -D_DEBUG -DSO_REUSEADDR
 release=-c -Wall -DSO_REUSEADDR -DRUNASCHILD
 
-SRCDIR := .
-SOCKETDIR := ./thirdparty
+SRCDIR := ./src
+THIRDDIR := ./thirdparty
 OBJDIR := ./obj
 
 cmp=$(debug)
@@ -13,16 +13,16 @@ APP_NAME=AFN
 #APP_NAME=AFN.so
 DEFS=-DHAVE_FCNTL_H 
 
-VPATH=$(SRCDIR):$(SOCKETDIR)
+VPATH=$(SRCDIR):$(THIRDDIR)
 
 INC = -I/usr/local/include \
-	  -I$(SOCKETDIR) \
+	  -I$(THIRDDIR) \
 	  -I$(SRCDIR)
 
 
 LIB = -lpthread -levent -lxml2
   
-SRCS:=$(wildcard $(SRCDIR)/*.cpp $(SOCKETDIR)/*.cpp)
+SRCS:=$(wildcard $(SRCDIR)/*.cpp $(THIRDDIR)/*.cpp)
 SRCS:=$(notdir $(SRCS))
 OBJS:=$(patsubst %.cpp,$(OBJDIR)/%.o,$(SRCS))
 
@@ -30,7 +30,7 @@ $(OBJDIR)/%.o: %.cpp
 	echo compiling $(<F)
 	$(cc) $(cmp) $(INC) $(DEFS) $< -o $@
 all:$(OBJS)	
-	$(cc) -g -DDEBUG -Dlinux=l $(LIB) $(INC) $(DEFS) -o $(APP_NAME) $(OBJS)
+	$(cc) -g -DDEBUG -Dlinux=l $(LIB) -o $(APP_NAME) $(OBJS)
 clean :
 	echo rm begin 
 	rm -f $(OBJDIR)/*.o

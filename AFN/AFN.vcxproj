@@ -83,20 +83,23 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AFN01.h" />
-    <ClInclude Include="AFN02.h" />
-    <ClInclude Include="AFN04.h" />
-    <ClInclude Include="AFN0C.h" />
-    <ClInclude Include="AFNData.h" />
-    <ClInclude Include="AFNPackage.h" />
-    <ClInclude Include="AFNPackageBuilder.h" />
-    <ClInclude Include="Connection.h" />
-    <ClInclude Include="DBManager.h" />
-    <ClInclude Include="LogFileu.h" />
-    <ClInclude Include="proto.h" />
-    <ClInclude Include="targetver.h" />
-    <ClInclude Include="TcpServer.h" />
-    <ClInclude Include="TelnetServer.h" />
+    <ClInclude Include="src\AFN01.h" />
+    <ClInclude Include="src\AFN02.h" />
+    <ClInclude Include="src\AFN04.h" />
+    <ClInclude Include="src\AFN0C.h" />
+    <ClInclude Include="src\AFNData.h" />
+    <ClInclude Include="src\AFNPackage.h" />
+    <ClInclude Include="src\AFNPackageBuilder.h" />
+    <ClInclude Include="src\Connection.h" />
+    <ClInclude Include="src\DBManager.h" />
+    <ClInclude Include="src\LogFileu.h" />
+    <ClInclude Include="src\proto.h" />
+    <ClInclude Include="src\targetver.h" />
+    <ClInclude Include="src\TcpServer.h" />
+    <ClInclude Include="src\TelnetServer.h" />
+    <ClInclude Include="src\YQDefs.h" />
+    <ClInclude Include="src\YQErrCode.h" />
+    <ClInclude Include="src\YQUtils.h" />
     <ClInclude Include="thirdparty\Base64.h" />
     <ClInclude Include="thirdparty\Exception.h" />
     <ClInclude Include="thirdparty\File.h" />
@@ -119,25 +122,23 @@
     <ClInclude Include="thirdparty\XmlDocument.h" />
     <ClInclude Include="thirdparty\XmlException.h" />
     <ClInclude Include="thirdparty\XmlNode.h" />
-    <ClInclude Include="YQDefs.h" />
-    <ClInclude Include="YQErrCode.h" />
-    <ClInclude Include="YQUtils.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AFN.cpp" />
-    <ClCompile Include="AFN01.cpp" />
-    <ClCompile Include="AFN02.cpp" />
-    <ClCompile Include="AFN04.cpp" />
-    <ClCompile Include="AFN0C.cpp" />
-    <ClCompile Include="AFNData.cpp" />
-    <ClCompile Include="AFNPackage.cpp" />
-    <ClCompile Include="AFNPackageBuilder.cpp" />
-    <ClCompile Include="Connection.cpp" />
-    <ClCompile Include="DBManager.cpp" />
-    <ClCompile Include="LogFileu.cpp" />
-    <ClCompile Include="proto.cpp" />
-    <ClCompile Include="TcpServer.cpp" />
-    <ClCompile Include="TelnetServer.cpp" />
+    <ClCompile Include="src\AFN.cpp" />
+    <ClCompile Include="src\AFN01.cpp" />
+    <ClCompile Include="src\AFN02.cpp" />
+    <ClCompile Include="src\AFN04.cpp" />
+    <ClCompile Include="src\AFN0C.cpp" />
+    <ClCompile Include="src\AFNData.cpp" />
+    <ClCompile Include="src\AFNPackage.cpp" />
+    <ClCompile Include="src\AFNPackageBuilder.cpp" />
+    <ClCompile Include="src\Connection.cpp" />
+    <ClCompile Include="src\DBManager.cpp" />
+    <ClCompile Include="src\LogFileu.cpp" />
+    <ClCompile Include="src\proto.cpp" />
+    <ClCompile Include="src\TcpServer.cpp" />
+    <ClCompile Include="src\TelnetServer.cpp" />
+    <ClCompile Include="src\YQUtils.cpp" />
     <ClCompile Include="thirdparty\Base64.cpp" />
     <ClCompile Include="thirdparty\Exception.cpp" />
     <ClCompile Include="thirdparty\File.cpp" />
@@ -154,7 +155,6 @@
     <ClCompile Include="thirdparty\XmlDocument.cpp" />
     <ClCompile Include="thirdparty\XmlException.cpp" />
     <ClCompile Include="thirdparty\XmlNode.cpp" />
-    <ClCompile Include="YQUtils.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

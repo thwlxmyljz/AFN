@@ -19,38 +19,17 @@
     <Filter Include="源文件\thirdparty">
       <UniqueIdentifier>{06d892db-040f-4561-9f13-7b0de5ca9927}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\src">
+      <UniqueIdentifier>{1fc970db-a42f-43de-a946-80f93ab263b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\src">
+      <UniqueIdentifier>{b00a49d0-e936-483d-ac47-045e5c6b83fe}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="targetver.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Connection.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="AFNPackage.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="AFNPackageBuilder.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="DBManager.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="TcpServer.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="YQUtils.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="YQDefs.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="YQErrCode.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="thirdparty\Ipv4Address.h">
       <Filter>头文件\thirdparty</Filter>
     </ClInclude>
@@ -77,9 +56,6 @@
     </ClInclude>
     <ClInclude Include="thirdparty\XmlNode.h">
       <Filter>头文件\thirdparty</Filter>
-    </ClInclude>
-    <ClInclude Include="LogFileu.h">
-      <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="thirdparty\Exception.h">
       <Filter>头文件\thirdparty</Filter>
@@ -117,56 +93,62 @@
     <ClInclude Include="thirdparty\IStream.h">
       <Filter>头文件\thirdparty</Filter>
     </ClInclude>
-    <ClInclude Include="proto.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="AFNData.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="AFN02.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="AFN01.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="TelnetServer.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="AFN04.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="AFN0C.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="thirdparty\sockets-config.h">
       <Filter>头文件\thirdparty</Filter>
     </ClInclude>
+    <ClInclude Include="src\AFN0C.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AFN01.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AFN02.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AFN04.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AFNData.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AFNPackage.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AFNPackageBuilder.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Connection.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DBManager.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\LogFileu.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\proto.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\targetver.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TcpServer.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TelnetServer.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\YQDefs.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\YQErrCode.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\YQUtils.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AFN.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Connection.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="AFNPackage.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="AFNPackageBuilder.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="DBManager.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="TcpServer.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="LogFileu.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="YQUtils.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="thirdparty\Ipv4Address.cpp">
       <Filter>源文件\thirdparty</Filter>
     </ClCompile>
@@ -215,26 +197,50 @@
     <ClCompile Include="thirdparty\FileStream.cpp">
       <Filter>源文件\thirdparty</Filter>
     </ClCompile>
-    <ClCompile Include="proto.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="src\AFN.cpp">
+      <Filter>源文件\src</Filter>
     </ClCompile>
-    <ClCompile Include="AFNData.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="src\AFN0C.cpp">
+      <Filter>源文件\src</Filter>
     </ClCompile>
-    <ClCompile Include="AFN02.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="src\AFN01.cpp">
+      <Filter>源文件\src</Filter>
     </ClCompile>
-    <ClCompile Include="AFN01.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="src\AFN02.cpp">
+      <Filter>源文件\src</Filter>
     </ClCompile>
-    <ClCompile Include="TelnetServer.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="src\AFN04.cpp">
+      <Filter>源文件\src</Filter>
     </ClCompile>
-    <ClCompile Include="AFN04.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="src\AFNData.cpp">
+      <Filter>源文件\src</Filter>
     </ClCompile>
-    <ClCompile Include="AFN0C.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="src\AFNPackage.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AFNPackageBuilder.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Connection.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DBManager.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LogFileu.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\proto.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TcpServer.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TelnetServer.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\YQUtils.cpp">
+      <Filter>源文件\src</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
