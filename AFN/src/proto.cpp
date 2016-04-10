@@ -100,7 +100,7 @@ Pkg_Afn_Data::~Pkg_Afn_Data()
 	}
 }
 Pkg_Afn_Data::Pkg_Afn_Data(BYTE* _data,DWORD _len)
-		:m_pData(NULL),m_nLen(0)
+		:m_pData(NULL),m_nLen(0),m_DataUsed(0)
 {
 	unPackData(_data,_len);
 }
@@ -119,6 +119,7 @@ void Pkg_Afn_Data::unPackData(BYTE* _data,DWORD _len)
 		if (m_pData){
 			m_nLen = _len;
 			memcpy(m_pData,_data,m_nLen);
+			m_DataUsed = 1;
 		}
 	}
 }

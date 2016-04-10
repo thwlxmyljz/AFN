@@ -220,43 +220,41 @@ int AFN0C::HandleAck(std::list<AFNPackage*>& ackLst)
 	}
 	//AFN0C响应帧
 	AFNPackage* ackPkg = *(ackLst.begin());	
-	if (ackPkg->pAfn->afnHeader.AFN == Pkg_Afn_Header::AFN0C)
-	{
-		if (ackPkg->userHeader.C._C.FUN == Pkg_User_Header::UH_FUNC_SUB8){
-			//用户数据
-			Pkg_Afn_Data* pData = NULL;
-			switch (ackPkg->Fn)
-			{
-				case 2://F2
-					pData = new AFN0CAck_Data_GetClock(ackPkg->pAfn->pAfnData);
-					break;
-				case 11://F11
-					pData = new AFN0CAck_Data_GetRunStatus(ackPkg->pAfn->pAfnData);
-					break;
-				case 33://F33
-					//当前正向有/无功电能示值、一/四象限无功电能示值（总、费率1～M，1≤M≤12）
-					pData = new AFN0CAck_Data_AllKwh(ackPkg->pAfn->pAfnData);
-					break;
-				default:
-					break;
-			} 
-			if (pData){
-				pData->HandleData();
-			}
-			AppCall call;
-			call.AFN = ackPkg->pAfn->afnHeader.AFN;
-			call.m_areacode = ackPkg->userHeader.A1;
-			call.m_number = ackPkg->userHeader.A2;
-			AFNPackageBuilder::Instance().Notify(call,pData);
+	
+	if (ackPkg->userHeader.C._C.FUN == Pkg_User_Header::UH_FUNC_SUB8){
+		//用户数据
+		Pkg_Afn_Data* pData = NULL;
+		switch (ackPkg->Fn)
+		{
+			case 2://F2
+				pData = new AFN0CAck_Data_GetClock(ackPkg->pAfn->pAfnData);
+				break;
+			case 11://F11
+				pData = new AFN0CAck_Data_GetRunStatus(ackPkg->pAfn->pAfnData);
+				break;
+			case 33://F33
+				//当前正向有/无功电能示值、一/四象限无功电能示值（总、费率1～M，1≤M≤12）
+				pData = new AFN0CAck_Data_AllKwh(ackPkg->pAfn->pAfnData);
+				break;
+			default:
+				break;
+		} 
+		if (pData){
+			pData->HandleData();
 		}
-		else if(ackPkg->userHeader.C._C.FUN == Pkg_User_Header::UH_FUNC_SUB9){
-			//否认：无所召唤的数据
-			AppCall call;
-			call.AFN = ackPkg->pAfn->afnHeader.AFN;
-			call.m_areacode = ackPkg->userHeader.A1;
-			call.m_number = ackPkg->userHeader.A2;
-			AFNPackageBuilder::Instance().Notify(call,(Pkg_Afn_Data*)0);
-		}
+		AppCall call;
+		call.AFN = ackPkg->pAfn->afnHeader.AFN;
+		call.m_areacode = ackPkg->userHeader.A1;
+		call.m_number = ackPkg->userHeader.A2;
+		AFNPackageBuilder::Instance().Notify(call,pData);
+	}
+	else if(ackPkg->userHeader.C._C.FUN == Pkg_User_Header::UH_FUNC_SUB9){
+		//否认：无所召唤的数据
+		AppCall call;
+		call.AFN = ackPkg->pAfn->afnHeader.AFN;
+		call.m_areacode = ackPkg->userHeader.A1;
+		call.m_number = ackPkg->userHeader.A2;
+		AFNPackageBuilder::Instance().Notify(call,(Pkg_Afn_Data*)0);
 	}
 	return -1;
 }

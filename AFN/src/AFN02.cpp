@@ -31,8 +31,7 @@ int AFN02::HandleRequest(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& 
 	}
 	//AFN02单帧
 	AFNPackage* reqPkg = *(reqLst.begin());	
-	if (reqPkg->userHeader.C._C.FUN == Pkg_User_Header::UH_FUNC_MAIN9 && \
-		reqPkg->pAfn->afnHeader.AFN == Pkg_Afn_Header::AFN02)
+	if (reqPkg->userHeader.C._C.FUN == Pkg_User_Header::UH_FUNC_MAIN9)
 	{
 		//链路接口检测,发送响应帧,保存启动帧序号PSEQ为响应帧起始序号			
 		if (reqPkg->pn == 0){

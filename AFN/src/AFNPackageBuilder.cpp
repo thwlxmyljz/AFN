@@ -7,13 +7,13 @@
 #include "LogFileu.h"
 
 #define LOCK_GETDEV() Lock lock(g_JzqConListMutex);\
-	Jzq* dev = g_JzqConList->getJzq(name);\
-	if (!dev){\
-		return YQER_JZQ_NOTFOUND;\
-	}\
-	if (!dev->m_conn){\
-		return YQER_JZQ_NOLOGIN;\
-	}
+					Jzq* dev = g_JzqConList->getJzq(name);\
+					if (!dev){\
+						return YQER_JZQ_NOTFOUND;\
+					}\
+					if (!dev->m_conn){\
+						return YQER_JZQ_NOLOGIN;\
+					}
 
 #define SET_COMMPARAMS(ackPkg,dev,afnData) ackPkg->userHeader.C._C.DIR = 0x00;\
 	ackPkg->userHeader.C._C.PRM = 0x01;\
@@ -29,11 +29,11 @@
 #define BEGIN_CALL() AppCall call;\
 					int ret = YQER_OK;
 
-#define SET_CALL(call) call.AFN = ackPkg->pAfn->afnHeader.AFN;\
+#define SET_CALL() call.AFN = ackPkg->pAfn->afnHeader.AFN;\
 		call.m_areacode = dev->m_areacode;\
 		call.m_number = dev->m_number;
 
-#define END_CALL_WAIT() Pkg_Afn_Data* p = Wait(call);\
+#define END_CALL_WAIT(val) Pkg_Afn_Data* p = Wait(call);\
 					if (val){\
 						(*val) = p;\
 					}\
@@ -70,9 +70,11 @@ int AFNPackageBuilder::HandlePkg(std::list<AFNPackage*>& reqLst,std::list<AFNPac
 	if((reqLst.size()) >= 1){
 		AFNPackage* reqPkg = *(reqLst.begin());
 		if (reqPkg->userHeader.C._C.PRM == 1){
+			//收到集中器作为启动站请求帧
 			return DoHandleRequest(reqLst,ackLst);
 		}
 		else{
+			//收到集中器作为从动站响应帧
 			return DoHandleAck(reqLst);
 		}
 	}
@@ -181,9 +183,9 @@ int AFNPackageBuilder::setpointparams(Pkg_Afn_Data** val,std::string name,WORD p
 		ackPkg->userHeader.C._C.FUN = 11;//请求2级数据		
 		ackPkg->okPkg();
 		ret = dev->m_conn->SendPkg(ackPkg);
-		SET_CALL(call)
+		SET_CALL()
 	}
-	END_CALL_WAIT()
+	END_CALL_WAIT(val)
 }
 int AFNPackageBuilder::setpointstatus(Pkg_Afn_Data** val,std::string name)
 {
@@ -197,9 +199,9 @@ int AFNPackageBuilder::setpointstatus(Pkg_Afn_Data** val,std::string name)
 		ackPkg->userHeader.C._C.FUN = 10;//请求1级数据		
 		ackPkg->okPkg();
 		ret = dev->m_conn->SendPkg(ackPkg);
-		SET_CALL(call)
+		SET_CALL()
 	}
-	END_CALL_WAIT()
+	END_CALL_WAIT(val)
 }
 int AFNPackageBuilder::getclock(Pkg_Afn_Data** val,std::string name)
 {
@@ -213,9 +215,9 @@ int AFNPackageBuilder::getclock(Pkg_Afn_Data** val,std::string name)
 		ackPkg->userHeader.C._C.FUN = 10;//请求1级数据	
 		ackPkg->okPkg();
 		ret = dev->m_conn->SendPkg(ackPkg);
-		SET_CALL(call)
+		SET_CALL()
 	}
-	END_CALL_WAIT()
+	END_CALL_WAIT(val)
 }
 int AFNPackageBuilder::getstatus(Pkg_Afn_Data** val,std::string name)
 {
@@ -229,9 +231,9 @@ int AFNPackageBuilder::getstatus(Pkg_Afn_Data** val,std::string name)
 		ackPkg->userHeader.C._C.FUN = 10;//请求1级数据	
 		ackPkg->okPkg();
 		ret = dev->m_conn->SendPkg(ackPkg);
-		SET_CALL(call)
+		SET_CALL()
 	}
-	END_CALL_WAIT()
+	END_CALL_WAIT(val)
 }
 int AFNPackageBuilder::getallkwh(Pkg_Afn_Data** val,std::string name,WORD pn)
 {
@@ -245,7 +247,7 @@ int AFNPackageBuilder::getallkwh(Pkg_Afn_Data** val,std::string name,WORD pn)
 		ackPkg->userHeader.C._C.FUN = 10;//请求1级数据	
 		ackPkg->okPkg();
 		ret = dev->m_conn->SendPkg(ackPkg);
-		SET_CALL(call)
+		SET_CALL()
 	}
-	END_CALL_WAIT()
+	END_CALL_WAIT(val)
 }
