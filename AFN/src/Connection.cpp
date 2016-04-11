@@ -9,8 +9,9 @@
 #define BUF_SIZE 16384
 
 Connection::Connection(struct event_base *base,struct bufferevent *_bev,evutil_socket_t _fd,struct sockaddr *sa)
-	:m_jzq(NULL),bev(_bev),fd(_fd),m_remoteAddr((*(sockaddr_in*)sa))
+	:bev(_bev),fd(_fd),m_remoteAddr((*(sockaddr_in*)sa))
 {	
+	m_jzq.Invalid();
 #ifdef _WIN32
 	in_addr addr; 
 	memcpy(&addr, &m_remoteAddr.sin_addr.S_un.S_addr, sizeof(m_remoteAddr.sin_addr.S_un.S_addr));   
@@ -74,15 +75,8 @@ int Connection::RecBuf()
 		std::list<AFNPackage* > ackLst;	
 		if (pkg->userHeader.A3._A3.TAG == 0){
 			//单地址
-			if (!m_jzq){
-				//查找集中器，如果集中器配置在数据库内，则会查找到此集中器
-				//如果未配置在数据库内，在处理登录帧的时候，会加入到集中器列表，再下一帧数据过来的时候，会查找到此集中器
-				m_jzq = g_JzqConList->getJzq(pkg->userHeader.A1,pkg->userHeader.A2);
-				if (m_jzq){
-					//设置集中器的网络连接
-					m_jzq->m_conn = this;
-				}
-			}
+			m_jzq.m_areacode = pkg->userHeader.A1;
+			m_jzq.m_number = pkg->userHeader.A2;				
 		}
 		if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 1  && pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 1) {
 			//单帧
@@ -146,34 +140,31 @@ BOOL Connection::Compare(struct bufferevent *_bev)
 //------------------------------------------------------------------------------------
 Jzq::Jzq()
 	:m_name(""),
-	m_areacode(0),
-	m_number(0),
 	m_tag(0),
 	m_RSEQ(0x0),
 	m_PSEQ(0x0),
 	m_PFC(0x0),
-	m_conn(NULL),
 	m_heart(0)
 {
+	m_a1a2.Invalid();
 }
 Jzq::Jzq(string _name,WORD _areaCode,WORD _number,BYTE _tag)
 	:m_name(_name),
-	m_areacode(_areaCode),
-	m_number(_number),
 	m_tag(_tag),
 	m_RSEQ(0x0),
 	m_PSEQ(0x0),
 	m_PFC(0x0),
-	m_conn(NULL),
 	m_heart(0)
 {
+	m_a1a2.m_areacode = _areaCode;
+	m_a1a2.m_number = _number;
 }
 Jzq::~Jzq()
 {
 }
 BOOL Jzq::operator==(const Jzq& o)
 {
-	return (o.m_areacode == m_areacode && o.m_number == m_number);
+	return (m_a1a2 == o.m_a1a2);
 }
 //------------------------------------------------------------------------------------
 BYTE Jzq::s_MSA = 0x01;
@@ -205,9 +196,9 @@ std::string JzqList::printJzq()
 	jzqIter it = m_jzqList.begin();
 	while (it != m_jzqList.end()){
 		Jzq* p = (*it);
-		os <<"name(" << p->m_name << "),areacode(" << p->m_areacode << "),address(" << p->m_number << "),state("\
-			<< ((p->m_tag&0x1)?"db:yes,":"db:no,") << ((p->m_tag&0x2)?"online:yes)":"online:no)") ;
-		os << "\r\n--------------------------------------------------------\r\n";
+		os <<"name(" << p->m_name << "),areacode(" << p->m_a1a2.m_areacode << "),address(" << p->m_a1a2.m_number << "),state("\
+			<< ((p->m_tag&0x1)?"config:yes,":"config:no,") << ((p->m_tag&0x2)?"online:yes)":"online:no)") ;
+		os << "\r\n-------------------------------------------------------------------------------\r\n";
 		it++;
 	}
 	return os.str();
@@ -228,12 +219,6 @@ void JzqList::conn_readcb(struct bufferevent *bev, void *user_data)
 }
 void JzqList::conn_writecb(struct bufferevent *bev, void *user_data)
 {
-	/*
-    struct evbuffer *output = bufferevent_get_output(bev);
-    if (evbuffer_get_length(output) == 0) {
-        ;
-    }
-	*/
 }
 
 void JzqList::conn_eventcb(struct bufferevent *bev, short events, void *user_data)
@@ -272,41 +257,26 @@ void JzqList::delConnection(struct bufferevent *bev)
 	for (conIter it = g_JzqConList->begin(); it != g_JzqConList->end(); it++){
 		Connection* con = (*it);
 		if (con->Compare(bev))
-		{		
-			//清除集中器的网络连接
-			if (con->m_jzq){
-				con->m_jzq->m_conn = NULL;
-			}
+		{					
+			YQLogInfo("delete connection");
 			g_JzqConList->erase(it);			
 			delete con;
 			break;
 		}
 	}    
 }
-Connection* JzqList::getConnection(struct bufferevent *bev)
-{
-	for (conIter it = g_JzqConList->begin(); it != g_JzqConList->end(); it++){
-		Connection* con = (*it);
-		if (con->Compare(bev))
-		{			
-			return con;
-			break;
-		}
-	} 
-	return NULL;
-}
 Jzq* JzqList::getJzq(WORD _areacode,WORD _number)
 {
 	Jzq *p = NULL;
 	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++){
-		if ((*it)->m_areacode == _areacode && (*it)->m_number == _number){			
+		if ((*it)->m_a1a2.m_areacode == _areacode && (*it)->m_a1a2.m_number == _number){			
 			p = (*it);
 			break;
 		}
 	}
 	return p;
 }
-Jzq* JzqList::getJzq(std::string _name)
+Jzq* JzqList::getJzq(const std::string& _name)
 {
 	Jzq *p = NULL;
 	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++){
@@ -317,15 +287,48 @@ Jzq* JzqList::getJzq(std::string _name)
 	}
 	return p;
 }
+Connection* JzqList::getConnection(struct bufferevent *bev)
+{
+	for (conIter it = g_JzqConList->begin(); it != g_JzqConList->end(); it++){
+		Connection* con = (*it);
+		if (con->Compare(bev)){			
+			return con;
+		}
+	} 
+	return NULL;
+}
+Connection* JzqList::getConnection(WORD _areacode,WORD _number)
+{
+	Connection *p = NULL;
+	for (conIter it = begin(); it != end(); it++){
+		if ((*it)->m_jzq.m_areacode == _areacode && (*it)->m_jzq.m_number == _number){			
+			p = (*it);
+			break;
+		}
+	}
+	return p;
+}
+Connection* JzqList::getConnection(const std::string& _name)
+{
+	Jzq *p = getJzq(_name);
+	if ( p ){
+		return getConnection(p->m_a1a2.m_areacode,p->m_a1a2.m_number);
+	}
+	return NULL;
+}
 void JzqList::ReportLoginState(WORD _areacode,WORD _number,WORD _Fn,BYTE _pseq)
 {
 	Jzq *p = getJzq(_areacode,_number);
 	if (!p){
-		YQLogInfo("new jzq");
-		p = new Jzq("",_areacode,_number,0x0);
+		static int noneTag = 1;
+		std::string noneName = "none";
+		ostringstream os;
+		os << "none" << noneTag++;
+		p = new Jzq(os.str(),_areacode,_number,0x0);
 		if (!p)
 			return;
 		m_jzqList.push_back(p);
+		LogFile->FmtLog(LOG_INFORMATION,"new jzq(%s)",p->m_name.c_str());
 	}
 	if (_Fn==1){
 		p->m_tag |= (0x1<<1);
@@ -347,7 +350,7 @@ BYTE JzqList::GetRSEQ(WORD _areacode,WORD _number,BOOL _increase)
 	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++)
 	{
 		Jzq* p = (*it);
-		if (p->m_areacode == _areacode && p->m_number == _number)
+		if (p->m_a1a2.m_areacode == _areacode && p->m_a1a2.m_number == _number)
 		{			
 			BYTE n = p->m_RSEQ;
 			if (_increase){
@@ -365,7 +368,7 @@ BYTE JzqList::GetPSEQ(WORD _areacode,WORD _number,BOOL _increase)
 	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++)
 	{
 		Jzq* p = (*it);
-		if (p->m_areacode == _areacode && p->m_number == _number)
+		if (p->m_a1a2.m_areacode == _areacode && p->m_a1a2.m_number == _number)
 		{			
 			BYTE n = p->m_PFC;
 			if (_increase){

@@ -103,15 +103,15 @@ int TelnetServer::Run()
 	return 0;
 }
 //命令说明
-char helpstr[] = "\r\n+++++++++++++++++++++++\r\n"
-				"command: ls,quit,setpointparams,setpointstatus,getclock,getstatus\r\n+++++++++++++++++++++++\r\n\r\n"
-				"1, ls: list all zjq\r\n-----------------\r\n"
-				"2, quit: quit\r\n-----------------\r\n"
-				"3, setpointparams [name] [pn]:not implement\r\n-----------------\r\n"				
-				"4, setpointstatus [name]:not implement\r\n-----------------\r\n"
-				"5, getclock [name]:终端日历时钟未显示星期，测试命令(getclock test)\r\n-----------------\r\n"
-				"6, getstatus [name]:终端集中抄表状态信息，测试命令(getstatus test)\r\n-----------------\r\n"
-				"7, getallkwh [name] [pn]:读取电表数据,测试命令(getallkwh test 1)\r\n-----------------\r\n"
+char helpstr[] = "\r\n++++++++++++++++++++++++++++++++++++++++++++++\r\n"
+				"command: ls,quit,setpointparams,setpointstatus,getclock,getstatus\r\n++++++++++++++++++++++++++++++++++++++++++++++\r\n\r\n"
+				"1, ls: list all zjq\r\n---------------------------------------------------\r\n"
+				"2, quit: quit\r\n---------------------------------------------------\r\n"
+				"3, setpointparams [name] [pn]:not implement\r\n---------------------------------------------------\r\n"				
+				"4, setpointstatus [name]:not implement\r\n---------------------------------------------------\r\n"
+				"5, getclock [name]:终端日历时钟未显示星期，测试命令(getclock test)\r\n---------------------------------------------------\r\n"
+				"6, getstatus [name]:终端集中抄表状态信息，测试命令(getstatus test)\r\n---------------------------------------------------\r\n"
+				"7, getallkwh [name] [pn]:读取电表数据,测试命令(getallkwh test 1)\r\n---------------------------------------------------\r\n"
 				"\r\n\r\n$";
 void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 {

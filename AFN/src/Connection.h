@@ -21,8 +21,52 @@
 using namespace std;
 
 class AFNPackage;
-class Jzq;
 
+class Jzq{
+public:
+	class JzqA1A2{	
+	public:
+		//行政区号,0无效
+		WORD m_areacode;
+		//地址编码,0无效
+		WORD m_number;
+		void Invalid(){
+			m_areacode = 0;
+			m_number = 0;
+		}
+		BOOL isOK(){
+			return m_areacode != 0 && m_number != 0;
+		}
+		bool operator==(const JzqA1A2& o){
+			return m_areacode == o.m_areacode && m_number == o.m_number;
+		}
+	} m_a1a2;
+
+	//名称
+	string m_name;
+	//按位表示属性
+	/*
+	bit0:1已存在数据库配置,0未配置
+	bit1:1已登录，0未登录
+	*/
+	BYTE m_tag;	
+	//响应帧序号
+	BYTE m_RSEQ;
+	//请求帧序号
+	BYTE m_PSEQ;
+	//启动帧帧序号计数器PFC
+	BYTE m_PFC;
+	//最近的心跳时间
+	DWORD m_heart;
+	//主站MSA值
+	static BYTE s_MSA;
+public:
+	Jzq();
+	Jzq(string _name,WORD _areaCode,WORD _number,BYTE _tag);
+	~Jzq();
+	BOOL operator==(const Jzq& o);
+};
+//------------------------------------------------------------------------------------
 /*集中器连接*/
 class Connection
 {
@@ -30,8 +74,8 @@ class Connection
 public:
 	Connection(struct event_base *base,struct bufferevent *_bev,evutil_socket_t _fd,struct sockaddr *sa);
 	virtual ~Connection(void);
-	//集中器
-	Jzq* m_jzq;
+	//集中器标记
+	Jzq::JzqA1A2 m_jzq;
 
 public:
 	//读取连接数据包
@@ -60,39 +104,6 @@ private:
 	typedef std::list<AFNPackage*>::iterator Iter;
 };
 //------------------------------------------------------------------------------------
-class Jzq{
-public:
-	//名称
-	string m_name;
-	//行政区号
-	WORD m_areacode;
-	//地址编码
-	WORD m_number;
-	//按位表示属性
-	/*
-	bit0:1已存在数据库配置,0未配置
-	bit1:1已登录，0未登录
-	*/
-	BYTE m_tag;	
-	//响应帧序号
-	BYTE m_RSEQ;
-	//请求帧序号
-	BYTE m_PSEQ;
-	//启动帧帧序号计数器PFC
-	BYTE m_PFC;
-	//网络连接
-	Connection* m_conn;
-	//最近的心跳时间
-	DWORD m_heart;
-	//主站MSA值
-	static BYTE s_MSA;
-public:
-	Jzq();
-	Jzq(string _name,WORD _areaCode,WORD _number,BYTE _tag);
-	~Jzq();
-	BOOL operator==(const Jzq& o);
-};
-//------------------------------------------------------------------------------------
 /*
 集中器管理列表,连接链表+集中器链表
 */
@@ -110,15 +121,17 @@ public:
 	void LoadJzq();
 	//集中器列表打印
 	std::string printJzq();
+	Jzq* getJzq(WORD _areacode,WORD _number);
+	Jzq* getJzq(const std::string& _name);
 	//新的集中器连接
 	int newConnection(struct event_base *base,evutil_socket_t fd, struct sockaddr *sa);
 	//删除集中器连接
 	void delConnection(struct bufferevent *bev);
 	//获取连接对象
 	Connection* getConnection(struct bufferevent *bev);
-	//获取集中器对象
-	Jzq* getJzq(WORD _areacode,WORD _number);
-	Jzq* getJzq(std::string _name);
+	//获取集中器连接对象
+	Connection* getConnection(WORD _areacode,WORD _number);
+	Connection* getConnection(const std::string& _name) ;
 	//登录相关
 	void ReportLoginState(WORD _areacode,WORD _number,WORD _Fn,BYTE _pseq);
 	//获取集中器的响应RSEQ

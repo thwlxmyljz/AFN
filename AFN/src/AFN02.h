@@ -22,10 +22,10 @@ CS
 16H
 */
 
-class AFN02Data_Ack : public Pkg_Afn_Data{
+class AFN02Ack_Data : public Pkg_Afn_Data{
 public:
-	AFN02Data_Ack(Pkg_Afn_DataTag _what);
-	virtual ~AFN02Data_Ack();
+	AFN02Ack_Data(Pkg_Afn_DataTag _what);
+	virtual ~AFN02Ack_Data();
 public:
 	BYTE WhatAckAFN;//1×Ö½Ú
 	Pkg_Afn_DataTag WhatAckDataTag;//4×Ö½Ú

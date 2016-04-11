@@ -5,7 +5,7 @@
 #include "LogFileu.h"
 
 
-AFN02Data_Ack::AFN02Data_Ack(Pkg_Afn_DataTag _what)
+AFN02Ack_Data::AFN02Ack_Data(Pkg_Afn_DataTag _what)
 	:Pkg_Afn_Data(),WhatAckDataTag(_what)
 {
 	m_Tag.DA1 = 0;
@@ -21,7 +21,7 @@ AFN02Data_Ack::AFN02Data_Ack(Pkg_Afn_DataTag _what)
 	memcpy(m_pData+1,&WhatAckDataTag,4);
 	m_pData[5] = Err;
 }
-AFN02Data_Ack::~AFN02Data_Ack()
+AFN02Ack_Data::~AFN02Ack_Data()
 {
 }
 int AFN02::HandleRequest(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& ackLst)
@@ -60,7 +60,7 @@ int AFN02::HandleRequest(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& 
 				ackPkg->pAfn->afnHeader.SEQ._SEQ.FIR = 1;
 				ackPkg->pAfn->afnHeader.SEQ._SEQ.TPV = Pkg_Afn_Header::SEQ_TPV_NO;						
 				ackPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ = g_JzqConList->GetRSEQ(reqPkg->userHeader.A1,reqPkg->userHeader.A2);	
-				ackPkg->pAfn->pAfnData = new AFN02Data_Ack(reqPkg->pAfn->pAfnData->m_Tag);
+				ackPkg->pAfn->pAfnData = new AFN02Ack_Data(reqPkg->pAfn->pAfnData->m_Tag);
 				ackPkg->okPkg();
 
 				ackLst.push_back(ackPkg);
