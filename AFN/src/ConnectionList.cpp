@@ -46,7 +46,9 @@ void JzqList::checkConnection()
 	while (it != m_jzqList.end()){
 		Jzq* p = (*it);
 		ss += p->printInfo();
-		if (TYQUtils::TimeElapse(p->m_heart) >= 120){
+		if (TYQUtils::TimeElapse(p->m_heart) > 180/*3·ÖÖÓ£¬3´Îheartbeart*/){
+			std::string mystr = p->printInfo() + " timeout";
+			YQLogInfo(mystr.c_str());
 			p->LoginState(2/*ÍË³öµÇÂ¼*/,0,FALSE);
 		}
 		it++;
