@@ -3,6 +3,7 @@
 #include "YQErrCode.h"
 #include "LogFileu.h"
 #include "Connection.h"
+#include "ConnectionList.h"
 #include "AFNPackage.h"
 #include "YQUtils.h"
 #include "AFNPackageBuilder.h"

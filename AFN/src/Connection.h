@@ -65,6 +65,14 @@ public:
 	Jzq(string _name,WORD _areaCode,WORD _number,BYTE _tag);
 	~Jzq();
 	BOOL operator==(const Jzq& o);
+	std::string printInfo();
+	/*
+	登录函数
+	_Fn:1(login in),2(login out),3(heart beart)
+	_pseq:login in时记录帧序号
+	_log:日志记录
+	*/
+	void LoginState(WORD _Fn,BYTE _pseq,BOOL _log=TRUE);
 };
 //------------------------------------------------------------------------------------
 /*集中器连接*/
@@ -76,13 +84,13 @@ public:
 	virtual ~Connection(void);
 	//集中器标记
 	Jzq::JzqA1A2 m_jzq;
-
 public:
-	//读取连接数据包
+	//读取帧
 	int RecBuf();
+	//发送帧
+	int SendBuf(const void* cmd,unsigned int cmdlen);
 
 	//发送数据包
-	int SendBuf(const void* cmd,unsigned int cmdlen);
 	int SendPkg(const AFNPackage* pkg);
 	int SendPkg(std::list<AFNPackage*>& pkgLst);
 
@@ -99,50 +107,8 @@ private:
 	evutil_socket_t fd;
 	//对端地址
 	sockaddr_in m_remoteAddr;
-	//接收到报文列表(多帧)
+	//接收到多帧报文列表缓存，单帧处理完后直接丢弃
 	std::list<AFNPackage*> m_pkgList;
 	typedef std::list<AFNPackage*>::iterator Iter;
 };
-//------------------------------------------------------------------------------------
-/*
-集中器管理列表,连接链表+集中器链表
-*/
-class JzqList : public list<Connection*>
-{
-private:
-	//集中器列表
-	list<Jzq*> m_jzqList;
-public:	
-	typedef list<Connection*>::iterator conIter;
-	typedef list<Jzq*>::iterator jzqIter;
-public:
-	virtual ~JzqList();
-	//从数据库加载集中器
-	void LoadJzq();
-	//集中器列表打印
-	std::string printJzq();
-	Jzq* getJzq(WORD _areacode,WORD _number);
-	Jzq* getJzq(const std::string& _name);
-	//新的集中器连接
-	int newConnection(struct event_base *base,evutil_socket_t fd, struct sockaddr *sa);
-	//删除集中器连接
-	void delConnection(struct bufferevent *bev);
-	//获取连接对象
-	Connection* getConnection(struct bufferevent *bev);
-	//获取集中器连接对象
-	Connection* getConnection(WORD _areacode,WORD _number);
-	Connection* getConnection(const std::string& _name) ;
-	//登录相关
-	void ReportLoginState(WORD _areacode,WORD _number,WORD _Fn,BYTE _pseq);
-	//获取集中器的响应RSEQ
-	BYTE GetRSEQ(WORD _areacode,WORD _number,BOOL _increase=TRUE);
-	//获取集中器的请求PSEQ
-	BYTE GetPSEQ(WORD _areacode,WORD _number,BOOL _increase=TRUE);
-public:
-	/*libevent事件处理*/
-	static void conn_writecb(struct bufferevent *bev, void *user_data);
-	static void conn_readcb(struct bufferevent *bev, void *user_data);
-	static void conn_eventcb(struct bufferevent *bev, short events, void *user_data);
-};
-extern Mutex g_JzqConListMutex;
-extern JzqList* g_JzqConList;
+

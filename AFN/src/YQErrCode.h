@@ -25,7 +25,7 @@ enum LOGCLS
 //错误代码，以YQER_开头
 #define YQER_OK					0					//成功或正常
 //---------------------------------------------------------------------------
-#define YQER_JZQ_NOTFOUND -97 //找不到集中器的网络连接，或者未登录
+#define YQER_JZQ_NOTOK -97 //找不到集中器的网络连接，或者未登录
 #define YQER_PARAMERR  -98 //参数错误
 #define YQER_NOMEMORY  -99 //内存错误
 //服务器错误

@@ -3,11 +3,27 @@
 #include "YQErrCode.h"
 #include "LogFileu.h"
 #include "Connection.h"
+#include "ConnectionList.h"
 #include "AFNPackage.h"
 #include "YQUtils.h"
 #include "AFNPackageBuilder.h"
 
+#ifndef WIN32
+#include <sys/queue.h>
+#include <unistd.h>
+#endif
+
+#include <time.h>
+
+#ifdef WIN32
+#include <winsock2.h>
+#endif
+
 #define VER "1.0.0"
+
+#define TMOUT 60 //60 secs
+
+struct timeval lasttime;
 
 TcpServer::TcpServer(unsigned int port)
 	:m_svrPort(port),base(NULL),listener(NULL),signal_event(NULL)
@@ -28,14 +44,14 @@ int TcpServer::Run()
 	if (base){
 		YQLogInfo("Server has already run!");
 		return 0;
-	}
-
+	}	
 #ifdef _WIN32    
     WSADATA wsa_data;
     WSAStartup(0x0201, &wsa_data);
 	evthread_use_windows_threads();//winÉÏÉèÖÃ
 	evthread_make_base_notifiable(base);
 #endif
+	/*initialize tcp server listen socket*/
 	struct sockaddr_in sin;
     base = event_base_new();
     if (!base) {
@@ -64,6 +80,14 @@ int TcpServer::Run()
     }
 	YQLogInfo("Server start ok");
 
+	/* Initalize heartbeat timeout event */
+	event_assign(&timeout_event, base, -1, 0, timeout_cb, (void*) &timeout_event);
+	struct timeval tv;
+	evutil_timerclear(&tv);
+	tv.tv_sec = TMOUT;
+	event_add(&timeout_event, &tv);
+	evutil_gettimeofday(&lasttime, NULL);
+
     event_base_dispatch(base);
 
 	evconnlistener_free(listener);
@@ -88,4 +112,27 @@ void TcpServer::listener_cb(struct evconnlistener *listener, evutil_socket_t fd,
     struct sockaddr *sa, int socklen, void *user_data)
 {
 	g_JzqConList->newConnection((struct event_base *)user_data,fd,sa);
+}
+//ÐÄÌø¼ì²â
+void TcpServer::timeout_cb(evutil_socket_t fd, short event, void *arg)
+{
+	struct timeval newtime, difference;
+	struct event *timeout = (struct event *)arg;
+	double elapsed;
+
+	evutil_gettimeofday(&newtime, NULL);
+	evutil_timersub(&newtime, &lasttime, &difference);
+	elapsed = difference.tv_sec +
+	    (difference.tv_usec / 1.0e6);
+
+	printf("timeout_cb called at %d: %.3f seconds elapsed.\n",
+	    (int)newtime.tv_sec, elapsed);
+	lasttime = newtime;
+
+	struct timeval tv;
+	evutil_timerclear(&tv);
+	tv.tv_sec = TMOUT;
+	event_add(timeout, &tv);
+
+	g_JzqConList->checkConnection();
 }

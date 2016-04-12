@@ -10,6 +10,7 @@
 #include "event2/listener.h"
 #include "event2/util.h"
 #include "event2/event.h"
+#include "event2/event_struct.h"
 
 class ZjqList;
 
@@ -23,8 +24,8 @@ public:
 private:
 	//libevent»Øµ÷
 	static void signal_cb(evutil_socket_t sig, short events, void *user_data);
-	static void listener_cb(struct evconnlistener *listener, evutil_socket_t fd,\
-							struct sockaddr *sa, int socklen, void *user_data);
+	static void listener_cb(struct evconnlistener *listener, evutil_socket_t fd,struct sockaddr *sa, int socklen, void *user_data);
+	static void timeout_cb(evutil_socket_t fd, short event, void *arg);
 private:
 	//ÕìÌı¶Ë¿Ú
 	unsigned int m_svrPort;
@@ -32,5 +33,7 @@ private:
 	struct event_base *base;
     struct evconnlistener *listener;
     struct event *signal_event;
+	//heartbeat timeout	
+	struct event timeout_event;
 };
 

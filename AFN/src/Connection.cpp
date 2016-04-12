@@ -8,6 +8,62 @@
 
 #define BUF_SIZE 16384
 
+//------------------------------------------------------------------------------------
+Jzq::Jzq()
+	:m_name(""),
+	m_tag(0),
+	m_RSEQ(0x0),
+	m_PSEQ(0x0),
+	m_PFC(0x0),
+	m_heart(0)
+{
+	m_a1a2.Invalid();
+}
+Jzq::Jzq(string _name,WORD _areaCode,WORD _number,BYTE _tag)
+	:m_name(_name),
+	m_tag(_tag),
+	m_RSEQ(0x0),
+	m_PSEQ(0x0),
+	m_PFC(0x0),
+	m_heart(0)
+{
+	m_a1a2.m_areacode = _areaCode;
+	m_a1a2.m_number = _number;
+}
+Jzq::~Jzq()
+{
+}
+BOOL Jzq::operator==(const Jzq& o)
+{
+	return (m_a1a2 == o.m_a1a2);
+}
+std::string Jzq::printInfo()
+{
+	std::ostringstream os;
+	os <<"name(" << m_name << "),areacode(" << m_a1a2.m_areacode << "),address(" << m_a1a2.m_number << "),state(";
+	os << ((m_tag&0x1)?"config:yes,":"config:no,") << ((m_tag&0x2)?"online:yes)":"online:no)");
+	os << "\r\n-------------------------------------------------------------------------------\r\n";
+	return os.str();
+}
+void Jzq::LoginState(WORD _Fn,BYTE _pseq,BOOL _log)
+{
+	if (_Fn==1){
+		m_tag |= (0x1<<1);
+		m_RSEQ = _pseq;//响应帧起始=登录帧的请求帧起始序号,之后响应+1循环(0~15)
+		if (_log) LogFile->FmtLog(LOG_INFORMATION,"jzq(%s,%d,%d) login in",m_name.c_str(),m_a1a2.m_areacode,m_a1a2.m_number);	
+	}
+	else if (_Fn == 2){
+		m_tag &= ~(0x1<<1);
+		if (_log) LogFile->FmtLog(LOG_INFORMATION,"jzq(%s,%d,%d) login out",m_name.c_str(),m_a1a2.m_areacode,m_a1a2.m_number);
+	}
+	else if (_Fn==3){
+		m_tag |= (0x1<<1);
+		if (_log) LogFile->FmtLog(LOG_INFORMATION,"jzq(%s,%d,%d) heartbeat",m_name.c_str(),m_a1a2.m_areacode,m_a1a2.m_number);
+		TYQUtils::TimeStart(m_heart);
+	}
+}
+//------------------------------------------------------------------------------------
+BYTE Jzq::s_MSA = 0x01;
 Connection::Connection(struct event_base *base,struct bufferevent *_bev,evutil_socket_t _fd,struct sockaddr *sa)
 	:bev(_bev),fd(_fd),m_remoteAddr((*(sockaddr_in*)sa))
 {	
@@ -137,245 +193,4 @@ BOOL Connection::Compare(struct bufferevent *_bev)
 {
 	return bev==_bev;
 }
-//------------------------------------------------------------------------------------
-Jzq::Jzq()
-	:m_name(""),
-	m_tag(0),
-	m_RSEQ(0x0),
-	m_PSEQ(0x0),
-	m_PFC(0x0),
-	m_heart(0)
-{
-	m_a1a2.Invalid();
-}
-Jzq::Jzq(string _name,WORD _areaCode,WORD _number,BYTE _tag)
-	:m_name(_name),
-	m_tag(_tag),
-	m_RSEQ(0x0),
-	m_PSEQ(0x0),
-	m_PFC(0x0),
-	m_heart(0)
-{
-	m_a1a2.m_areacode = _areaCode;
-	m_a1a2.m_number = _number;
-}
-Jzq::~Jzq()
-{
-}
-BOOL Jzq::operator==(const Jzq& o)
-{
-	return (m_a1a2 == o.m_a1a2);
-}
-//------------------------------------------------------------------------------------
-BYTE Jzq::s_MSA = 0x01;
-//------------------------------------------------------------------------------------
-Mutex g_JzqConListMutex;
-JzqList* g_JzqConList = NULL;
-JzqList::~JzqList()
-{
-	//清空连接
-	conIter it = begin();
-	while (it != end()) {
-		Connection* con = (*it);
-		erase(it);
-		delete con;
-		it = begin();
-	}
-}
-void JzqList::LoadJzq()
-{
-	//数据库加载集中器
-	Jzq* p = new Jzq("test01",0xffff,0xffff,0x01);
-	m_jzqList.push_back(p);
-	p = new Jzq("test",0x1000,0x44d,0x01);
-	m_jzqList.push_back(p);
-}
-std::string JzqList::printJzq()
-{
-	std::ostringstream os;
-	jzqIter it = m_jzqList.begin();
-	while (it != m_jzqList.end()){
-		Jzq* p = (*it);
-		os <<"name(" << p->m_name << "),areacode(" << p->m_a1a2.m_areacode << "),address(" << p->m_a1a2.m_number << "),state("\
-			<< ((p->m_tag&0x1)?"config:yes,":"config:no,") << ((p->m_tag&0x2)?"online:yes)":"online:no)") ;
-		os << "\r\n-------------------------------------------------------------------------------\r\n";
-		it++;
-	}
-	return os.str();
-}
-/**
-libevent event
-*/
-void JzqList::conn_readcb(struct bufferevent *bev, void *user_data)
-{
-	Connection* p = g_JzqConList->getConnection(bev);
-	if (p){
-		p->RecBuf();
-	}
-	else{
-		YQLogMin("bev read, but no connection,Free bev");/*XXX win32*/
-		bufferevent_free(bev);
-	}
-}
-void JzqList::conn_writecb(struct bufferevent *bev, void *user_data)
-{
-}
 
-void JzqList::conn_eventcb(struct bufferevent *bev, short events, void *user_data)
-{
-    if (events & BEV_EVENT_EOF)  {
-        YQLogInfo("Connection closed.");
-    } 
-    else if (events & BEV_EVENT_ERROR) {
-        YQLogMin("Got an error on the connection");/*XXX win32*/
-    }
-	g_JzqConList->delConnection(bev);
-}
-int JzqList::newConnection(struct event_base *base,evutil_socket_t fd, struct sockaddr *sa)
-{
-	struct bufferevent *bev;
-#ifdef _WIN32	
-    bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_THREADSAFE);
-#else
-	bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE);
-#endif
-    if (!bev)  {
-		YQLogMaj("Error constructing bufferevent!");        
-        return YQER_CON_Err(1);
-    }
-
-	Connection* con = new Connection(base,bev,fd,sa);
-	push_back(con);	
-    bufferevent_setcb(bev, conn_readcb, conn_writecb, conn_eventcb, NULL);
-    bufferevent_enable(bev, EV_READ|EV_WRITE);
-
-	return YQER_OK;
-}
-void JzqList::delConnection(struct bufferevent *bev)
-{
-	Lock lock(g_JzqConListMutex);
-	for (conIter it = g_JzqConList->begin(); it != g_JzqConList->end(); it++){
-		Connection* con = (*it);
-		if (con->Compare(bev))
-		{					
-			YQLogInfo("delete connection");
-			g_JzqConList->erase(it);			
-			delete con;
-			break;
-		}
-	}    
-}
-Jzq* JzqList::getJzq(WORD _areacode,WORD _number)
-{
-	Jzq *p = NULL;
-	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++){
-		if ((*it)->m_a1a2.m_areacode == _areacode && (*it)->m_a1a2.m_number == _number){			
-			p = (*it);
-			break;
-		}
-	}
-	return p;
-}
-Jzq* JzqList::getJzq(const std::string& _name)
-{
-	Jzq *p = NULL;
-	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++){
-		if ((*it)->m_name == _name){			
-			p = (*it);
-			break;
-		}
-	}
-	return p;
-}
-Connection* JzqList::getConnection(struct bufferevent *bev)
-{
-	for (conIter it = g_JzqConList->begin(); it != g_JzqConList->end(); it++){
-		Connection* con = (*it);
-		if (con->Compare(bev)){			
-			return con;
-		}
-	} 
-	return NULL;
-}
-Connection* JzqList::getConnection(WORD _areacode,WORD _number)
-{
-	Connection *p = NULL;
-	for (conIter it = begin(); it != end(); it++){
-		if ((*it)->m_jzq.m_areacode == _areacode && (*it)->m_jzq.m_number == _number){			
-			p = (*it);
-			break;
-		}
-	}
-	return p;
-}
-Connection* JzqList::getConnection(const std::string& _name)
-{
-	Jzq *p = getJzq(_name);
-	if ( p ){
-		return getConnection(p->m_a1a2.m_areacode,p->m_a1a2.m_number);
-	}
-	return NULL;
-}
-void JzqList::ReportLoginState(WORD _areacode,WORD _number,WORD _Fn,BYTE _pseq)
-{
-	Jzq *p = getJzq(_areacode,_number);
-	if (!p){
-		static int noneTag = 1;
-		std::string noneName = "none";
-		ostringstream os;
-		os << "none" << noneTag++;
-		p = new Jzq(os.str(),_areacode,_number,0x0);
-		if (!p)
-			return;
-		m_jzqList.push_back(p);
-		LogFile->FmtLog(LOG_INFORMATION,"new jzq(%s)",p->m_name.c_str());
-	}
-	if (_Fn==1){
-		p->m_tag |= (0x1<<1);
-		p->m_RSEQ = _pseq;//响应帧起始=登录帧的请求帧起始序号,之后响应+1循环(0~15)
-		LogFile->FmtLog(LOG_INFORMATION,"jzq(%d,%d) login in",_areacode,_number);		
-	}
-	else if (_Fn == 2){
-		p->m_tag &= ~(0x1<<1);
-		LogFile->FmtLog(LOG_INFORMATION,"jzq(%d,%d) login out",_areacode,_number);
-	}
-	else if (_Fn==3){
-		p->m_tag |= (0x1<<1);
-		LogFile->FmtLog(LOG_INFORMATION,"jzq(%d,%d) heartbeat",_areacode,_number);
-	}
-	TYQUtils::TimeStart(p->m_heart);
-}
-BYTE JzqList::GetRSEQ(WORD _areacode,WORD _number,BOOL _increase)
-{
-	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++)
-	{
-		Jzq* p = (*it);
-		if (p->m_a1a2.m_areacode == _areacode && p->m_a1a2.m_number == _number)
-		{			
-			BYTE n = p->m_RSEQ;
-			if (_increase){
-				if (++p->m_RSEQ > 15){
-					p->m_RSEQ = 0;
-				}
-			}
-			return n;
-		}
-	}
-	return 0x0;
-}
-BYTE JzqList::GetPSEQ(WORD _areacode,WORD _number,BOOL _increase)
-{
-	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++)
-	{
-		Jzq* p = (*it);
-		if (p->m_a1a2.m_areacode == _areacode && p->m_a1a2.m_number == _number)
-		{			
-			BYTE n = p->m_PFC;
-			if (_increase){
-				++p->m_PFC;				
-			}
-			return n&0x0f;
-		}
-	}
-	return 0x0;
-}

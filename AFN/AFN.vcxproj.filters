@@ -147,6 +147,9 @@
     <ClInclude Include="src\YQUtils.h">
       <Filter>头文件\src</Filter>
     </ClInclude>
+    <ClInclude Include="src\ConnectionList.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="thirdparty\Ipv4Address.cpp">
@@ -240,6 +243,9 @@
       <Filter>源文件\src</Filter>
     </ClCompile>
     <ClCompile Include="src\YQUtils.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ConnectionList.cpp">
       <Filter>源文件\src</Filter>
     </ClCompile>
   </ItemGroup>

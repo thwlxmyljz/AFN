@@ -1,4 +1,5 @@
 #include "Connection.h"
+#include "ConnectionList.h"
 #include "AFNPackageBuilder.h"
 #include "YQErrCode.h"
 #include "Lock.h"
@@ -6,10 +7,10 @@
 #include "AFN0C.h"
 #include "LogFileu.h"
 
-#define LOCK_GETDEV() Lock lock(g_JzqConListMutex);\
+#define AUTOLOCK_GETCONNECTION(name) AUTO_LOCK()\
 					Connection* con = g_JzqConList->getConnection(name);\
 					if (!con){\
-						return YQER_JZQ_NOTFOUND;\
+						return YQER_JZQ_NOTOK;\
 					}
 
 #define SET_COMMPARAMS(ackPkg,con,afnData) ackPkg->userHeader.C._C.DIR = 0x00;\
@@ -172,7 +173,7 @@ int AFNPackageBuilder::setpointparams(Pkg_Afn_Data** val,std::string name,WORD p
 {
 	BEGIN_CALL()
 	{
-		LOCK_GETDEV()
+		AUTOLOCK_GETCONNECTION(name)
 		AFN04* afnData = new AFN04();
 		afnData->CreatePointBaseSetting(pn,TRUE);
 		AFNPackage* ackPkg = new AFNPackage();	
@@ -188,7 +189,7 @@ int AFNPackageBuilder::setpointstatus(Pkg_Afn_Data** val,std::string name)
 {
 	BEGIN_CALL()
 	{
-		LOCK_GETDEV()
+		AUTOLOCK_GETCONNECTION(name)
 		AFN04* afnData = new AFN04();
 		afnData->CreatePointStatus();
 		AFNPackage* ackPkg = new AFNPackage();	
@@ -204,7 +205,7 @@ int AFNPackageBuilder::getclock(Pkg_Afn_Data** val,std::string name)
 {
 	BEGIN_CALL()
 	{
-		LOCK_GETDEV()
+		AUTOLOCK_GETCONNECTION(name)
 		AFN0C* afnData = new AFN0C();
 		afnData->CreateClock();
 		AFNPackage* ackPkg = new AFNPackage();	
@@ -220,7 +221,7 @@ int AFNPackageBuilder::getstatus(Pkg_Afn_Data** val,std::string name)
 {
 	BEGIN_CALL()
 	{
-		LOCK_GETDEV()
+		AUTOLOCK_GETCONNECTION(name)
 		AFN0C* afnData = new AFN0C();
 		afnData->CreateRunStatus();
 		AFNPackage* ackPkg = new AFNPackage();	
@@ -236,7 +237,7 @@ int AFNPackageBuilder::getallkwh(Pkg_Afn_Data** val,std::string name,WORD pn)
 {
 	BEGIN_CALL()
 	{
-		LOCK_GETDEV()
+		AUTOLOCK_GETCONNECTION(name)
 		AFN0C* afnData = new AFN0C();
 		afnData->CreateAllKwh(pn);
 		AFNPackage* ackPkg = new AFNPackage();	

@@ -91,6 +91,7 @@
     <ClInclude Include="src\AFNPackage.h" />
     <ClInclude Include="src\AFNPackageBuilder.h" />
     <ClInclude Include="src\Connection.h" />
+    <ClInclude Include="src\ConnectionList.h" />
     <ClInclude Include="src\DBManager.h" />
     <ClInclude Include="src\LogFileu.h" />
     <ClInclude Include="src\proto.h" />
@@ -133,6 +134,7 @@
     <ClCompile Include="src\AFNPackage.cpp" />
     <ClCompile Include="src\AFNPackageBuilder.cpp" />
     <ClCompile Include="src\Connection.cpp" />
+    <ClCompile Include="src\ConnectionList.cpp" />
     <ClCompile Include="src\DBManager.cpp" />
     <ClCompile Include="src\LogFileu.cpp" />
     <ClCompile Include="src\proto.cpp" />

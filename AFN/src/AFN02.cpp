@@ -1,4 +1,5 @@
 #include "Connection.h"
+#include "ConnectionList.h"
 #include "AFN02.h"
 #include "AFNPackage.h"
 #include "YQErrCode.h"
