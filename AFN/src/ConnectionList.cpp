@@ -5,7 +5,10 @@
 #include "YQUtils.h"
 #include "AFNPackageBuilder.h"
 #include "Lock.h"
+#include "YQErrCode.h"
 #include <sstream>
+#include "DBManager.h"
+#include "Log.h"
 //------------------------------------------------------------------------------------
 Mutex g_JzqConList_Mutex;
 JzqList* g_JzqConList = NULL;
@@ -23,6 +26,16 @@ JzqList::~JzqList()
 void JzqList::LoadJzq()
 {
 	//数据库加载集中器
+	std::string sql= "select * from PW_JZQ";
+	qopen(sql);
+	query()->First();
+	LOG(LOG_INFORMATION,"jzq count(%d)",query()->RecordCount);
+	while (!(query()->IsEof())){
+		YQLogInfo("row");
+		query()->Next();
+	}
+	qclose();
+	
 	Jzq* p = new Jzq("test01",0xffff,0xffff,0x01);
 	m_jzqList.push_back(p);
 	p = new Jzq("test",0x1000,0x44d,0x01);

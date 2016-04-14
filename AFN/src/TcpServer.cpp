@@ -30,7 +30,6 @@ TcpServer::TcpServer(unsigned int port)
 {
 	LogFile = new TLogFile("afn.log",16*1024*1024,"APN",VER);
 	g_JzqConList = new JzqList();	
-	g_JzqConList->LoadJzq();	
 }
 TcpServer::~TcpServer(void)
 {
@@ -44,7 +43,8 @@ int TcpServer::Run()
 	if (base){
 		YQLogInfo("Server has already run!");
 		return 0;
-	}	
+	}
+	g_JzqConList->LoadJzq();
 #ifdef _WIN32    
     WSADATA wsa_data;
     WSAStartup(0x0201, &wsa_data);

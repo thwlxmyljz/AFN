@@ -51,7 +51,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\include;.\thirdparty</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\include;.\common;.\thirdparty</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DisableSpecificWarnings>4819;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
@@ -83,6 +83,10 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="common\LogFileu.h" />
+    <ClInclude Include="common\YQDefs.h" />
+    <ClInclude Include="common\YQErrCode.h" />
+    <ClInclude Include="common\YQUtils.h" />
     <ClInclude Include="src\AFN01.h" />
     <ClInclude Include="src\AFN02.h" />
     <ClInclude Include="src\AFN04.h" />
@@ -93,13 +97,10 @@
     <ClInclude Include="src\Connection.h" />
     <ClInclude Include="src\ConnectionList.h" />
     <ClInclude Include="src\DBManager.h" />
-    <ClInclude Include="src\LogFileu.h" />
     <ClInclude Include="src\proto.h" />
     <ClInclude Include="src\targetver.h" />
     <ClInclude Include="src\TcpServer.h" />
     <ClInclude Include="src\TelnetServer.h" />
-    <ClInclude Include="src\YQDefs.h" />
-    <ClInclude Include="src\YQErrCode.h" />
     <ClInclude Include="src\YQUtils.h" />
     <ClInclude Include="thirdparty\Base64.h" />
     <ClInclude Include="thirdparty\Exception.h" />
@@ -125,6 +126,8 @@
     <ClInclude Include="thirdparty\XmlNode.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="common\LogFileu.cpp" />
+    <ClCompile Include="common\YQUtils.cpp" />
     <ClCompile Include="src\AFN.cpp" />
     <ClCompile Include="src\AFN01.cpp" />
     <ClCompile Include="src\AFN02.cpp" />
@@ -136,11 +139,9 @@
     <ClCompile Include="src\Connection.cpp" />
     <ClCompile Include="src\ConnectionList.cpp" />
     <ClCompile Include="src\DBManager.cpp" />
-    <ClCompile Include="src\LogFileu.cpp" />
     <ClCompile Include="src\proto.cpp" />
     <ClCompile Include="src\TcpServer.cpp" />
     <ClCompile Include="src\TelnetServer.cpp" />
-    <ClCompile Include="src\YQUtils.cpp" />
     <ClCompile Include="thirdparty\Base64.cpp" />
     <ClCompile Include="thirdparty\Exception.cpp" />
     <ClCompile Include="thirdparty\File.cpp" />

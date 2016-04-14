@@ -7,22 +7,25 @@ release=-c -Wall -DSO_REUSEADDR -DRUNASCHILD
 SRCDIR := ./src
 THIRDDIR := ./thirdparty
 OBJDIR := ./obj
+COMMDIR := ./common
 
 cmp=$(debug)
 APP_NAME=AFN
 #APP_NAME=AFN.so
 DEFS=-DHAVE_FCNTL_H 
 
-VPATH=$(SRCDIR):$(THIRDDIR)
+VPATH=$(SRCDIR):$(THIRDDIR):$(COMMDIR)
 
 INC = -I/usr/local/include \
+	   -I/usr/local/include/mysql \
 	  -I$(THIRDDIR) \
-	  -I$(SRCDIR)
+	  -I$(SRCDIR)\
+	  -I$(COMMDIR)
 
 
-LIB = -lpthread -levent -lxml2
+LIB = -lpthread -levent -lxml2 -lmysqlclient
   
-SRCS:=$(wildcard $(SRCDIR)/*.cpp $(THIRDDIR)/*.cpp)
+SRCS:=$(wildcard $(SRCDIR)/*.cpp $(THIRDDIR)/*.cpp $(COMMDIR)/*.cpp)
 SRCS:=$(notdir $(SRCS))
 OBJS:=$(patsubst %.cpp,$(OBJDIR)/%.o,$(SRCS))
 

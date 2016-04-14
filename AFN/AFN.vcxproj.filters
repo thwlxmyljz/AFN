@@ -123,9 +123,6 @@
     <ClInclude Include="src\DBManager.h">
       <Filter>头文件\src</Filter>
     </ClInclude>
-    <ClInclude Include="src\LogFileu.h">
-      <Filter>头文件\src</Filter>
-    </ClInclude>
     <ClInclude Include="src\proto.h">
       <Filter>头文件\src</Filter>
     </ClInclude>
@@ -138,16 +135,22 @@
     <ClInclude Include="src\TelnetServer.h">
       <Filter>头文件\src</Filter>
     </ClInclude>
-    <ClInclude Include="src\YQDefs.h">
-      <Filter>头文件\src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\YQErrCode.h">
-      <Filter>头文件\src</Filter>
-    </ClInclude>
     <ClInclude Include="src\YQUtils.h">
       <Filter>头文件\src</Filter>
     </ClInclude>
     <ClInclude Include="src\ConnectionList.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="common\LogFileu.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="common\YQUtils.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="common\YQErrCode.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="common\YQDefs.h">
       <Filter>头文件\src</Filter>
     </ClInclude>
   </ItemGroup>
@@ -230,9 +233,6 @@
     <ClCompile Include="src\DBManager.cpp">
       <Filter>源文件\src</Filter>
     </ClCompile>
-    <ClCompile Include="src\LogFileu.cpp">
-      <Filter>源文件\src</Filter>
-    </ClCompile>
     <ClCompile Include="src\proto.cpp">
       <Filter>源文件\src</Filter>
     </ClCompile>
@@ -242,10 +242,13 @@
     <ClCompile Include="src\TelnetServer.cpp">
       <Filter>源文件\src</Filter>
     </ClCompile>
-    <ClCompile Include="src\YQUtils.cpp">
+    <ClCompile Include="src\ConnectionList.cpp">
       <Filter>源文件\src</Filter>
     </ClCompile>
-    <ClCompile Include="src\ConnectionList.cpp">
+    <ClCompile Include="common\LogFileu.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="common\YQUtils.cpp">
       <Filter>源文件\src</Filter>
     </ClCompile>
   </ItemGroup>
