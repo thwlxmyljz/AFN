@@ -58,9 +58,22 @@ void Jzq::LoginState(WORD _Fn,BYTE _pseq,BOOL _log)
 	}
 	else if (_Fn==3){
 		m_tag |= (0x1<<1);
-		if (_log) LogFile->FmtLog(LOG_INFORMATION,"jzq(%s,%d,%d) heartbeat",m_name.c_str(),m_a1a2.m_areacode,m_a1a2.m_number);
 		TYQUtils::TimeStart(m_heart);
+		if (_log) LogFile->FmtLog(LOG_INFORMATION,"jzq(%s,%d,%d) heartbeat(%d)",m_name.c_str(),m_a1a2.m_areacode,m_a1a2.m_number,m_heart);		
 	}
+}
+BOOL Jzq::checkTimeout()
+{
+	DWORD dwElapse = TYQUtils::TimeElapse(m_heart);
+	if ( dwElapse > 180*1000/*3∑÷÷”£¨3¥Œheartbeart*/)
+	{
+		ostringstream os;
+		os << m_name << " timeout, from " << m_heart << " + " << dwElapse;			
+		YQLogInfo(os.str().c_str());
+		LoginState(2/*ÕÀ≥ˆµ«¬º*/,0,FALSE);
+		return TRUE;
+	}
+	return FALSE;
 }
 //------------------------------------------------------------------------------------
 BYTE Jzq::s_MSA = 0x01;

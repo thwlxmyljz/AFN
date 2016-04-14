@@ -31,27 +31,17 @@ void JzqList::LoadJzq()
 std::string JzqList::printJzq()
 {
 	std::string ss;
-	jzqIter it = m_jzqList.begin();
-	while (it != m_jzqList.end()){
-		Jzq* p = (*it);
-		ss += p->printInfo();
-		it++;
+	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++){
+		ss += (*it)->printInfo();
 	}
 	return ss;
 }
 void JzqList::checkConnection()
 {
 	std::string ss;
-	jzqIter it = m_jzqList.begin();
-	while (it != m_jzqList.end()){
-		Jzq* p = (*it);
-		ss += p->printInfo();
-		if (TYQUtils::TimeElapse(p->m_heart) > 180/*3·ÖÖÓ£¬3´Îheartbeart*/){
-			std::string mystr = p->printInfo() + " timeout";
-			YQLogInfo(mystr.c_str());
-			p->LoginState(2/*ÍË³öµÇÂ¼*/,0,FALSE);
-		}
-		it++;
+	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++){		
+		ss += (*it)->printInfo();
+		(*it)->checkTimeout();
 	}
 	YQLogInfo(ss.c_str());
 }

@@ -19,7 +19,7 @@
 #include <winsock2.h>
 #endif
 
-#define VER "1.0.0"
+#define VER "1.0.1"
 
 #define TMOUT 60 //60 secs
 

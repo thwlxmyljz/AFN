@@ -73,6 +73,10 @@ public:
 	_log:日志记录
 	*/
 	void LoginState(WORD _Fn,BYTE _pseq,BOOL _log=TRUE);
+	/*
+	返回TRUE:timeout
+	*/
+	BOOL checkTimeout();
 };
 //------------------------------------------------------------------------------------
 /*集中器连接*/
