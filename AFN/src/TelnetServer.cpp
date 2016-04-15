@@ -247,7 +247,7 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 				ostringstream os;
 				os << "getallkwh return " << ret <<"\r\n";	
 				if (p){
-					os << p->toString() <<"\r\n$";
+					os << p->toString() <<"\r\n$";					
 					delete p;
 				}
 				else{

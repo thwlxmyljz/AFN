@@ -4,6 +4,7 @@
 #include "YQDB.h"
 #include "TQuery.h"
 #include "TSingleton.h"
+
 using namespace std;
 
 class DBManager
@@ -14,7 +15,7 @@ protected:
 	void Init();
 	BOOL FOK;
 	//Êý¾Ý¿â
-	TYQDataBase* FDB;		
+	TYQDataBase* FDB;
 public:
 	TQuery* Query;
 	/*
@@ -28,6 +29,7 @@ public:
 };
 
 #define qopen(SQL) DBManager::Instance()->OpenQuery(SQL)
+#define qexec(SQL) DBManager::Instance()->OpenQuery(SQL,false)
 #define qclose() DBManager::Instance()->CloseQuery()
 #define query() DBManager::Instance()->Query
 

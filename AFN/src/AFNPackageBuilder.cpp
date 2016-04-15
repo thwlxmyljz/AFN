@@ -29,11 +29,20 @@
 
 #define SET_CALL() call.AFN = ackPkg->pAfn->afnHeader.AFN;\
 		call.m_areacode = con->m_jzq.m_areacode;\
-		call.m_number = con->m_jzq.m_number;
+		call.m_number = con->m_jzq.m_number;\
+		delete ackPkg;
 
-#define END_CALL_WAIT(val) Pkg_Afn_Data* p = Wait(call);\
+#define WAIT_CALL(val) Pkg_Afn_Data* p = Wait(call);\
 					if (val){\
 						(*val) = p;\
+					}\
+					return ret;
+					
+#define WAIT_CALL_SAVETODB(val) Pkg_Afn_Data* p = Wait(call);\
+					if (val){\
+						(*val) = p;\
+						if (p) \
+							p->toDB(call.m_areacode,call.m_number);\
 					}\
 					return ret;
 
@@ -91,15 +100,50 @@ int AFNPackageBuilder::DoHandleRequest(std::list<AFNPackage*>& reqLst,std::list<
 }
 
 int AFNPackageBuilder::DoHandleAck(std::list<AFNPackage*>& ackLst)
-{
-	AFNPackage* ackPkg = *(ackLst.begin());	
-	for (mapIter it = handlerMap.begin(); it != handlerMap.end(); it++){
-		PkgHandler& h = (*it).second;
-		if (h.ackHandler && (*it).first == ackPkg->pAfn->afnHeader.AFN){
-			return h.ackHandler(ackLst);
+{	
+	if (ackLst.size() == 0){
+		return -1;
+	}
+	
+	Pkg_Afn_Data* pDataHead = NULL;
+	Pkg_Afn_Data* pDataTail = NULL;
+	AppCall call;
+	
+	for (std::list<AFNPackage*>::iterator it = ackLst.begin(); it != ackLst.end(); it++){
+		AFNPackage* ackPkg = *it;			
+		call.AFN = ackPkg->pAfn->afnHeader.AFN;
+		call.m_areacode = ackPkg->userHeader.A1;
+		call.m_number = ackPkg->userHeader.A2;
+		if (ackPkg->userHeader.C._C.FUN == Pkg_User_Header::UH_FUNC_SUB8){
+			//用户数据
+			Pkg_Afn_Data* pData = NULL;
+			for (mapIter it = handlerMap.begin(); it != handlerMap.end(); it++){
+				PkgHandler& h = (*it).second;
+				if (h.ackHandler && (*it).first == ackPkg->pAfn->afnHeader.AFN){
+					pData = h.ackHandler(ackPkg);
+				}
+			}
+			if (pData){
+				pData->HandleData();			
+				if (!pDataHead){
+					pDataHead = pData;
+					pDataTail = pData;
+				}
+				else{
+					pDataTail->m_next = pData;
+					pDataTail = pData;
+				}
+			}
+		}
+		else if(ackPkg->userHeader.C._C.FUN == Pkg_User_Header::UH_FUNC_SUB9){
+			//否认：无所召唤的数据			
+		}
+		else{
+			;
 		}
 	}
-	return -1;
+	AFNPackageBuilder::Instance().Notify(call,pDataHead);
+	return YQER_OK;;
 }
 Pkg_Afn_Data* AFNPackageBuilder::Wait(const AppCall& call)
 {
@@ -183,7 +227,7 @@ int AFNPackageBuilder::setpointparams(Pkg_Afn_Data** val,std::string name,WORD p
 		ret = con->SendPkg(ackPkg);
 		SET_CALL()
 	}
-	END_CALL_WAIT(val)
+	WAIT_CALL(val)
 }
 int AFNPackageBuilder::setpointstatus(Pkg_Afn_Data** val,std::string name)
 {
@@ -199,7 +243,7 @@ int AFNPackageBuilder::setpointstatus(Pkg_Afn_Data** val,std::string name)
 		ret = con->SendPkg(ackPkg);
 		SET_CALL()
 	}
-	END_CALL_WAIT(val)
+	WAIT_CALL(val)
 }
 int AFNPackageBuilder::getclock(Pkg_Afn_Data** val,std::string name)
 {
@@ -215,7 +259,7 @@ int AFNPackageBuilder::getclock(Pkg_Afn_Data** val,std::string name)
 		ret = con->SendPkg(ackPkg);
 		SET_CALL()
 	}
-	END_CALL_WAIT(val)
+	WAIT_CALL(val)
 }
 int AFNPackageBuilder::getstatus(Pkg_Afn_Data** val,std::string name)
 {
@@ -231,7 +275,7 @@ int AFNPackageBuilder::getstatus(Pkg_Afn_Data** val,std::string name)
 		ret = con->SendPkg(ackPkg);
 		SET_CALL()
 	}
-	END_CALL_WAIT(val)
+	WAIT_CALL(val)
 }
 int AFNPackageBuilder::getallkwh(Pkg_Afn_Data** val,std::string name,WORD pn)
 {
@@ -247,5 +291,5 @@ int AFNPackageBuilder::getallkwh(Pkg_Afn_Data** val,std::string name,WORD pn)
 		ret = con->SendPkg(ackPkg);
 		SET_CALL()
 	}
-	END_CALL_WAIT(val)
+	WAIT_CALL_SAVETODB(val)
 }

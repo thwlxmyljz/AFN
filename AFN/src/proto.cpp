@@ -80,7 +80,7 @@ DWORD Pkg_Afn::GetDataLen()
 }
 //------------------------------------------------------------------------------------
 Pkg_Afn_Data::Pkg_Afn_Data()
-		:m_pData(NULL),m_nLen(0),m_DataUsed(0)
+		:m_pData(NULL),m_nLen(0),m_DataUsed(0),m_next(NULL)
 {
 }
 Pkg_Afn_Data::Pkg_Afn_Data(Pkg_Afn_Data& _origin)
@@ -90,6 +90,7 @@ Pkg_Afn_Data::Pkg_Afn_Data(Pkg_Afn_Data& _origin)
 	m_nLen = _origin.m_nLen;
 	++_origin.m_DataUsed;
 	m_DataUsed = 1;
+	m_next = NULL;
 }
 Pkg_Afn_Data::~Pkg_Afn_Data()
 {
@@ -100,7 +101,7 @@ Pkg_Afn_Data::~Pkg_Afn_Data()
 	}
 }
 Pkg_Afn_Data::Pkg_Afn_Data(BYTE* _data,DWORD _len)
-		:m_pData(NULL),m_nLen(0),m_DataUsed(0)
+		:m_pData(NULL),m_nLen(0),m_DataUsed(0),m_next(NULL)
 {
 	unPackData(_data,_len);
 }

@@ -289,7 +289,12 @@ public:
 class Pkg_Afn_Data : public Pkg_UserDataInterface {
 	friend class Pkg_Afn;
 	friend class Pkg;
-
+	
+private:
+	
+	//不允许赋值操作
+	Pkg_Afn_Data& operator=(const Pkg_Afn_Data&);
+	
 public:
 	//DA,DT,4字节单元标识
 	Pkg_Afn_DataTag m_Tag;
@@ -299,6 +304,9 @@ public:
 	DWORD m_nLen;
 	//m_pData引用计数
 	int m_DataUsed;
+
+	//多帧数据时
+	Pkg_Afn_Data* m_next;
 public:
 	Pkg_Afn_Data();
 	Pkg_Afn_Data(Pkg_Afn_Data& _origin);
@@ -309,10 +317,19 @@ public:
 	virtual DWORD PackData(BYTE* _data,DWORD _len);
 	virtual DWORD GetDataLen();
 
-	//应用数据实现
+	/*
+	应用数据接口,in main thread
+	*/
 	virtual Pkg_Afn_Data* New(){return NULL;}
+	//解包分析所需要的数据
 	virtual int HandleData(){return 0;}
+	//打印
 	virtual std::string toString(){return "";}
+	
+	/*
+	数据库操作接口,in data thread
+	*/
+	virtual int toDB(WORD A1,WORD A2){return -1;}
 };
 /*
 附加信息域,分上下行

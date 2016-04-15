@@ -30,16 +30,21 @@ void JzqList::LoadJzq()
 	qopen(sql);
 	query()->First();
 	LOG(LOG_INFORMATION,"jzq count(%d)",query()->RecordCount);
-	while (!(query()->IsEof())){
-		YQLogInfo("row");
+	while (!(query()->IsEof())){		
+		int areacode = query()->FieldByName("AREACODE")->AsInteger();
+		int address = query()->FieldByName("ADDRESS")->AsInteger();
+		std::string name = query()->FieldByName("NAME")->AsString();
+		LOG(LOG_INFORMATION,"load jzq(%s,%d,%d)",name.c_str(),areacode,address);
+		Jzq* p = new Jzq(name,areacode,address,0x01);
+		m_jzqList.push_back(p);
 		query()->Next();
 	}
 	qclose();
-	
+	/*
 	Jzq* p = new Jzq("test01",0xffff,0xffff,0x01);
 	m_jzqList.push_back(p);
 	p = new Jzq("test",0x1000,0x44d,0x01);
-	m_jzqList.push_back(p);
+	m_jzqList.push_back(p);*/
 }
 std::string JzqList::printJzq()
 {

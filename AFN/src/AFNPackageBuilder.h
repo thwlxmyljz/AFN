@@ -11,7 +11,7 @@
 #endif
 
 typedef int (*pfnDoHandleRequest)(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& ackLst);
-typedef int (*pfnDoHandleAck)(std::list<AFNPackage*>& ackLst);
+typedef Pkg_Afn_Data* (*pfnDoHandleAck)(AFNPackage* ackPkg);
 
 struct PkgHandler{
 	pfnDoHandleRequest reqHander;
@@ -55,7 +55,7 @@ class AFNPackageBuilder
 	//app call request list
 	std::map<AppCall,Pkg_Afn_Data*> cmdMap;
 	typedef std::map<AppCall,Pkg_Afn_Data*>::iterator CmdMapIter;
-	//
+	
 #ifdef _WIN32
 	CRITICAL_SECTION CritSection;
 	CONDITION_VARIABLE ConditionVar;

@@ -69,7 +69,8 @@ public:
 public:
 	virtual AFN0CAck_Data_AllKwh* New();
 	virtual int HandleData();
-	std::string toString();
+	virtual std::string toString();
+	virtual int toDB(WORD A1,WORD A2);
 	/*
 	终端抄表时间	见附录A.15	分时日月年	5
 	费率数M（1≤M≤12）	BIN	个	1
@@ -107,7 +108,7 @@ public:
 	AFN0C(void);
 	~AFN0C(void);
 
-	static int HandleAck(std::list<AFNPackage*>& ackLst);
+	static Pkg_Afn_Data* HandleAck(AFNPackage* ackPkg);
 
 public:
 	int Create(WORD pn,WORD Fn);
