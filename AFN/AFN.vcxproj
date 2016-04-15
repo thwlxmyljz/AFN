@@ -51,7 +51,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\include;.\common;.\thirdparty</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\include\mysql;.\include;.\common;.\thirdparty</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DisableSpecificWarnings>4819;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
@@ -59,7 +59,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>.\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ws2_32.lib;wsock32.lib;libxml2.lib;iconv.lib;libevent.lib;libevent_core.lib;libevent_extras.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;wsock32.lib;libxml2.lib;iconv.lib;libevent.lib;libevent_core.lib;libevent_extras.lib;mysqlclient.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>libcmt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
@@ -126,7 +126,12 @@
     <ClInclude Include="thirdparty\XmlNode.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="common\Log.cpp" />
     <ClCompile Include="common\LogFileu.cpp" />
+    <ClCompile Include="common\TQuery.cpp" />
+    <ClCompile Include="common\YQComFun.cpp" />
+    <ClCompile Include="common\YQCommon.cpp" />
+    <ClCompile Include="common\YQDB.cpp" />
     <ClCompile Include="common\YQUtils.cpp" />
     <ClCompile Include="src\AFN.cpp" />
     <ClCompile Include="src\AFN01.cpp" />

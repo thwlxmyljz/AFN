@@ -55,8 +55,9 @@
 
 #ifndef YQDBH
 #define YQDBH
-
-
+#ifdef _WIN32
+#include <WinSock2.h>
+#endif
 #include "mysql.h"
 #include "yqlist.h"
 #include <time.h>

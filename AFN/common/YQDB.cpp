@@ -902,7 +902,11 @@ int TParams::ParamSybaseDateTime(char *src,tm &ftm)
 
 		for(i=0;i<12;i++)
 		{
+#ifdef _WIN32
+			if(stricmp(mons[i],sztmpdata)== 0)
+#else
 			if(strcasecmp(mons[i],sztmpdata)== 0)
+#endif			
 			{
 				break;
 			}
@@ -1027,8 +1031,11 @@ int TParams::ParamSybaseDateTime(char *src,tm &ftm)
 		memset(sztmpdata,0,10);
 		strncpy(sztmpdata,p1,strlen(p2));
 
-
-		if(strcasecmp(sztmpdata,"PM")== 0)
+#ifdef _WIN32
+			if(stricmp(sztmpdata,"PM")== 0)
+#else
+			if(strcasecmp(sztmpdata,"PM")== 0)
+#endif	
 			ftm.tm_hour+=12;
 		ftm.tm_isdst = 0;
 

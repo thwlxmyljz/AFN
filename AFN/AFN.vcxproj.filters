@@ -251,5 +251,20 @@
     <ClCompile Include="common\YQUtils.cpp">
       <Filter>源文件\src</Filter>
     </ClCompile>
+    <ClCompile Include="common\Log.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="common\TQuery.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="common\YQDB.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="common\YQComFun.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="common\YQCommon.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
