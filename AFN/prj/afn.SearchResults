@@ -1,2 +1,5 @@
----- EX_COLUMN_DATA Matches (1 in 1 files) ----
-YQDB.h (common):} EX_COLUMN_DATA;
+---- YQDBER_GET_EFFER_ROW Matches (4 in 1 files) ----
+YQDB.cpp (common):		return YQDBER_GET_EFFER_ROW;
+YQDB.cpp (common):		return YQDBER_GET_EFFER_ROW;
+YQDB.cpp (common):			return YQDBER_GET_EFFER_ROW;
+YQDB.cpp (common):	return YQDBER_GET_EFFER_ROW;

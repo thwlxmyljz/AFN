@@ -19,6 +19,10 @@ using namespace std;
 
 #define BUD() AFNPackageBuilder::Instance()
 
+#define TEL_TMOUT 60 //60 secs
+
+struct timeval tel_lasttime;
+
 int split(const string& str, vector<string>& ret_, string sep)
 {
 	if (str.empty())
@@ -95,6 +99,14 @@ int TelnetServer::Run()
 	}
 	YQLogInfo("TelnetServer start ok");
 
+	/* Initalize heartbeat timeout event */
+	event_assign(&timeout_event, base, -1, 0, timeout_cb, (void*) &timeout_event);
+	struct timeval tv;
+	evutil_timerclear(&tv);
+	tv.tv_sec = TEL_TMOUT;
+	event_add(&timeout_event, &tv);
+	evutil_gettimeofday(&tel_lasttime, NULL);
+	
     event_base_dispatch(base);
 
 	evconnlistener_free(listener);
@@ -103,6 +115,31 @@ int TelnetServer::Run()
     YQLogInfo("TelnetServer shut down");
 	return 0;
 }
+void TelnetServer::timeout_cb(evutil_socket_t fd, short event, void *arg)
+{
+	struct timeval newtime, difference;
+	struct event *timeout = (struct event *)arg;
+	double elapsed;
+
+	evutil_gettimeofday(&newtime, NULL);
+	evutil_timersub(&newtime, &tel_lasttime, &difference);
+	elapsed = difference.tv_sec +
+	    (difference.tv_usec / 1.0e6);
+
+	printf("TelnetServer timeout_cb called at %d: %.3f seconds elapsed.\n",
+	    (int)newtime.tv_sec, elapsed);
+	tel_lasttime = newtime;
+
+	struct timeval tv;
+	evutil_timerclear(&tv);
+	tv.tv_sec = TEL_TMOUT;
+	event_add(timeout, &tv);
+
+	//采集数据
+	Pkg_Afn_Data* p = NULL;
+	BUD().getallkwh(&p,"test",1);
+}
+
 //命令说明
 char helpstr[] = "\r\n++++++++++++++++++++++++++++++++++++++++++++++\r\n"
 				"command: ls,quit,setpointparams,setpointstatus,getclock,getstatus\r\n++++++++++++++++++++++++++++++++++++++++++++++\r\n\r\n"

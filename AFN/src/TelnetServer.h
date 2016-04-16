@@ -10,6 +10,7 @@
 #include "event2/listener.h"
 #include "event2/util.h"
 #include "event2/event.h"
+#include "event2/event_struct.h"
 
 #include <string>
 
@@ -29,12 +30,16 @@ private:
 	static void signal_cb(evutil_socket_t sig, short events, void *user_data);
 	static void listener_cb(struct evconnlistener *listener, evutil_socket_t fd,\
 							struct sockaddr *sa, int socklen, void *user_data);
+	static void timeout_cb(evutil_socket_t fd, short event, void *arg);
 private:
 	//侦听端口
 	unsigned int m_svrPort;
 	//libevent对象
 	struct event_base *base;
-    struct evconnlistener *listener;	
+   	struct evconnlistener *listener;	
+
+	//heartbeat timeout, 定时采集集中器数据
+	struct event timeout_event;
 };
 
 class TelnetThread : public Thread

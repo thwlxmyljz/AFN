@@ -112,21 +112,6 @@ int JzqList::newConnection(struct event_base *base,evutil_socket_t fd, struct so
 
 	return YQER_OK;
 }
-void JzqList::delConnection(struct bufferevent *bev)
-{
-	AUTO_LOCK()
-	for (conIter it = g_JzqConList->begin(); it != g_JzqConList->end(); it++){
-		Connection* con = (*it);
-		if (con->Compare(bev))
-		{			
-			g_JzqConList->ReportLoginState(con->m_jzq.m_areacode,con->m_jzq.m_number,2,0,FALSE);
-			YQLogInfo("delete connection");
-			g_JzqConList->erase(it);			
-			delete con;
-			break;
-		}
-	}    
-}
 Jzq* JzqList::getJzq(WORD _areacode,WORD _number)
 {
 	Jzq *p = NULL;
@@ -177,6 +162,21 @@ Connection* JzqList::getConnection(const std::string& _name)
 		return getConnection(p->m_a1a2.m_areacode,p->m_a1a2.m_number);
 	}
 	return NULL;
+}
+void JzqList::delConnection(struct bufferevent *bev)
+{
+	AUTO_LOCK()
+	for (conIter it = g_JzqConList->begin(); it != g_JzqConList->end(); it++){
+		Connection* con = (*it);
+		if (con->Compare(bev))
+		{			
+			g_JzqConList->ReportLoginState(con->m_jzq.m_areacode,con->m_jzq.m_number,2,0,FALSE);
+			YQLogInfo("delete connection");
+			g_JzqConList->erase(it);			
+			delete con;
+			break;
+		}
+	}    
 }
 void JzqList::ReportLoginState(WORD _areacode,WORD _number,WORD _Fn,BYTE _pseq,BOOL _add)
 {
