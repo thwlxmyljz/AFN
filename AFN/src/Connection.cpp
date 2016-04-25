@@ -161,6 +161,15 @@ int Connection::RecBuf()
 			ClearPkgList(m_pkgList);
 			YQLogInfo("rec mul pkg , first");
 			m_pkgList.push_back(pkg);
+
+			//??????????????????????
+			nRet = AFNPackageBuilder::Instance().HandlePkg(m_pkgList,ackLst);
+			if (nRet == YQER_OK && ackLst.size() > 0){
+				SendPkg(ackLst);
+				ClearPkgList(ackLst);
+			}	
+			ClearPkgList(m_pkgList);
+			//??????????????????????
 		}
 		else if (pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 0) {
 			//∂‡÷°£¨÷–º‰÷°
@@ -193,6 +202,10 @@ int Connection::SendPkg(std::list<AFNPackage*>& pkgLst)
 		}
 	}
 	return ret;
+}
+void Connection::ClearRecPkgList()
+{
+	ClearPkgList(m_pkgList);
 }
 void Connection::ClearPkgList(std::list<AFNPackage*>& lst)
 {

@@ -51,6 +51,10 @@ int AFNData::parseDateTime6(const BYTE* _data,int _len,std::string& dt)
 int AFNData::parseTable14(const BYTE* _data,int _len,float& val)
 {
 	if (_len >= 5){
+		if (_data[0] == 0xee){
+			val = -1;
+			return 5;
+		}
 		val =   (float)(((_data[4]>>4)&0x0f)*100000+(_data[4]&0x0f)*10000+
 				((_data[3]>>4)&0x0f)*1000+(_data[3]&0x0f)*100+
 				((_data[2]>>4)&0x0f)*10+(_data[2]&0x0f)+
@@ -64,6 +68,10 @@ int AFNData::parseTable14(const BYTE* _data,int _len,float& val)
 int AFNData::parseTable11(const BYTE* _data,int _len,float& val)
 {
 	if (_len >= 4){
+		if (_data[0] == 0xee){
+			val = -1;
+			return 4;
+		}
 		val =   (float)(((_data[3]>>4)&0x0f)*100000+(_data[3]&0x0f)*10000+
 				((_data[2]>>4)&0x0f)*1000+(_data[2]&0x0f)*100+
 				((_data[1]>>4)&0x0f)*10+(_data[1]&0x0f)+

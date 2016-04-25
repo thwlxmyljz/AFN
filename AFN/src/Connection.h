@@ -101,9 +101,11 @@ public:
 	//判断是否此连接
 	BOOL Compare(struct bufferevent *_bev);
 
+	//清空收报缓存
+	void ClearRecPkgList();
+	
 protected:
 	void ClearPkgList(std::list<AFNPackage*>& lst);
-
 private:
 	//libevent数据通道
 	struct bufferevent *bev;	
