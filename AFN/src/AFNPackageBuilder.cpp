@@ -14,16 +14,16 @@
 					}\
 					con->ClearRecPkgList();
 
-#define SET_COMMPARAMS(ackPkg,con,afnData) ackPkg->userHeader.C._C.DIR = 0x00;\
-	ackPkg->userHeader.C._C.PRM = 0x01;\
-	ackPkg->userHeader.C._C.FCV = 0x00;\
-	ackPkg->userHeader.C._C.FCB = 0x00;\
-	ackPkg->userHeader.A3._A3.TAG = 0;\
-	ackPkg->userHeader.A3._A3.MSA = Jzq::s_MSA;\
-	ackPkg->userHeader.A1 = con->m_jzq.m_areacode;\
-	ackPkg->userHeader.A2 = con->m_jzq.m_number;\
-	ackPkg->pAfn = afnData;\
-	ackPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ = g_JzqConList->GetPSEQ(ackPkg->userHeader.A1,ackPkg->userHeader.A2);
+#define SET_COMMPARAMS(pkg,con,afnData) pkg->userHeader.C._C.DIR = 0x00;\
+	pkg->userHeader.C._C.PRM = 0x01;\
+	pkg->userHeader.C._C.FCV = 0x00;\
+	pkg->userHeader.C._C.FCB = 0x00;\
+	pkg->userHeader.A3._A3.TAG = 0;\
+	pkg->userHeader.A3._A3.MSA = Jzq::s_MSA;\
+	pkg->userHeader.A1 = con->m_jzq.m_areacode;\
+	pkg->userHeader.A2 = con->m_jzq.m_number;\
+	pkg->pAfn = afnData;\
+	pkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ = g_JzqConList->GetPSEQ(pkg->userHeader.A1,pkg->userHeader.A2);
 
 #define BEGIN_CALL() AppCall call;\
 					int ret = YQER_OK;
