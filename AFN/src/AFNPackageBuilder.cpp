@@ -154,7 +154,7 @@ Pkg_Afn_Data* AFNPackageBuilder::Wait(const AppCall& call)
 	cmdMap[call] = NULL;
 	while( cmdMap[call] == NULL )
 	{
-		if (SleepConditionVariableCS(&ConditionVar, &CritSection, 2000) == 0){
+		if (SleepConditionVariableCS(&ConditionVar, &CritSection, 10000) == 0){
 			YQLogInfo("SleepConditionVariableCS timeout");
 			break;
 		}
@@ -172,7 +172,7 @@ Pkg_Afn_Data* AFNPackageBuilder::Wait(const AppCall& call)
 	while( cmdMap[call] == NULL )
 	{
 		gettimeofday(&now, NULL);
-		outtime.tv_sec = now.tv_sec + 2;
+		outtime.tv_sec = now.tv_sec + 10;
 		outtime.tv_nsec = now.tv_usec * 1000;
 		if (pthread_cond_timedwait(&ConditionVar,&CritSection,&outtime) == ETIMEDOUT){
 			YQLogInfo("pthread_cond_timedwait timeout");
