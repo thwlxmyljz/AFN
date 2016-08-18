@@ -46,11 +46,12 @@ public:
 	Connection* getConnection(WORD _areacode,WORD _number);
 	Connection* getConnection(const std::string& _name);
 	
+	int GetEleID(WORD areacode,WORD addr, WORD pn);
 	//检测心跳
 	void CheckConnection();
 
-	//执行所有在线采集器的采集
-	void GetAllKwh();
+	//定时执行所有在线采集器的电力采集
+	void AutoGetAllKwh();
 
 	/*libevent事件处理*/
 	static void conn_writecb(struct bufferevent *bev, void *user_data);

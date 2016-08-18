@@ -21,7 +21,7 @@
 
 #define VER "1.0.1"
 
-#define TMOUT_CHECK 60 //60 secs
+#define TMOUT_CHECK 60 //connection check timeout , 60 secs
 struct timeval check_lasttime;
 
 TcpServer::TcpServer(unsigned int port)

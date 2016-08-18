@@ -86,7 +86,7 @@ void JzqList::LoadJzq()
 		*/
 		Jzq* p = (*it);
 		char sqlBuf[128];
-		sprintf(sqlBuf,"select * from gc_equipmentelect where EquipmentCjqArea=%d and EquipmentCjqAddr=%d",p->m_a1a2.m_areacode,p->m_a1a2.m_number);
+		snprintf(sqlBuf,128,"select * from gc_equipmentelect where EquipmentCjqArea=%d and EquipmentCjqAddr=%d",p->m_a1a2.m_areacode,p->m_a1a2.m_number);
 		qopen(sqlBuf);
 		query()->First();
 		LOG(LOG_INFORMATION,"jzq count(%d)",query()->RecordCount);
@@ -107,6 +107,20 @@ void JzqList::LoadJzq()
 	m_jzqList.push_back(p);
 	p = new Jzq("test",0x1000,0x44d,0x01);
 	m_jzqList.push_back(p);*/
+}
+int JzqList::GetEleID(WORD areacode,WORD addr, WORD pn)
+{
+	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++){	
+		Jzq* p = (*it);
+		if (p->m_a1a2.m_areacode == areacode && p->m_a1a2.m_number == addr){
+			for (Jzq::EleIter eleIt = p->eleLst.begin(); eleIt != p->eleLst.end(); eleIt++){
+				Element& ele = (*eleIt);
+				if (ele.pn == pn)
+					return ele.ID;
+			}
+		}
+	}
+	return -1;
 }
 std::string JzqList::printJzq()
 {
@@ -131,13 +145,17 @@ void JzqList::CheckConnection()
 /*
 定时采集集中器数据
 */
-void JzqList::GetAllKwh()
+void JzqList::AutoGetAllKwh()
 {
 	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++){		
 		Jzq* pJzq = (*it);
 		if (TYQUtils::TimeElapse(pJzq->m_kwhTimer) > TM_GETKWH){
+			if (!getConnection(pJzq->m_a1a2.m_areacode,pJzq->m_a1a2.m_number)){
+				LOG(LOG_INFORMATION,"auto getkwh(%s), jzq not connected",pJzq->m_name.c_str());
+				continue;
+			}
 			Pkg_Afn_Data* p = NULL;
-			AFNPackageBuilder::Instance().getallkwh(&p,pJzq->m_name,0);
+			AFNPackageBuilder::Instance().getallkwh(&p,pJzq->m_name,1/*集中器定义的测试测量点*/);
 		}
 	}
 }

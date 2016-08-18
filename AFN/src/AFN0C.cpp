@@ -4,6 +4,8 @@
 #include "AFNPackageBuilder.h"
 #include "DBManager.h"
 #include <sstream>
+#include "ConnectionList.h"
+#include "Log.h"
 
 #define GO() p += len;\
 		left -= len;
@@ -206,11 +208,36 @@ std::string AFN0CAck_Data_AllKwh::toString()
 	}
 	return os.str();
 }
-int AFN0CAck_Data_AllKwh::toDB(WORD A1,WORD A2)
+int AFN0CAck_Data_AllKwh::toDB(WORD A1,WORD A2,WORD Fn, WORD Pn)
 {
+	/*
+	CREATE TABLE `gc_nhfxelect` (
+	  `ID` int(24) NOT NULL AUTO_INCREMENT COMMENT '序号',
+	  `EquipmentCjqID` int(24) NOT NULL COMMENT '唯一表示采集器 对应gc_equipmentelect的ID值',
+	  `USERKWH` float NOT NULL COMMENT '正向有功总电能示值',
+	  `DEVKVAR` float NOT NULL COMMENT '正向无功总电能示值',
+	  `FIRSTKVAR` float NOT NULL COMMENT '一象限无功总电能示值',
+	  `FOURKVAR` float NOT NULL COMMENT '四象限无功总电能示值',
+	  `M_USERKWH` varchar(50) DEFAULT NULL COMMENT '正向有功费率1-M示值,#分隔',
+	  `M_DEVKVAR` varchar(50) DEFAULT NULL COMMENT '正向无功费率1-M示值,#分隔',
+	  `M_FIRSTKVAR` varchar(50) DEFAULT NULL COMMENT '一象限无功费率1-M示值,#分隔',
+	  `M_FOURKVAR` varchar(50) DEFAULT NULL COMMENT '四象限无功费率1-M示值,#分隔',
+	  `RecordTime` datetime(6) NOT NULL COMMENT '记录时间',
+	  `TimeSpace` int(8) NOT NULL COMMENT '时间间隔 单位：秒 5min',
+	  `Remarks` varchar(64) DEFAULT NULL COMMENT '备注信息',
+	  PRIMARY KEY (`ID`),
+	  UNIQUE KEY `EquipmentCjqID` (`EquipmentCjqID`)
+	) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+	*/
 	std::ostringstream os;
-	os << "insert into DATA_0C33(AREACODE,ADDRESS,STIME,USERKWH,DEVKVAR,FIRSTKVAR,FOURKVAR,M_USERKWH,M_DEVKVAR,M_FIRSTKVAR,M_FOURKVAR) ";
-	os << "values("<<A1<<","<<A2<<",'"<<dt<<"',"<<userkwh<<","<<devkwh<<","<<onekwh<<","<<fourkwh<<",'";
+	int eleId = g_JzqConList->GetEleID(A1,A2,Pn);
+	if (eleId == -1)
+	{
+		LOG(LOG_MINOR,"drop ele data , not found ele");
+		return -1;
+	}
+	os << "insert into gc_nhfxelect(EquipmentCjqID,TimeSpace,RecordTime,USERKWH,DEVKVAR,FIRSTKVAR,FOURKVAR,M_USERKWH,M_DEVKVAR,M_FIRSTKVAR,M_FOURKVAR) ";
+	os << "values("<<eleId<<","<<60<<",'"<<dt<<"',"<<userkwh<<","<<devkwh<<","<<onekwh<<","<<fourkwh<<",'";
 	for (int i = 0; i < m; i++){
 		os <<userkwh_fee[i]<<"#";
 	}

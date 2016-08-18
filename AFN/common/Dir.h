@@ -4,7 +4,7 @@
 #ifdef _WIN32
 #define INIFILE      "C://WINDOWS/pw.ini"
 #else
-#define INIFILE      "root/AFN/pw.ini" //配置文件
+#define INIFILE      "/root/AFN/pw.ini" //配置文件
 #endif
 
 #endif

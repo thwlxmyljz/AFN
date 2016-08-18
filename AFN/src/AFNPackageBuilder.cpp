@@ -6,6 +6,7 @@
 #include "AFN04.h"
 #include "AFN0C.h"
 #include "LogFileu.h"
+#include "Log.h"
 
 #define AUTOLOCK_GETCONNECTION(name) AUTO_LOCK()\
 					Connection* con = g_JzqConList->getConnection(name);\
@@ -28,9 +29,11 @@
 #define BEGIN_CALL() AppCall call;\
 					int ret = YQER_OK;
 
-#define SET_CALL() call.AFN = sndPkg->pAfn->afnHeader.AFN;\
+#define SET_CALL_DELPKG() call.AFN = sndPkg->pAfn->afnHeader.AFN;\
 		call.m_areacode = con->m_jzq.m_areacode;\
 		call.m_number = con->m_jzq.m_number;\
+		call.m_fn = AFNPackage::GetFn(sndPkg->pAfn->pAfnData->m_Tag.DT1,sndPkg->pAfn->pAfnData->m_Tag.DT2);\
+		call.m_pn = AFNPackage::Getpn(sndPkg->pAfn->pAfnData->m_Tag.DA1,sndPkg->pAfn->pAfnData->m_Tag.DA2);\
 		delete sndPkg;
 
 #define WAIT_CALL(val) Pkg_Afn_Data* p = Wait(call);\
@@ -43,7 +46,7 @@
 					if (val){\
 						(*val) = p;\
 						if (p) \
-							p->toDB(call.m_areacode,call.m_number);\
+							p->toDB(call.m_areacode,call.m_number,,call.m_fn,call.m_pn);\
 					}\
 					return ret;
 
@@ -188,14 +191,31 @@ Pkg_Afn_Data* AFNPackageBuilder::Wait(const AppCall& call)
 
 int AFNPackageBuilder::Notify(const AppCall& call,Pkg_Afn_Data* data)
 {
+	//called in TcpServer thread
 #ifdef _WIN32
 	EnterCriticalSection(&CritSection);
 	if (cmdMap.find(call) != cmdMap.end()){
-		cmdMap[call] = data;		
+		cmdMap[call] = data;
+		if (call.AFN == Pkg_Afn_Header::AFN0C)
+		{
+			//采集数据自动入数据库
+			if (data) 
+				data->toDB(call.m_areacode,call.m_number,call.m_fn,call.m_pn);
+		}
 		WakeAllConditionVariable(&ConditionVar);
 	}
 	else{		
-		YQLogInfo("Notify ,but not found call");
+		//异步结果
+		if (call.AFN == Pkg_Afn_Header::AFN0C)
+		{
+			YQLogInfo("Notify , auto save to ele kwh");
+			//采集数据自动入数据库, maybe save data to another thread for save to db
+			if (data) 
+				data->toDB(call.m_areacode,call.m_number,call.m_fn,call.m_pn);
+		}
+		else{
+			YQLogInfo("Notify ,maybe async call , no handler");
+		}
 		delete data;
 	}
 	LeaveCriticalSection(&CritSection);
@@ -206,8 +226,18 @@ int AFNPackageBuilder::Notify(const AppCall& call,Pkg_Afn_Data* data)
 		cmdMap[call] = data;
 		pthread_cond_broadcast(&ConditionVar);
 	}
-	else{		
-		YQLogInfo("Notify ,but not found call");
+	else{
+		//异步结果
+		if (call.AFN == Pkg_Afn_Header::AFN0C)
+		{
+			YQLogInfo("Notify , auto save to ele kwh");
+			//采集数据自动入数据库, maybe save data to another thread for save to db
+			if (data) 
+				data->toDB(call.m_areacode,call.m_number,call.m_fn,call.m_pn);
+		}
+		else{
+			YQLogInfo("Notify ,maybe async call , no handler");
+		}
 		delete data;
 	}
 	pthread_mutex_unlock(&CritSection);
@@ -226,7 +256,7 @@ int AFNPackageBuilder::setpointparams(Pkg_Afn_Data** val,std::string name,WORD p
 		sndPkg->userHeader.C._C.FUN = 11;//请求2级数据		
 		sndPkg->okPkg();
 		ret = con->SendPkg(sndPkg);
-		SET_CALL()
+		SET_CALL_DELPKG()
 	}
 	WAIT_CALL(val)
 }
@@ -242,7 +272,7 @@ int AFNPackageBuilder::setpointstatus(Pkg_Afn_Data** val,std::string name)
 		sndPkg->userHeader.C._C.FUN = 10;//请求1级数据		
 		sndPkg->okPkg();
 		ret = con->SendPkg(sndPkg);
-		SET_CALL()
+		SET_CALL_DELPKG()
 	}
 	WAIT_CALL(val)
 }
@@ -258,7 +288,7 @@ int AFNPackageBuilder::getclock(Pkg_Afn_Data** val,std::string name)
 		sndPkg->userHeader.C._C.FUN = 10;//请求1级数据	
 		sndPkg->okPkg();
 		ret = con->SendPkg(sndPkg);
-		SET_CALL()
+		SET_CALL_DELPKG()
 	}
 	WAIT_CALL(val)
 }
@@ -274,7 +304,7 @@ int AFNPackageBuilder::getstatus(Pkg_Afn_Data** val,std::string name)
 		sndPkg->userHeader.C._C.FUN = 10;//请求1级数据	
 		sndPkg->okPkg();
 		ret = con->SendPkg(sndPkg);
-		SET_CALL()
+		SET_CALL_DELPKG()
 	}
 	WAIT_CALL(val)
 }
@@ -289,8 +319,23 @@ int AFNPackageBuilder::getallkwh(Pkg_Afn_Data** val,std::string name,WORD pn)
 		SET_COMMPARAMS(sndPkg,con,afnData)
 		sndPkg->userHeader.C._C.FUN = 10;//请求1级数据	
 		sndPkg->okPkg();
+		LOG(LOG_INFORMATION,"getallkwh_sync(%s,%d) send package...",name.c_str(),pn);
 		ret = con->SendPkg(sndPkg);
-		SET_CALL()
+		SET_CALL_DELPKG()
 	}
-	WAIT_CALL_SAVETODB(val)
+	WAIT_CALL(val)
+}
+int AFNPackageBuilder::getallkwh_async(Pkg_Afn_Data** val,std::string name,WORD pn)
+{
+	AUTOLOCK_GETCONNECTION(name)
+	AFN0C* afnData = new AFN0C();
+	afnData->CreateAllKwh(pn);
+	AFNPackage* sndPkg = new AFNPackage();	
+	SET_COMMPARAMS(sndPkg,con,afnData)
+	sndPkg->userHeader.C._C.FUN = 10;//请求1级数据	
+	sndPkg->okPkg();
+	LOG(LOG_INFORMATION,"getallkwh_async(%s,%d) send package...",name.c_str(),pn);
+	int ret = con->SendPkg(sndPkg);
+	delete sndPkg;
+	return ret;
 }

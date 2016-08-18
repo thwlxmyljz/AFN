@@ -329,7 +329,7 @@ public:
 	/*
 	数据库操作接口,in data thread
 	*/
-	virtual int toDB(WORD A1,WORD A2){return -1;}
+	virtual int toDB(WORD A1,WORD A2,WORD Fn, WORD Pn){return -1;}
 };
 /*
 附加信息域,分上下行

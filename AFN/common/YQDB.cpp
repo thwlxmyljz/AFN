@@ -509,7 +509,7 @@ void TYQMySQLQuery::First()
 	if(m_res == NULL)
 		return;
 	mysql_data_seek(m_res, 0);
-	mysql_fetch_row(m_res);
+	m_row = mysql_fetch_row(m_res);
 	if(m_row != NULL)
 		bEof = false;
 	else

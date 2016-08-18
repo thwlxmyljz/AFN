@@ -117,7 +117,7 @@ int TelnetServer::Run()
 void TelnetServer::timeout_cb_kwh(evutil_socket_t fd, short event, void *arg)
 {
 	//对所有在线集中器采集数据
-	g_JzqConList->GetAllKwh();
+	g_JzqConList->AutoGetAllKwh();
 
 	resetTimer(fd,event,arg);
 }

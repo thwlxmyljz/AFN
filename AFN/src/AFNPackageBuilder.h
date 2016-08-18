@@ -24,6 +24,10 @@ struct AppCall{
 	WORD m_number;
 	//AFN命令
 	BYTE AFN;
+	//FN
+	WORD m_fn;
+	//PN
+	WORD m_pn;	
 
 	bool operator < (const AppCall& o) const {
 		if (m_areacode < o.m_areacode)
@@ -38,7 +42,18 @@ struct AppCall{
 			return true;
 		else if (AFN > o.AFN)
 			return false;
+		if (m_fn < o.m_fn)
+			return true;
+		else if (m_fn > o.m_fn)
+			return false;
+		if (m_pn < o.m_pn)
+			return true;
+		else if (m_pn > o.m_pn)
+			return false;
 		return false;
+	}
+	bool operator == (const AppCall& o) const {
+		return m_areacode==o.m_areacode && m_number==o.m_number && AFN==o.AFN && m_fn==o.m_fn&& m_pn==o.m_pn;
 	}
 };
 class AFNPackageBuilder
@@ -69,7 +84,7 @@ public:
 	void Register(Pkg_Afn_Header::AFN_CODE code,pfnDoHandleRequest reqHandler,pfnDoHandleAck ackHandler);
 
 	/*-------------------------------------------------------
-	接受帧处理,tcpserver main thread call
+	tcpserver thread call
 	*/
 	//reqLst:多帧请求，ackLst:返回响应帧（可能0～多帧）,如果返回了响应帧，则需要发送到终端
 	int HandlePkg(AFNPackage* reqPkg,std::list<AFNPackage*>& ackLst);
@@ -77,19 +92,23 @@ public:
 	int Notify(const AppCall& call,Pkg_Afn_Data* data);
 
 	/*--------------------------------------------------------
-	构造请求帧,app thread call
+	telnet thread's user call, user sync wait for call result
 	*/
 	Pkg_Afn_Data* Wait(const AppCall& call);
 	//召测测量点,pn测量点号,0所有测量点
 	int setpointparams(Pkg_Afn_Data** val,std::string name,WORD pn);
 	int setpointstatus(Pkg_Afn_Data** val,std::string name);
-
 	//获取集中器时钟
 	int getclock(Pkg_Afn_Data** val,std::string name);
 	//终端集中抄表状态信息
 	int getstatus(Pkg_Afn_Data** val,std::string name);
 	//抄表信息
 	int getallkwh(Pkg_Afn_Data** val,std::string name,WORD pn);
+
+	/*
+	telnet thread auto call, async call
+	*/
+	int getallkwh_async(Pkg_Afn_Data** val,std::string name,WORD pn); 
 public:
 	static AFNPackageBuilder& Instance(){
 		if (single == NULL){
