@@ -51,7 +51,7 @@ private:
 class TelnetThread : public Thread
 {
 public:
-	void  Run();
+	virtual void  Run();
 private:
 	TelnetServer svr;
 };
