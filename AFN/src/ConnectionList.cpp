@@ -12,6 +12,9 @@
 //------------------------------------------------------------------------------------
 Mutex g_JzqConList_Mutex;
 JzqList* g_JzqConList = NULL;
+
+#define TM_GETKWH 10000 //10 secs
+
 JzqList::~JzqList()
 {
 	//清空连接
@@ -26,20 +29,79 @@ JzqList::~JzqList()
 void JzqList::LoadJzq()
 {
 	//数据库加载集中器
-	std::string sql= "select * from PW_JZQ";
+	/*
+	CREATE TABLE `gc_equipmentjzq` (
+	  `ID` int(24) NOT NULL AUTO_INCREMENT COMMENT '序号',
+	  `EquipmentName` varchar(24) NOT NULL COMMENT '集中器名称',
+	  `EquipmentCjqArea` int(11) NOT NULL COMMENT '采集器 行政区划码',
+	  `EquipmentCjqAddr` int(11) NOT NULL COMMENT '采集器 终端地址',
+	  `EquipmentXH` varchar(24) DEFAULT NULL COMMENT '集中器型号',
+	  `EquipmentPower` float DEFAULT NULL COMMENT '集中器功率',
+	  `UnitCode` varchar(32) NOT NULL COMMENT '大单位序号',
+	  `UnitDepCode` varchar(32) NOT NULL COMMENT '小单位序号',
+	  `EquipmentPlace` varchar(24) DEFAULT NULL COMMENT '设备所安装的位置',
+	  `SetTime` datetime(6) NOT NULL COMMENT '设备安装时间',
+	  `State` int(8) DEFAULT NULL COMMENT '设备的使用状态',
+	  `Remarks` varchar(64) DEFAULT NULL COMMENT '备注信息',
+	  PRIMARY KEY (`ID`),
+	  KEY `INDEX1` (`EquipmentCjqArea`,`EquipmentCjqAddr`)
+	) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
+	*/
+	std::string sql= "select * from gc_equipmentjzq";
 	qopen(sql);
 	query()->First();
 	LOG(LOG_INFORMATION,"jzq count(%d)",query()->RecordCount);
 	while (!(query()->IsEof())){		
-		int areacode = query()->FieldByName("AREACODE")->AsInteger();
-		int address = query()->FieldByName("ADDRESS")->AsInteger();
-		std::string name = query()->FieldByName("NAME")->AsString();
+		int areacode = query()->FieldByName("EquipmentCjqArea")->AsInteger();
+		int address = query()->FieldByName("EquipmentCjqAddr")->AsInteger();
+		std::string name = query()->FieldByName("EquipmentName")->AsString();
 		LOG(LOG_INFORMATION,"load jzq(%s,%d,%d)",name.c_str(),areacode,address);
 		Jzq* p = new Jzq(name,areacode,address,0x01);
 		m_jzqList.push_back(p);
 		query()->Next();
 	}
 	qclose();
+	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++){		
+		/*
+		CREATE TABLE `gc_equipmentelect` (
+		  `ID` int(24) NOT NULL AUTO_INCREMENT COMMENT '序号',
+		  `EquipmentName` varchar(24) NOT NULL COMMENT '电仪器名称',
+		  `EquipmentCjqPn` int(11) NOT NULL COMMENT '电仪器编号 电表标识',
+		  `EquipmentCjqArea` int(11) NOT NULL COMMENT '采集器 行政区划码',
+		  `EquipmentCjqAddr` int(11) NOT NULL COMMENT '采集器 终端地址',
+		  `EquipmentXH` varchar(24) DEFAULT NULL COMMENT '电仪器型号',
+		  `EquipmentPower` float DEFAULT NULL COMMENT '电仪器功率',
+		  `UnitName` varchar(32) NOT NULL COMMENT '大单位名称',
+		  `UnitCode` varchar(32) NOT NULL COMMENT '大单位序号',
+		  `UnitDepName` varchar(32) NOT NULL COMMENT '小单位名称',
+		  `UnitDepCode` varchar(32) NOT NULL COMMENT '小单位序号',
+		  `EquipmentPlace` varchar(24) DEFAULT NULL COMMENT '设备所安装的位置',
+		  `SetTime` datetime(6) NOT NULL COMMENT '设备安装时间',
+		  `State` int(8) DEFAULT NULL COMMENT '设备的使用状态',
+		  `Remarks` varchar(64) DEFAULT NULL COMMENT '备注信息',
+		  PRIMARY KEY (`ID`),
+		  UNIQUE KEY `EquipmentCjqPn` (`EquipmentCjqPn`),
+		  KEY `INDEX1` (`EquipmentCjqPn`,`EquipmentCjqArea`,`EquipmentCjqAddr`)
+		) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+		*/
+		Jzq* p = (*it);
+		char sqlBuf[128];
+		sprintf(sqlBuf,"select * from gc_equipmentelect where EquipmentCjqArea=%d and EquipmentCjqAddr=%d",p->m_a1a2.m_areacode,p->m_a1a2.m_number);
+		qopen(sqlBuf);
+		query()->First();
+		LOG(LOG_INFORMATION,"jzq count(%d)",query()->RecordCount);
+		while (!(query()->IsEof())){		
+			int pn = query()->FieldByName("EquipmentCjqPn")->AsInteger();
+			int id = query()->FieldByName("ID")->AsInteger();
+			LOG(LOG_INFORMATION,"load ele(%s,%d)",p->m_name.c_str(),pn);
+			Element ele;
+			ele.pn = pn;
+			ele.ID = id;
+			p->eleLst.push_back(ele);
+			query()->Next();
+		}
+		qclose();
+	}
 	/*
 	Jzq* p = new Jzq("test01",0xffff,0xffff,0x01);
 	m_jzqList.push_back(p);
@@ -54,14 +116,30 @@ std::string JzqList::printJzq()
 	}
 	return ss;
 }
-void JzqList::checkConnection()
+/*
+心跳超时检测
+*/
+void JzqList::CheckConnection()
 {
 	std::string ss;
 	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++){		
 		ss += (*it)->printInfo();
-		(*it)->checkTimeout();
+		(*it)->CheckTimeout();
 	}
 	YQLogInfo(ss.c_str());
+}
+/*
+定时采集集中器数据
+*/
+void JzqList::GetAllKwh()
+{
+	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++){		
+		Jzq* pJzq = (*it);
+		if (TYQUtils::TimeElapse(pJzq->m_kwhTimer) > TM_GETKWH){
+			Pkg_Afn_Data* p = NULL;
+			AFNPackageBuilder::Instance().getallkwh(&p,pJzq->m_name,0);
+		}
+	}
 }
 /**
 libevent event
@@ -168,8 +246,7 @@ void JzqList::delConnection(struct bufferevent *bev)
 	AUTO_LOCK()
 	for (conIter it = g_JzqConList->begin(); it != g_JzqConList->end(); it++){
 		Connection* con = (*it);
-		if (con->Compare(bev))
-		{			
+		if (con->Compare(bev)){			
 			g_JzqConList->ReportLoginState(con->m_jzq.m_areacode,con->m_jzq.m_number,2,0,FALSE);
 			YQLogInfo("delete connection");
 			g_JzqConList->erase(it);			
@@ -204,10 +281,8 @@ BYTE JzqList::GetRSEQ(WORD _areacode,WORD _number,BOOL _increase)
 		if (p->m_a1a2.m_areacode == _areacode && p->m_a1a2.m_number == _number)
 		{			
 			BYTE n = p->m_RSEQ;
-			if (_increase){
-				if (++p->m_RSEQ > 15){
-					p->m_RSEQ = 0;
-				}
+			if (_increase && ++p->m_RSEQ > 15){
+				p->m_RSEQ = 0;
 			}
 			return n;
 		}

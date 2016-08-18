@@ -38,7 +38,8 @@ int AFN02::HandleRequest(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& 
 		if (reqPkg->pn == 0){
 			if (reqPkg->Fn == 1/*F1登录*/ || reqPkg->Fn == 2/*F2退出登录*/ || reqPkg->Fn == 3/*F3心跳,数据单元带终端时间*/)
 			{
-				g_JzqConList->ReportLoginState(reqPkg->userHeader.A1,reqPkg->userHeader.A2,reqPkg->Fn,reqPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ);
+				//通知应用层
+				g_JzqConList->ReportLoginState(reqPkg->userHeader.A1,reqPkg->userHeader.A2,reqPkg->Fn,reqPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ,TRUE);
 
 				if (reqPkg->pAfn->afnHeader.SEQ._SEQ.CON != Pkg_Afn_Header::SEQ_CON_MBANSWER){
 					//终端测试软件的CON=0，实际设备CON=1								

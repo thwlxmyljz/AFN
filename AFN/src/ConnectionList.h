@@ -7,7 +7,7 @@ using namespace std;
 class AFNPackage;
 //------------------------------------------------------------------------------------
 /*
-集中器管理列表,连接链表+集中器链表
+集中器管理列表,tcp连接链表+集中器链表
 */
 class JzqList : public list<Connection*>
 {
@@ -45,8 +45,12 @@ public:
 	Connection* getConnection(struct bufferevent *bev);
 	Connection* getConnection(WORD _areacode,WORD _number);
 	Connection* getConnection(const std::string& _name);
+	
 	//检测心跳
-	void checkConnection();
+	void CheckConnection();
+
+	//执行所有在线采集器的采集
+	void GetAllKwh();
 
 	/*libevent事件处理*/
 	static void conn_writecb(struct bufferevent *bev, void *user_data);

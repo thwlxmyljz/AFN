@@ -97,6 +97,7 @@
     <ClInclude Include="src\Connection.h" />
     <ClInclude Include="src\ConnectionList.h" />
     <ClInclude Include="src\DBManager.h" />
+    <ClInclude Include="src\Element.h" />
     <ClInclude Include="src\proto.h" />
     <ClInclude Include="src\targetver.h" />
     <ClInclude Include="src\TcpServer.h" />
@@ -144,6 +145,7 @@
     <ClCompile Include="src\Connection.cpp" />
     <ClCompile Include="src\ConnectionList.cpp" />
     <ClCompile Include="src\DBManager.cpp" />
+    <ClCompile Include="src\Element.cpp" />
     <ClCompile Include="src\proto.cpp" />
     <ClCompile Include="src\TcpServer.cpp" />
     <ClCompile Include="src\TelnetServer.cpp" />

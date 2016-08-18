@@ -25,7 +25,12 @@ private:
 	//libevent回调
 	static void signal_cb(evutil_socket_t sig, short events, void *user_data);
 	static void listener_cb(struct evconnlistener *listener, evutil_socket_t fd,struct sockaddr *sa, int socklen, void *user_data);
-	static void timeout_cb(evutil_socket_t fd, short event, void *arg);
+	
+	/*集中器在线定时检测*/
+	static void timeout_cb_heart(evutil_socket_t fd, short event, void *arg);
+
+	//定时器回调后重设当前定时器
+	static void resetTimer(evutil_socket_t fd, short event, void *arg);
 private:
 	//侦听端口
 	unsigned int m_svrPort;
@@ -33,7 +38,8 @@ private:
 	struct event_base *base;
     struct evconnlistener *listener;
     struct event *signal_event;
-	//heartbeat timeout	
-	struct event timeout_event;
+
+	//集中器超时断线检测	
+	struct event timeout_event_checkjzq;
 };
 

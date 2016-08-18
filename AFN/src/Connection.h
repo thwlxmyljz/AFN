@@ -17,6 +17,7 @@
 #include <list>
 #include <map>
 #include <string>
+#include "Element.h"
 
 using namespace std;
 
@@ -57,9 +58,14 @@ public:
 	//启动帧帧序号计数器PFC
 	BYTE m_PFC;
 	//最近的心跳时间
-	DWORD m_heart;
+	DWORD m_heartTimer;
+	//最近的采集时间
+	DWORD m_kwhTimer;
 	//主站MSA值
 	static BYTE s_MSA;
+	//集中器带的电表
+	std::list<Element> eleLst;
+	typedef std::list<Element>::iterator EleIter;
 public:
 	Jzq();
 	Jzq(string _name,WORD _areaCode,WORD _number,BYTE _tag);
@@ -76,18 +82,21 @@ public:
 	/*
 	返回TRUE:timeout
 	*/
-	BOOL checkTimeout();
+	BOOL CheckTimeout();
 };
 //------------------------------------------------------------------------------------
 /*集中器连接*/
 class Connection
 {
 	friend class ZjqList;
+
 public:
 	Connection(struct event_base *base,struct bufferevent *_bev,evutil_socket_t _fd,struct sockaddr *sa);
 	virtual ~Connection(void);
-	//集中器标记
+
+	//连接对应的集中器标记
 	Jzq::JzqA1A2 m_jzq;
+
 public:
 	//读取帧
 	int RecBuf();
@@ -105,7 +114,9 @@ public:
 	void ClearRecPkgList();
 	
 protected:
+
 	void ClearPkgList(std::list<AFNPackage*>& lst);
+
 private:
 	//libevent数据通道
 	struct bufferevent *bev;	

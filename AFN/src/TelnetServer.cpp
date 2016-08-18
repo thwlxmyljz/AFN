@@ -17,11 +17,8 @@ using namespace std;
 #define ERR_PRINT() char errmsg[] = "param error\r\n$"; \
 			bufferevent_write(bev, errmsg, strlen(errmsg));
 
-#define BUD() AFNPackageBuilder::Instance()
-
-#define TEL_TMOUT 60 //60 secs
-
-struct timeval tel_lasttime;
+#define TMOUT_KWH 10 //secs采集电力
+struct timeval kwh_lasttime;//上次采集命令发送时间
 
 int split(const string& str, vector<string>& ret_, string sep)
 {
@@ -100,44 +97,50 @@ int TelnetServer::Run()
 	YQLogInfo("TelnetServer start ok");
 
 	/* Initalize heartbeat timeout event */
-	event_assign(&timeout_event, base, -1, 0, timeout_cb, (void*) &timeout_event);
+	event_assign(&timeout_event_kwh, base, -1, 0, timeout_cb_kwh, (void*) &timeout_cb_kwh);
 	struct timeval tv;
 	evutil_timerclear(&tv);
-	tv.tv_sec = TEL_TMOUT;
-	event_add(&timeout_event, &tv);
-	evutil_gettimeofday(&tel_lasttime, NULL);
-	
+	tv.tv_sec = TMOUT_KWH;
+	evutil_gettimeofday(&kwh_lasttime, NULL);
+	event_add(&timeout_event_kwh, &tv);	
+
+	/*run loop*/
     event_base_dispatch(base);
 
+	/*exit */
 	evconnlistener_free(listener);
     event_base_free(base);
 
     YQLogInfo("TelnetServer shut down");
 	return 0;
 }
-void TelnetServer::timeout_cb(evutil_socket_t fd, short event, void *arg)
+void TelnetServer::timeout_cb_kwh(evutil_socket_t fd, short event, void *arg)
+{
+	//对所有在线集中器采集数据
+	g_JzqConList->GetAllKwh();
+
+	resetTimer(fd,event,arg);
+}
+//定时器回调后重设当前定时器
+void TelnetServer::resetTimer(evutil_socket_t fd, short event, void *arg)
 {
 	struct timeval newtime, difference;
 	struct event *timeout = (struct event *)arg;
 	double elapsed;
 
 	evutil_gettimeofday(&newtime, NULL);
-	evutil_timersub(&newtime, &tel_lasttime, &difference);
+	evutil_timersub(&newtime, &kwh_lasttime, &difference);
 	elapsed = difference.tv_sec +
 	    (difference.tv_usec / 1.0e6);
 
 	printf("TelnetServer timeout_cb called at %d: %.3f seconds elapsed.\n",
 	    (int)newtime.tv_sec, elapsed);
-	tel_lasttime = newtime;
+	kwh_lasttime = newtime;
 
 	struct timeval tv;
 	evutil_timerclear(&tv);
-	tv.tv_sec = TEL_TMOUT;
+	tv.tv_sec = TMOUT_KWH;
 	event_add(timeout, &tv);
-
-	//采集数据
-	Pkg_Afn_Data* p = NULL;
-	BUD().getallkwh(&p,"test",1);
 }
 
 //命令说明
@@ -204,7 +207,7 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 			}
 			else{
 				Pkg_Afn_Data* p = NULL;
-				int ret = BUD().setpointparams(&p,params[1],atoi(params[2].c_str()));
+				int ret = AFNPackageBuilder::Instance().setpointparams(&p,params[1],atoi(params[2].c_str()));
 				ostringstream os;
 				os << "setpointparams return " << ret <<"\r\n";	
 				if (p){
@@ -223,7 +226,7 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 			}
 			else{
 				Pkg_Afn_Data* p = NULL;
-				int ret = BUD().setpointstatus(&p,params[1]);
+				int ret = AFNPackageBuilder::Instance().setpointstatus(&p,params[1]);
 				ostringstream os;
 				os << "setpointstatus return " << ret <<"\r\n";	
 				if (p){
@@ -242,7 +245,7 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 			}
 			else{
 				Pkg_Afn_Data* p = NULL;
-				int ret = BUD().getclock(&p,params[1]);
+				int ret = AFNPackageBuilder::Instance().getclock(&p,params[1]);
 				ostringstream os;
 				os << "getclock return " << ret <<"\r\n";
 				if (p){
@@ -261,7 +264,7 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 			}
 			else{
 				Pkg_Afn_Data* p = NULL;
-				int ret = BUD().getstatus(&p,params[1]);
+				int ret = AFNPackageBuilder::Instance().getstatus(&p,params[1]);
 				ostringstream os;
 				os << "getstatus return " << ret <<"\r\n";	
 				if (p){
@@ -280,7 +283,7 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 			}
 			else{
 				Pkg_Afn_Data* p = NULL;
-				int ret = BUD().getallkwh(&p,params[1],atoi(params[2].c_str()));
+				int ret = AFNPackageBuilder::Instance().getallkwh(&p,params[1],atoi(params[2].c_str()));
 				ostringstream os;
 				os << "getallkwh return " << ret <<"\r\n";	
 				if (p){

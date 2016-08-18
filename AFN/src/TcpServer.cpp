@@ -21,9 +21,8 @@
 
 #define VER "1.0.1"
 
-#define TMOUT 60 //60 secs
-
-struct timeval lasttime;
+#define TMOUT_CHECK 60 //60 secs
+struct timeval check_lasttime;
 
 TcpServer::TcpServer(unsigned int port)
 	:m_svrPort(port),base(NULL),listener(NULL),signal_event(NULL)
@@ -81,15 +80,17 @@ int TcpServer::Run()
 	YQLogInfo("Server start ok");
 
 	/* Initalize heartbeat timeout event */
-	event_assign(&timeout_event, base, -1, 0, timeout_cb, (void*) &timeout_event);
+	event_assign(&timeout_event_checkjzq, base, -1, 0, timeout_cb_heart, (void*) &timeout_event_checkjzq);
 	struct timeval tv;
 	evutil_timerclear(&tv);
-	tv.tv_sec = TMOUT;
-	event_add(&timeout_event, &tv);
-	evutil_gettimeofday(&lasttime, NULL);
-
+	tv.tv_sec = TMOUT_CHECK;
+	evutil_gettimeofday(&check_lasttime, NULL);
+	event_add(&timeout_event_checkjzq, &tv);
+	
+	/*run loop*/
     event_base_dispatch(base);
 
+	/*run over , exit*/
 	evconnlistener_free(listener);
     event_free(signal_event);
     event_base_free(base);
@@ -113,26 +114,31 @@ void TcpServer::listener_cb(struct evconnlistener *listener, evutil_socket_t fd,
 {
 	g_JzqConList->newConnection((struct event_base *)user_data,fd,sa);
 }
-//心跳检测
-void TcpServer::timeout_cb(evutil_socket_t fd, short event, void *arg)
+//集中器在线定时检测
+void TcpServer::timeout_cb_heart(evutil_socket_t fd, short event, void *arg)
+{
+	g_JzqConList->CheckConnection();
+
+	resetTimer(fd,event,arg);
+}
+//定时器回调后重设当前定时器
+void TcpServer::resetTimer(evutil_socket_t fd, short event, void *arg)
 {
 	struct timeval newtime, difference;
 	struct event *timeout = (struct event *)arg;
 	double elapsed;
 
 	evutil_gettimeofday(&newtime, NULL);
-	evutil_timersub(&newtime, &lasttime, &difference);
+	evutil_timersub(&newtime, &check_lasttime, &difference);
 	elapsed = difference.tv_sec +
 	    (difference.tv_usec / 1.0e6);
 
 	printf("timeout_cb called at %d: %.3f seconds elapsed.\n",
 	    (int)newtime.tv_sec, elapsed);
-	lasttime = newtime;
+	check_lasttime = newtime;
 
 	struct timeval tv;
 	evutil_timerclear(&tv);
-	tv.tv_sec = TMOUT;
+	tv.tv_sec = TMOUT_CHECK;
 	event_add(timeout, &tv);
-
-	g_JzqConList->checkConnection();
 }
