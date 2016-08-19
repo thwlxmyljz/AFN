@@ -158,6 +158,7 @@ int Connection::RecBuf()
 		}
 		if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 1  && pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 1) {
 			//ตฅึก
+			YQLogInfo("rec single pkg ");
 			nRet = AFNPackageBuilder::Instance().HandlePkg(pkg,ackLst);
 			if (nRet == YQER_OK && ackLst.size() > 0){
 				SendPkg(ackLst);
@@ -196,6 +197,9 @@ int Connection::RecBuf()
 				}	
 				ClearPkgList(m_pkgList);
 			}		
+		}
+		else{
+			YQLogMin("rec pkg,FIN|FIR error");
 		}
 	}while(len > 0);
 

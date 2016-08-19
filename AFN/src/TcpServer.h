@@ -28,8 +28,8 @@ private:
 	
 	/*集中器在线定时检测*/
 	static void timeout_cb_heart(evutil_socket_t fd, short event, void *arg);
-	/*定时采集电力数据*/
-	static void timeout_cb_kwh(evutil_socket_t fd, short event, void *arg);
+	//重设在线定时检测定时器
+	static void resetCheckTimer(evutil_socket_t fd, short event, void *arg);
 private:
 	//侦听端口
 	unsigned int m_svrPort;
@@ -40,7 +40,5 @@ private:
 
 	//集中器超时断线检测	
 	struct event timeout_event_checkjzq;
-	//定时采集集中器数据
-	struct event timeout_event_kwh;
 };
 

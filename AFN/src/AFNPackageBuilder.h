@@ -3,6 +3,8 @@
 #include "AFNPackage.h"
 #include <map>
 
+class Jzq;
+
 #ifndef _WIN32
 #include <pthread.h>
 #include <errno.h>
@@ -79,6 +81,9 @@ class AFNPackageBuilder
 	pthread_cond_t ConditionVar; 
 #endif
 
+	//自动结果到数据库
+	void SaveResultToDB(const AppCall& call,Pkg_Afn_Data* data);
+
 public:		
 	//注册处理函数
 	void Register(Pkg_Afn_Header::AFN_CODE code,pfnDoHandleRequest reqHandler,pfnDoHandleAck ackHandler);
@@ -108,7 +113,10 @@ public:
 	/*
 	telnet thread auto call, async call
 	*/
-	int getallkwh_async(Pkg_Afn_Data** val,std::string name,WORD pn); 
+	//采集此集中器管辖所有电表数据
+	int getallkwh_async(Jzq* pJzq);
+	//采集此集中器单个电表(pn)数据
+	int getallkwh_async(std::string name,WORD pn); 
 public:
 	static AFNPackageBuilder& Instance(){
 		if (single == NULL){

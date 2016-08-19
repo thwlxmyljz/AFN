@@ -13,7 +13,7 @@
 Mutex g_JzqConList_Mutex;
 JzqList* g_JzqConList = NULL;
 
-#define TM_GETKWH 10000 //10 secs
+#define TM_GETKWH 60000 //60 secs
 
 JzqList::~JzqList()
 {
@@ -150,12 +150,9 @@ void JzqList::AutoGetAllKwh()
 	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++){		
 		Jzq* pJzq = (*it);
 		if (TYQUtils::TimeElapse(pJzq->m_kwhTimer) > TM_GETKWH){
-			if (!getConnection(pJzq->m_a1a2.m_areacode,pJzq->m_a1a2.m_number)){
-				LOG(LOG_INFORMATION,"auto getkwh(%s), jzq not connected",pJzq->m_name.c_str());
-				continue;
-			}
-			Pkg_Afn_Data* p = NULL;
-			AFNPackageBuilder::Instance().getallkwh_async(&p,pJzq->m_name,1/*集中器定义的测试测量点*/);
+			//采集此集中器所带电表数据
+			TYQUtils::TimeStart(pJzq->m_kwhTimer);
+			AFNPackageBuilder::Instance().getallkwh_async(pJzq);
 		}
 	}
 }
