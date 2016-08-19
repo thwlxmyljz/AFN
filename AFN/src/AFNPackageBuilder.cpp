@@ -118,6 +118,8 @@ int AFNPackageBuilder::DoHandleAck(std::list<AFNPackage*>& ackLst)
 		call.AFN = ackPkg->pAfn->afnHeader.AFN;
 		call.m_areacode = ackPkg->userHeader.A1;
 		call.m_number = ackPkg->userHeader.A2;
+		call.m_fn = ackPkg->Fn;
+		call.m_pn = ackPkg->pn;
 		if (ackPkg->userHeader.C._C.FUN == Pkg_User_Header::UH_FUNC_SUB8){
 			//用户数据
 			Pkg_Afn_Data* pData = NULL;

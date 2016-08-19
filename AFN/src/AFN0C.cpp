@@ -208,7 +208,7 @@ std::string AFN0CAck_Data_AllKwh::toString()
 	}
 	return os.str();
 }
-int AFN0CAck_Data_AllKwh::toDB(WORD A1,WORD A2,WORD Fn, WORD Pn)
+int AFN0CAck_Data_AllKwh::toDB(WORD A1,WORD A2,WORD Fn, WORD pn)
 {
 	/*
 	CREATE TABLE `gc_nhfxelect` (
@@ -230,10 +230,10 @@ int AFN0CAck_Data_AllKwh::toDB(WORD A1,WORD A2,WORD Fn, WORD Pn)
 	) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 	*/
 	std::ostringstream os;
-	int eleId = g_JzqConList->GetEleID(A1,A2,Pn);
+	int eleId = g_JzqConList->GetEleID(A1,A2,pn);
 	if (eleId == -1)
 	{
-		LOG(LOG_MINOR,"drop ele data , not found ele");
+		LOG(LOG_MINOR,"drop ele data , not found ele(%d,%d,%d)",A1,A2,pn);
 		return -1;
 	}
 	os << "insert into gc_nhfxelect(EquipmentCjqID,TimeSpace,RecordTime,USERKWH,DEVKVAR,FIRSTKVAR,FOURKVAR,M_USERKWH,M_DEVKVAR,M_FIRSTKVAR,M_FOURKVAR) ";

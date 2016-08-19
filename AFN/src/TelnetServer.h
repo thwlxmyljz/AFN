@@ -34,7 +34,7 @@ private:
 	static void timeout_cb_kwh(evutil_socket_t fd, short event, void *arg);
 
 	//定时器回调后重设当前定时器
-	static void resetTimer(evutil_socket_t fd, short event, void *arg);
+	static void resetKwhTimer(evutil_socket_t fd, short event, void *arg);
 
 private:
 	//侦听端口

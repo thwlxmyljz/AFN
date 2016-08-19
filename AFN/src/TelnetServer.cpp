@@ -96,8 +96,8 @@ int TelnetServer::Run()
 	}
 	YQLogInfo("TelnetServer start ok");
 
-	/* Initalize heartbeat timeout event */
-	event_assign(&timeout_event_kwh, base, -1, 0, timeout_cb_kwh, (void*) &timeout_cb_kwh);
+	/* Initalize timeout event */
+	event_assign(&timeout_event_kwh, base, -1, 0, timeout_cb_kwh, (void*) &timeout_event_kwh);
 	struct timeval tv;
 	evutil_timerclear(&tv);
 	tv.tv_sec = TMOUT_KWH;
@@ -116,29 +116,11 @@ int TelnetServer::Run()
 }
 void TelnetServer::timeout_cb_kwh(evutil_socket_t fd, short event, void *arg)
 {
-	struct timeval newtime, difference;
-	struct event *timeout = (struct event *)arg;
-	double elapsed;
-
-	evutil_gettimeofday(&newtime, NULL);
-	evutil_timersub(&newtime, &kwh_lasttime, &difference);
-	elapsed = difference.tv_sec +
-	    (difference.tv_usec / 1.0e6);
-
-	printf("TelnetServer timeout_cb called at %d: %.3f seconds elapsed.\n",
-	    (int)newtime.tv_sec, elapsed);
-	kwh_lasttime = newtime;
-
-	struct timeval tv;
-	evutil_timerclear(&tv);
-	tv.tv_sec = TMOUT_KWH;
-	event_add(timeout, &tv);
-	//TelnetServer::resetTimer(fd,event,arg);
-	//对所有在线集中器采集数据
-	//g_JzqConList->AutoGetAllKwh();	
+	TelnetServer::resetKwhTimer(fd,event,arg);
+	g_JzqConList->AutoGetAllKwh();
 }
 //定时器回调后重设当前定时器
-void TelnetServer::resetTimer(evutil_socket_t fd, short event, void *arg)
+void TelnetServer::resetKwhTimer(evutil_socket_t fd, short event, void *arg)
 {
 	struct timeval newtime, difference;
 	struct event *timeout = (struct event *)arg;

@@ -24,6 +24,9 @@
 #define TMOUT_CHECK 60 //connection check timeout , 60 secs
 struct timeval check_lasttime;
 
+#define TMOUT_KWH 10 //secs采集电力
+struct timeval getkwh_lasttime;//上次采集命令发送时间
+
 TcpServer::TcpServer(unsigned int port)
 	:m_svrPort(port),base(NULL),listener(NULL),signal_event(NULL)
 {
@@ -86,7 +89,15 @@ int TcpServer::Run()
 	tv.tv_sec = TMOUT_CHECK;
 	evutil_gettimeofday(&check_lasttime, NULL);
 	event_add(&timeout_event_checkjzq, &tv);
-	
+
+	/* Initalize autogetkwh timeout event */
+	/*先放在TelnetServer线程
+	event_assign(&timeout_event_kwh, base, -1, 0, timeout_cb_kwh, (void*) &timeout_event_kwh);
+	evutil_timerclear(&tv);
+	tv.tv_sec = TMOUT_KWH;
+	evutil_gettimeofday(&getkwh_lasttime, NULL);
+	event_add(&timeout_event_kwh, &tv);
+	*/
 	/*run loop*/
     event_base_dispatch(base);
 
@@ -118,27 +129,8 @@ void TcpServer::listener_cb(struct evconnlistener *listener, evutil_socket_t fd,
 void TcpServer::timeout_cb_heart(evutil_socket_t fd, short event, void *arg)
 {
 	g_JzqConList->CheckConnection();
-
-	resetTimer(fd,event,arg);
 }
-//定时器回调后重设当前定时器
-void TcpServer::resetTimer(evutil_socket_t fd, short event, void *arg)
+void TcpServer::timeout_cb_kwh(evutil_socket_t fd, short event, void *arg)
 {
-	struct timeval newtime, difference;
-	struct event *timeout = (struct event *)arg;
-	double elapsed;
-
-	evutil_gettimeofday(&newtime, NULL);
-	evutil_timersub(&newtime, &check_lasttime, &difference);
-	elapsed = difference.tv_sec +
-	    (difference.tv_usec / 1.0e6);
-
-	printf("timeout_cb called at %d: %.3f seconds elapsed.\n",
-	    (int)newtime.tv_sec, elapsed);
-	check_lasttime = newtime;
-
-	struct timeval tv;
-	evutil_timerclear(&tv);
-	tv.tv_sec = TMOUT_CHECK;
-	event_add(timeout, &tv);
-}
+	g_JzqConList->AutoGetAllKwh();	
+}	

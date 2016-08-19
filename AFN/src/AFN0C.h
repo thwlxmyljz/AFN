@@ -70,7 +70,7 @@ public:
 	virtual AFN0CAck_Data_AllKwh* New();
 	virtual int HandleData();
 	virtual std::string toString();
-	virtual int toDB(WORD A1,WORD A2,WORD Fn, WORD Pn);
+	virtual int toDB(WORD A1,WORD A2,WORD Fn, WORD pn);
 	/*
 	终端抄表时间	见附录A.15	分时日月年	5
 	费率数M（1≤M≤12）	BIN	个	1

@@ -155,7 +155,7 @@ void JzqList::AutoGetAllKwh()
 				continue;
 			}
 			Pkg_Afn_Data* p = NULL;
-			AFNPackageBuilder::Instance().getallkwh(&p,pJzq->m_name,1/*集中器定义的测试测量点*/);
+			AFNPackageBuilder::Instance().getallkwh_async(&p,pJzq->m_name,1/*集中器定义的测试测量点*/);
 		}
 	}
 }
