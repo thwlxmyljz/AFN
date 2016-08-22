@@ -1,5 +1,6 @@
 #include "AFNPackage.h"
 #include "YQErrCode.h"
+#include "Log.h"
 
 DWORD AFNPackage::s_pkgID = 1;
 
@@ -27,6 +28,7 @@ void AFNPackage::SetReqType2ZJQ()
 int AFNPackage::ParseProto(BYTE* data,DWORD len)
 {
 	if (len < (PKG_HEADLEN+PKG_USER_HEADLEN+PKG_TAILLEN)){
+		LOG(LOG_MINOR,"parse pkg error, length too less , wait for left...");
 		return YQER_PKG_Err(1);
 	}
 
@@ -38,15 +40,18 @@ int AFNPackage::ParseProto(BYTE* data,DWORD len)
 	//判断包合法性
 	if (!valid()){
 		//包标识字符非法
+		LOG(LOG_MINOR,"parse pkg error, Tag error");
 		return YQER_PKG_Err(2);
 	}
 	if ((int)len != (int)pkgHeader.L._L.LEN+PKG_HEADLEN+PKG_TAILLEN){
 		//包长度不正确
+		LOG(LOG_MINOR,"parse pkg error, user length error");
 		return YQER_PKG_Err(3);
 	}
 	BYTE cs = GetCS(data+PKG_HEADLEN,pkgHeader.L._L.LEN);
 	if (cs != pkgTail.CS){
 		//校验和错误
+		LOG(LOG_MINOR,"parse pkg error, CS error");
 		return YQER_PKG_Err(4);
 	}
 	data += PKG_HEADLEN;
@@ -60,7 +65,8 @@ int AFNPackage::ParseProto(BYTE* data,DWORD len)
 
 	pn = AFNPackage::Getpn(pAfn->pAfnData->m_Tag.DA1,pAfn->pAfnData->m_Tag.DA2);
 	Fn = AFNPackage::GetFn(pAfn->pAfnData->m_Tag.DT1,pAfn->pAfnData->m_Tag.DT2);
-
+	LOG(LOG_INFORMATION,"parse pkg ok, user data len:%d",pkgHeader.L._L.LEN);
+	
 	return YQER_OK;
 }
 int AFNPackage::Serialize(BYTE* buf,DWORD bufLen) const

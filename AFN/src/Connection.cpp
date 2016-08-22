@@ -137,16 +137,24 @@ int Connection::RecBuf()
 	BYTE msg[BUF_SIZE];
 	size_t len = bufferevent_read(bev, msg, sizeof(msg)-1 );
 	msg[len] = '\0';
-	LogFile->FmtLog(LOG_INFORMATION,"rec pkg:%s", TYQUtils::Byte2Hex(msg,len).c_str());
+	LOG(LOG_INFORMATION,"rec pkg len[%d] data:%s",len, TYQUtils::Byte2Hex(msg,len).c_str());
 	BYTE* pMsg = msg;
 	do 
 	{
 		AFNPackage* pkg = new AFNPackage();
 		int errCode = pkg->ParseProto(pMsg,len);	
-		if (errCode != YQER_OK){		
-			YQLogMin("RecBuf, pkg invalid!");
-			delete pkg;
-			return errCode;
+		if (errCode != YQER_OK){
+			if (errCode == YQER_PKG_Err(1)){
+				//半截包，继续接受...,待做
+				YQLogMin("RecBuf, pkg invalid!");
+				delete pkg;
+				return errCode;
+			}
+			else{
+				YQLogMin("RecBuf, pkg invalid!");
+				delete pkg;
+				return errCode;
+			}
 		}
 		pMsg += pkg->GetFrameL();
 		len -= pkg->GetFrameL();
@@ -201,6 +209,7 @@ int Connection::RecBuf()
 		else{
 			YQLogMin("rec pkg,FIN|FIR error");
 		}
+		LOG(LOG_INFORMATION,"parse one pkg over, left %d bytes in buffer",len);
 	}while(len > 0);
 
 	return YQER_OK;

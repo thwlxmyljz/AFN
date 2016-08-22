@@ -117,7 +117,7 @@ int TelnetServer::Run()
 void TelnetServer::timeout_cb_kwh(evutil_socket_t fd, short event, void *arg)
 {
 	TelnetServer::resetKwhTimer(fd,event,arg);
-	g_JzqConList->AutoGetAllKwh();
+	//g_JzqConList->AutoGetAllKwh();
 }
 //定时器回调后重设当前定时器
 void TelnetServer::resetKwhTimer(evutil_socket_t fd, short event, void *arg)

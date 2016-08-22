@@ -18,14 +18,14 @@ void LOG(LPCSTR msg,LOGCLS Level)
 }
 void LOG(LOGCLS Level, const char* format,...)
 {	
-	char slask[1024]; // temporary for vsprintf / vsnprintf
+	char slask[4096]; // temporary for vsprintf / vsnprintf
 	va_list ap;
 
 	va_start(ap, format);
 #ifdef _WIN32
 	vsprintf(slask, format, ap);
 #else
-	vsnprintf(slask, 1024, format, ap);
+	vsnprintf(slask, 4096, format, ap);
 #endif
 	va_end(ap);
 
@@ -46,14 +46,14 @@ void LOG(LPCSTR File, int Line, LOGCLS LogCls, LPCSTR format, ...)
 	}
 	else
 	{
-		char slask[1024]; // temporary for vsprintf / vsnprintf
+		char slask[4096]; // temporary for vsprintf / vsnprintf
 		va_list ap;
 
 		va_start(ap, format);
 #ifdef _WIN32
 		vsprintf(slask, format, ap);
 #else
-		vsnprintf(slask, 1024, format, ap);
+		vsnprintf(slask, 4096, format, ap);
 #endif
 		va_end(ap);
 		fprintf(stderr,"[%d][%s:%d] %s\n",LogCls,File,Line,slask);
