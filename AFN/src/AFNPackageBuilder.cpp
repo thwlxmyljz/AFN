@@ -5,6 +5,7 @@
 #include "Lock.h"
 #include "AFN04.h"
 #include "AFN0C.h"
+#include "AFNAck.h"
 #include "LogFileu.h"
 #include "Log.h"
 #include "Utility.h"
@@ -99,6 +100,29 @@ int AFNPackageBuilder::DoHandleRequest(std::list<AFNPackage*>& reqLst,std::list<
 		PkgHandler& h = (*it).second;
 		if (h.reqHander && (*it).first == reqPkg->pAfn->afnHeader.AFN){
 			return h.reqHander(reqLst,ackLst);		
+		}
+		else{
+			//不认识的命令，直接回复确认
+			AFNPackage* ackPkg = new AFNPackage();
+			ackPkg->userHeader.C._C.DIR = 0x00;
+			ackPkg->userHeader.C._C.PRM = 0x00;
+			ackPkg->userHeader.C._C.FCV = 0x00;
+			ackPkg->userHeader.C._C.FCB = 0x00;
+			ackPkg->userHeader.C._C.FUN = 11;//链路状态
+			ackPkg->userHeader.A3._A3.TAG = 0;//单地址
+			ackPkg->userHeader.A3._A3.MSA = Jzq::s_MSA;
+			ackPkg->userHeader.A1 = reqPkg->userHeader.A1;
+			ackPkg->userHeader.A2 = reqPkg->userHeader.A2;
+			ackPkg->pAfn->afnHeader.AFN = Pkg_Afn_Header::AFN00;//确认
+			ackPkg->pAfn->afnHeader.SEQ._SEQ.CON = Pkg_Afn_Header::SEQ_CON_NOANSWER;
+			ackPkg->pAfn->afnHeader.SEQ._SEQ.FIN = 1;
+			ackPkg->pAfn->afnHeader.SEQ._SEQ.FIR = 1;
+			ackPkg->pAfn->afnHeader.SEQ._SEQ.TPV = Pkg_Afn_Header::SEQ_TPV_NO;						
+			ackPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ = g_JzqConList->GetRSEQ(reqPkg->userHeader.A1,reqPkg->userHeader.A2);	
+			ackPkg->pAfn->pAfnData = new AFNAck_Data();
+			ackPkg->okPkg();
+			ackLst.push_back(ackPkg);
+			return YQER_OK;
 		}
 	}
 	return -1;
