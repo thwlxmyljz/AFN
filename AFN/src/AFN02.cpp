@@ -4,7 +4,7 @@
 #include "AFNPackage.h"
 #include "YQErrCode.h"
 #include "LogFileu.h"
-
+#include "AFNPackageBuilder.h"
 
 AFN02Ack_Data::AFN02Ack_Data(Pkg_Afn_DataTag _what)
 	:Pkg_Afn_Data(),WhatAckDataTag(_what)
@@ -46,26 +46,7 @@ int AFN02::HandleRequest(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& 
 					return YQER_OK;
 				}
 				//数据按F3回应，ERR定义如下，=0正确，=1其他错误，=2表地址重复，3~255备用
-				AFNPackage* ackPkg = new AFNPackage();
-				ackPkg->userHeader.C._C.DIR = 0x00;
-				ackPkg->userHeader.C._C.PRM = 0x00;
-				ackPkg->userHeader.C._C.FCV = 0x00;
-				ackPkg->userHeader.C._C.FCB = 0x00;
-				ackPkg->userHeader.C._C.FUN = 11;//链路状态
-				ackPkg->userHeader.A3._A3.TAG = 0;//单地址
-				ackPkg->userHeader.A3._A3.MSA = Jzq::s_MSA;
-				ackPkg->userHeader.A1 = reqPkg->userHeader.A1;
-				ackPkg->userHeader.A2 = reqPkg->userHeader.A2;
-				ackPkg->pAfn->afnHeader.AFN = Pkg_Afn_Header::AFN00;//确认
-				ackPkg->pAfn->afnHeader.SEQ._SEQ.CON = Pkg_Afn_Header::SEQ_CON_NOANSWER;
-				ackPkg->pAfn->afnHeader.SEQ._SEQ.FIN = 1;
-				ackPkg->pAfn->afnHeader.SEQ._SEQ.FIR = 1;
-				ackPkg->pAfn->afnHeader.SEQ._SEQ.TPV = Pkg_Afn_Header::SEQ_TPV_NO;						
-				ackPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ = g_JzqConList->GetRSEQ(reqPkg->userHeader.A1,reqPkg->userHeader.A2);	
-				ackPkg->pAfn->pAfnData = new AFN02Ack_Data(reqPkg->pAfn->pAfnData->m_Tag);
-				ackPkg->okPkg();
-
-				ackLst.push_back(ackPkg);
+				ackLst.push_back(AFNPackageBuilder::Instance().CreateAck(reqPkg,new AFN02Ack_Data(reqPkg->pAfn->pAfnData->m_Tag)));
 				return YQER_OK;
 			}			
 		}

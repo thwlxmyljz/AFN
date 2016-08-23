@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Connection.h"
+#include "Lock.h"
+#include "Mutex.h"
+#include <list>
 
 using namespace std;
 

@@ -71,6 +71,28 @@ void AFNPackageBuilder::Register(Pkg_Afn_Header::AFN_CODE code,pfnDoHandleReques
 	h.ackHandler = ackHandler;
 	handlerMap[code] = h;
 }
+AFNPackage* AFNPackageBuilder::CreateAck(AFNPackage* reqPkg, Pkg_Afn_Data* data)
+{
+	AFNPackage* ackPkg = new AFNPackage();
+	ackPkg->userHeader.C._C.DIR = 0x00;
+	ackPkg->userHeader.C._C.PRM = 0x00;
+	ackPkg->userHeader.C._C.FCV = 0x00;
+	ackPkg->userHeader.C._C.FCB = 0x00;
+	ackPkg->userHeader.C._C.FUN = 11;//链路状态，
+	ackPkg->userHeader.A3._A3.TAG = 0;//单地址
+	ackPkg->userHeader.A3._A3.MSA = Jzq::s_MSA;
+	ackPkg->userHeader.A1 = reqPkg->userHeader.A1;
+	ackPkg->userHeader.A2 = reqPkg->userHeader.A2;
+	ackPkg->pAfn->afnHeader.AFN = Pkg_Afn_Header::AFN00;//确认
+	ackPkg->pAfn->afnHeader.SEQ._SEQ.CON = Pkg_Afn_Header::SEQ_CON_NOANSWER;
+	ackPkg->pAfn->afnHeader.SEQ._SEQ.FIN = 1;
+	ackPkg->pAfn->afnHeader.SEQ._SEQ.FIR = 1;
+	ackPkg->pAfn->afnHeader.SEQ._SEQ.TPV = Pkg_Afn_Header::SEQ_TPV_NO;						
+	ackPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ = g_JzqConList->GetRSEQ(reqPkg->userHeader.A1,reqPkg->userHeader.A2);	
+	ackPkg->pAfn->pAfnData = (data==NULL)?new AFNAck_Data():data;
+	ackPkg->okPkg();
+	return ackPkg;
+}
 int AFNPackageBuilder::HandlePkg(AFNPackage* reqPkg,std::list<AFNPackage*>& ackLst)
 {
 	std::list<AFNPackage*> lst;
@@ -103,25 +125,7 @@ int AFNPackageBuilder::DoHandleRequest(std::list<AFNPackage*>& reqLst,std::list<
 		}
 		else{
 			//不认识的命令，直接回复确认
-			AFNPackage* ackPkg = new AFNPackage();
-			ackPkg->userHeader.C._C.DIR = 0x00;
-			ackPkg->userHeader.C._C.PRM = 0x00;
-			ackPkg->userHeader.C._C.FCV = 0x00;
-			ackPkg->userHeader.C._C.FCB = 0x00;
-			ackPkg->userHeader.C._C.FUN = 11;//链路状态
-			ackPkg->userHeader.A3._A3.TAG = 0;//单地址
-			ackPkg->userHeader.A3._A3.MSA = Jzq::s_MSA;
-			ackPkg->userHeader.A1 = reqPkg->userHeader.A1;
-			ackPkg->userHeader.A2 = reqPkg->userHeader.A2;
-			ackPkg->pAfn->afnHeader.AFN = Pkg_Afn_Header::AFN00;//确认
-			ackPkg->pAfn->afnHeader.SEQ._SEQ.CON = Pkg_Afn_Header::SEQ_CON_NOANSWER;
-			ackPkg->pAfn->afnHeader.SEQ._SEQ.FIN = 1;
-			ackPkg->pAfn->afnHeader.SEQ._SEQ.FIR = 1;
-			ackPkg->pAfn->afnHeader.SEQ._SEQ.TPV = Pkg_Afn_Header::SEQ_TPV_NO;						
-			ackPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ = g_JzqConList->GetRSEQ(reqPkg->userHeader.A1,reqPkg->userHeader.A2);	
-			ackPkg->pAfn->pAfnData = new AFNAck_Data();
-			ackPkg->okPkg();
-			ackLst.push_back(ackPkg);
+			ackLst.push_back(CreateAck(reqPkg));
 			return YQER_OK;
 		}
 	}
@@ -177,7 +181,7 @@ int AFNPackageBuilder::DoHandleAck(std::list<AFNPackage*>& ackLst)
 			;
 		}
 	}
-	AFNPackageBuilder::Instance().Notify(call,pDataHead);
+	AFNPackageBuilder::Instance().notify(call,pDataHead);
 	return YQER_OK;;
 }
 Pkg_Afn_Data* AFNPackageBuilder::Wait(const AppCall& call)
@@ -219,50 +223,50 @@ Pkg_Afn_Data* AFNPackageBuilder::Wait(const AppCall& call)
 	return p;
 #endif
 }
-void AFNPackageBuilder::SaveResultToDB(const AppCall& call,Pkg_Afn_Data* data)
+void AFNPackageBuilder::saveResultToDB(const AppCall& call,Pkg_Afn_Data* data)
 {
-	if (call.AFN == Pkg_Afn_Header::AFN0C)
+	if (call.AFN == Pkg_Afn_Header::AFN0C && data)
 	{
 		//采集数据自动入数据库
-		if (data) 
-			data->toDB(call.m_areacode,call.m_number,call.m_fn,call.m_pn);
+		data->toDB(call.m_areacode,call.m_number,call.m_fn,call.m_pn);
+		return;
 	}
 }
-int AFNPackageBuilder::Notify(const AppCall& call,Pkg_Afn_Data* data)
+int AFNPackageBuilder::notify(const AppCall& call,Pkg_Afn_Data* data)
 {
-	LOG(LOG_INFORMATION,"Notify with data(0x%X)...",(int)data);
+	LOG(LOG_INFORMATION,"notify with data(0x%X)...",(int)data);
 	//called in TcpServer thread
 #ifdef _WIN32
 	EnterCriticalSection(&CritSection);
 	if (cmdMap.find(call) != cmdMap.end()){
 		cmdMap[call] = data;
-		SaveResultToDB(call,data);
+		saveResultToDB(call,data);
 		//data 由应用等待结果线程删除
 		WakeAllConditionVariable(&ConditionVar);
 	}
 	else{		
 		//异步结果
-		SaveResultToDB(call,data);
+		saveResultToDB(call,data);
 		delete data;
 	}
 	LeaveCriticalSection(&CritSection);
-	LOG(LOG_INFORMATION,"Notify with data(0x%X) over",(int)data);
+	LOG(LOG_INFORMATION,"notify with data(0x%X) over",(int)data);
 	return 0;
 #else
 	pthread_mutex_lock(&CritSection);
 	if (cmdMap.find(call) != cmdMap.end()){
 		cmdMap[call] = data;
-		SaveResultToDB(call,data);
+		saveResultToDB(call,data);
 		//data 由应用等待结果线程删除
 		pthread_cond_broadcast(&ConditionVar);
 	}
 	else{
 		//异步结果
-		SaveResultToDB(call,data);
+		saveResultToDB(call,data);
 		delete data;
 	}
 	pthread_mutex_unlock(&CritSection);
-	LOG(LOG_INFORMATION,"Notify with data(0x%X) over",(int)data);
+	LOG(LOG_INFORMATION,"notify with data(0x%X) over",(int)data);
 	return 0;
 #endif
 }

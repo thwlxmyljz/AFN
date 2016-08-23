@@ -60,6 +60,7 @@ struct AppCall{
 };
 class AFNPackageBuilder
 {
+private:
 	AFNPackageBuilder(void);
 	~AFNPackageBuilder(void);
 
@@ -82,22 +83,27 @@ class AFNPackageBuilder
 #endif
 
 	//自动结果到数据库
-	void SaveResultToDB(const AppCall& call,Pkg_Afn_Data* data);
+	void saveResultToDB(const AppCall& call,Pkg_Afn_Data* data);
+	//收到集中器的结果数据通知
+	int notify(const AppCall& call,Pkg_Afn_Data* data);
 
 public:		
 	//注册处理函数
 	void Register(Pkg_Afn_Header::AFN_CODE code,pfnDoHandleRequest reqHandler,pfnDoHandleAck ackHandler);
+	/*
+	为集中器请求包reqPkg构造一个回复包，当数据data=NULL时按F1全部确认进行回复
+	*/
+	AFNPackage* CreateAck(AFNPackage* reqPkg, Pkg_Afn_Data* data=NULL);
 
 	/*-------------------------------------------------------
-	tcpserver thread call
+	tcpserver thread call these function when received jzq data
 	*/
 	//reqLst:多帧请求，ackLst:返回响应帧（可能0～多帧）,如果返回了响应帧，则需要发送到终端
 	int HandlePkg(AFNPackage* reqPkg,std::list<AFNPackage*>& ackLst);
 	int HandlePkg(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& ackLst);
-	int Notify(const AppCall& call,Pkg_Afn_Data* data);
 
 	/*--------------------------------------------------------
-	telnet thread's user call, user sync wait for call result
+	telnet thread's user call these function, user sync wait for result
 	*/
 	Pkg_Afn_Data* Wait(const AppCall& call);
 	//召测测量点,pn测量点号,0所有测量点
@@ -111,12 +117,13 @@ public:
 	int getallkwh(Pkg_Afn_Data** val,std::string name,WORD pn);
 
 	/*
-	telnet thread auto call, async call
+	telnet thread auto call these function, async call
 	*/
 	//采集此集中器管辖所有电表数据
 	int getallkwh_async(Jzq* pJzq);
 	//采集此集中器单个电表(pn)数据
 	int getallkwh_async(std::string name,WORD pn); 
+
 public:
 	static AFNPackageBuilder& Instance(){
 		if (single == NULL){

@@ -28,6 +28,10 @@ JzqList::~JzqList()
 }
 void JzqList::LoadJzq()
 {
+	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++){
+		delete (*it);
+	}
+	m_jzqList.clear();
 	//数据库加载集中器
 	/*
 	CREATE TABLE `gc_equipmentjzq` (

@@ -43,7 +43,7 @@ BOOL Jzq::operator==(const Jzq& o)
 std::string Jzq::printInfo()
 {
 	std::ostringstream os;
-	os <<"name(" << m_name << "),areacode(" << m_a1a2.m_areacode << "),address(" << m_a1a2.m_number << "),state(";
+	os <<"totalEle("<<eleLst.size()<<"),name(" << m_name << "),areacode(" << m_a1a2.m_areacode << "),address(" << m_a1a2.m_number << "),state(";
 	os << ((m_tag&0x1)?"config:yes,":"config:no,") << ((m_tag&0x2)?"online:yes)":"online:no)");
 	os << "\r\n-------------------------------------------------------------------------------\r\n";
 	return os.str();

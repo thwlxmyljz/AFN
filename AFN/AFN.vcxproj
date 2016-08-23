@@ -91,6 +91,7 @@
     <ClInclude Include="src\AFN02.h" />
     <ClInclude Include="src\AFN04.h" />
     <ClInclude Include="src\AFN0C.h" />
+    <ClInclude Include="src\AFNAck.h" />
     <ClInclude Include="src\AFNData.h" />
     <ClInclude Include="src\AFNPackage.h" />
     <ClInclude Include="src\AFNPackageBuilder.h" />
@@ -139,6 +140,7 @@
     <ClCompile Include="src\AFN02.cpp" />
     <ClCompile Include="src\AFN04.cpp" />
     <ClCompile Include="src\AFN0C.cpp" />
+    <ClCompile Include="src\AFNAck.cpp" />
     <ClCompile Include="src\AFNData.cpp" />
     <ClCompile Include="src\AFNPackage.cpp" />
     <ClCompile Include="src\AFNPackageBuilder.cpp" />

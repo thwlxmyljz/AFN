@@ -151,6 +151,7 @@ char helpstr[] = "\r\n++++++++++++++++++++++++++++++++++++++++++++++\r\n"
 				"5, getclock [name]:终端日历时钟未显示星期，测试命令(getclock test)\r\n---------------------------------------------------\r\n"
 				"6, getstatus [name]:终端集中抄表状态信息，测试命令(getstatus test)\r\n---------------------------------------------------\r\n"
 				"7, getallkwh [name] [pn]:读取电表数据,测试命令(getallkwh test 1)\r\n---------------------------------------------------\r\n"
+				"8, freshjzq:重新加载集中器电表数据(freshjzq)\r\n---------------------------------------------------\r\n"
 				"\r\n\r\n$";
 void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 {
@@ -293,6 +294,14 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 				}
 				bufferevent_write(bev, os.str().c_str(), os.str().length());
 			}
+		}
+		else if (params[0] == "freshjzq"){
+			AUTO_LOCK()
+				g_JzqConList->LoadJzq();
+			ostringstream os;
+			string ss = g_JzqConList->printJzq();
+			os << ss << "\r\n$";	
+			bufferevent_write(bev, os.str().c_str(), os.str().length());
 		}
 		else{
 			char msg[] = "not support command\r\n";
