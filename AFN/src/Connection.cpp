@@ -52,20 +52,20 @@ void Jzq::LoginState(WORD _Fn,BYTE _pseq,BOOL _log)
 {
 	if (_Fn==1){
 
-		//¼¯ÖĞÆ÷·¢ËÍµÇÂ¼ÏûÏ¢
+		//é›†ä¸­å™¨å‘é€ç™»å½•æ¶ˆæ¯
 		m_tag |= (0x1<<1);
-		m_RSEQ = _pseq;//ÏìÓ¦Ö¡ÆğÊ¼=µÇÂ¼Ö¡µÄÇëÇóÖ¡ÆğÊ¼ĞòºÅ,Ö®ºóÏìÓ¦+1Ñ­»·(0~15)
+		m_RSEQ = _pseq;//å“åº”å¸§èµ·å§‹=ç™»å½•å¸§çš„è¯·æ±‚å¸§èµ·å§‹åºå·,ä¹‹åå“åº”+1å¾ªç¯(0~15)
 		LOG(LOG_INFORMATION,"jzq(%s,%d,%d) login in",m_name.c_str(),m_a1a2.m_areacode,m_a1a2.m_number);	
 	}
 	else if (_Fn == 2){
-		//³¬Ê±¡¢»òÕß¼¯ÖĞÆ÷·¢ËÍÍË³öÏûÏ¢
+		//è¶…æ—¶ã€æˆ–è€…é›†ä¸­å™¨å‘é€é€€å‡ºæ¶ˆæ¯
 		m_tag &= ~(0x1<<1);
 		LOG(LOG_INFORMATION,"jzq(%s,%d,%d) login out",m_name.c_str(),m_a1a2.m_areacode,m_a1a2.m_number);
 	}
 	else if (_Fn==3){
-		//¼¯ÖĞÆ÷·¢ËÍĞÄÌøÏûÏ¢
+		//é›†ä¸­å™¨å‘é€å¿ƒè·³æ¶ˆæ¯
 		m_tag |= (0x1<<1);
-		//¼ÇÂ¼ĞÄÌøÊ±¼ä
+		//è®°å½•å¿ƒè·³æ—¶é—´
 		TYQUtils::TimeStart(m_heartTimer);
 		LOG(LOG_INFORMATION,"jzq(%s,%d,%d) heartbeat(%d)",m_name.c_str(),m_a1a2.m_areacode,m_a1a2.m_number,m_heartTimer);		
 	}
@@ -73,13 +73,13 @@ void Jzq::LoginState(WORD _Fn,BYTE _pseq,BOOL _log)
 BOOL Jzq::CheckTimeout()
 {
 	DWORD dwElapse = TYQUtils::TimeElapse(m_heartTimer);
-	if ( dwElapse > 180000/*3·ÖÖÓ£¬3´Îheartbeart*/)
+	if ( dwElapse > 180000/*3åˆ†é’Ÿï¼Œ3æ¬¡heartbeart*/)
 	{
 		TYQUtils::TimeStart(m_heartTimer);
 		ostringstream os;
 		os << m_name << " timeout, from " << m_heartTimer << " + " << dwElapse;			
 		YQLogInfo(os.str().c_str());
-		LoginState(2/*ÍË³öµÇÂ¼*/,0,FALSE);
+		LoginState(2/*é€€å‡ºç™»å½•*/,0,FALSE);
 		return TRUE;
 	}
 	return FALSE;
@@ -132,7 +132,7 @@ int Connection::SendPkg(const AFNPackage* pkg)
 }
 int Connection::RecBuf()
 {
-	//Ã¿Ö¡ÏìÓ¦È·ÈÏÄ£Ê½
+	//æ¯å¸§å“åº”ç¡®è®¤æ¨¡å¼
 	int nRet = YQER_OK;
 	BYTE msg[BUF_SIZE];
 	size_t len = bufferevent_read(bev, msg, sizeof(msg)-1 );
@@ -145,7 +145,7 @@ int Connection::RecBuf()
 		int errCode = pkg->ParseProto(pMsg,len);	
 		if (errCode != YQER_OK){
 			if (errCode == YQER_PKG_Err(1)){
-				//°ë½Ø°ü£¬¼ÌĞø½ÓÊÜ...,´ı×ö
+				//åŠæˆªåŒ…ï¼Œç»§ç»­æ¥å—...,å¾…åš
 				YQLogMin("RecBuf, pkg invalid!");
 				delete pkg;
 				return errCode;
@@ -160,12 +160,12 @@ int Connection::RecBuf()
 		len -= pkg->GetFrameL();
 		std::list<AFNPackage* > ackLst;	
 		if (pkg->userHeader.A3._A3.TAG == 0){
-			//µ¥µØÖ·
+			//å•åœ°å€
 			m_jzq.m_areacode = pkg->userHeader.A1;
 			m_jzq.m_number = pkg->userHeader.A2;				
 		}
 		if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 1  && pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 1) {
-			//µ¥Ö¡
+			//å•å¸§
 			YQLogInfo("rec single pkg ");
 			nRet = AFNPackageBuilder::Instance().HandlePkg(pkg,ackLst);
 			if (nRet == YQER_OK && ackLst.size() > 0){
@@ -175,28 +175,28 @@ int Connection::RecBuf()
 			delete pkg;
 		}
 		else if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 0  && pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 1) {
-			//¶àÖ¡£¬µÚÒ»Ö¡
+			//å¤šå¸§ï¼Œç¬¬ä¸€å¸§
 			ClearPkgList(m_pkgList);
 			YQLogInfo("rec mul pkg , first");
 			m_pkgList.push_back(pkg);
 
-			//??????????????????????
+			//in test, no another pkg after this first pkg, so handle this pkg
 			nRet = AFNPackageBuilder::Instance().HandlePkg(m_pkgList,ackLst);
 			if (nRet == YQER_OK && ackLst.size() > 0){
 				SendPkg(ackLst);
 				ClearPkgList(ackLst);
 			}	
 			ClearPkgList(m_pkgList);
-			//??????????????????????
+			//
 		}
 		else if (pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 0) {
-			//¶àÖ¡£¬ÖĞ¼äÖ¡
+			//å¤šå¸§ï¼Œä¸­é—´å¸§
 			m_pkgList.push_back(pkg);		
 			if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 0){
 				YQLogInfo("rec mul pkg , middle");
 			}
 			else{
-				//¶àÖ¡£¬½áÊøÖ¡
+				//å¤šå¸§ï¼Œç»“æŸå¸§
 				YQLogInfo("rec mul pkg , end");
 				nRet = AFNPackageBuilder::Instance().HandlePkg(m_pkgList,ackLst);
 				if (nRet == YQER_OK && ackLst.size() > 0){
