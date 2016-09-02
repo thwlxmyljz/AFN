@@ -86,6 +86,7 @@ public:
 };
 //------------------------------------------------------------------------------------
 /*集中器连接*/
+#define BUF_SIZE 4000
 class Connection
 {
 	friend class ZjqList;
@@ -118,6 +119,11 @@ protected:
 	void ClearPkgList(std::list<AFNPackage*>& lst);
 
 private:
+	//收到的未解析的数据缓存
+	BYTE buffer[BUF_SIZE];
+	//当前可写缓存位置
+	int buffer_cur;
+
 	//libevent数据通道
 	struct bufferevent *bev;	
 	//fd

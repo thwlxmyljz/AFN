@@ -7,8 +7,6 @@
 #include "Log.h"
 #include <sstream>
 
-#define BUF_SIZE 16384
-
 //------------------------------------------------------------------------------------
 Jzq::Jzq()
 	:m_name(""),
@@ -87,7 +85,7 @@ BOOL Jzq::CheckTimeout()
 //------------------------------------------------------------------------------------
 BYTE Jzq::s_MSA = 0x01;
 Connection::Connection(struct event_base *base,struct bufferevent *_bev,evutil_socket_t _fd,struct sockaddr *sa)
-	:bev(_bev),fd(_fd),m_remoteAddr((*(sockaddr_in*)sa))
+	:buffer_cur(0),bev(_bev),fd(_fd),m_remoteAddr((*(sockaddr_in*)sa))
 {	
 	m_jzq.Invalid();
 #ifdef _WIN32
@@ -145,7 +143,7 @@ int Connection::RecBuf()
 		int errCode = pkg->ParseProto(pMsg,len);	
 		if (errCode != YQER_OK){
 			if (errCode == YQER_PKG_Err(1)){
-				//半截包，继续接受...,待做
+				//半截包，继续接收
 				YQLogMin("RecBuf, pkg invalid!");
 				delete pkg;
 				return errCode;

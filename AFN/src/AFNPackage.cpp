@@ -28,12 +28,20 @@ void AFNPackage::SetReqType2ZJQ()
 int AFNPackage::ParseProto(BYTE* data,DWORD len)
 {
 	if (len < (PKG_HEADLEN+PKG_USER_HEADLEN+PKG_TAILLEN)){
-		LOG(LOG_MINOR,"parse pkg error, length too less , wait for left...");
+		//包未收完整
+		LOG(LOG_MINOR,"parse pkg error, len too less , wait for left...");
 		return YQER_PKG_Err(1);
 	}
 
 	//生成包头域
 	memcpy(&pkgHeader,data,PKG_HEADLEN);
+
+	if ((int)len < (int)pkgHeader.L._L.LEN+PKG_HEADLEN+PKG_TAILLEN){
+		//包未收完整
+		LOG(LOG_MINOR,"parse pkg error, len less pkg.length, wait for left...");
+		return YQER_PKG_Err(1);
+	}
+
 	//生成包尾域
 	memcpy(&pkgTail,data+len-2,PKG_TAILLEN);
 
@@ -43,11 +51,7 @@ int AFNPackage::ParseProto(BYTE* data,DWORD len)
 		LOG(LOG_MINOR,"parse pkg error, Tag error");
 		return YQER_PKG_Err(2);
 	}
-	if ((int)len != (int)pkgHeader.L._L.LEN+PKG_HEADLEN+PKG_TAILLEN){
-		//包长度不正确
-		LOG(LOG_MINOR,"parse pkg error, user length error");
-		return YQER_PKG_Err(3);
-	}
+	
 	BYTE cs = GetCS(data+PKG_HEADLEN,pkgHeader.L._L.LEN);
 	if (cs != pkgTail.CS){
 		//校验和错误
