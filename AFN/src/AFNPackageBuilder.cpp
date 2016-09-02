@@ -89,7 +89,8 @@ AFNPackage* AFNPackageBuilder::CreateAck(AFNPackage* reqPkg, Pkg_Afn_Data* data)
 	ackPkg->pAfn->afnHeader.SEQ._SEQ.FIR = 1;
 	ackPkg->pAfn->afnHeader.SEQ._SEQ.TPV = Pkg_Afn_Header::SEQ_TPV_NO;						
 	ackPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ = g_JzqConList->GetRSEQ(reqPkg->userHeader.A1,reqPkg->userHeader.A2);	
-	ackPkg->pAfn->pAfnData = (data==NULL)?new AFNAck_Data():data;
+	if (!data) data = new AFNAck_Data();
+	ackPkg->pAfn->pAfnData = data;
 	ackPkg->okPkg();
 	return ackPkg;
 }
