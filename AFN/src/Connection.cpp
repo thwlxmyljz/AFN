@@ -84,8 +84,9 @@ BOOL Jzq::CheckTimeout()
 }
 //------------------------------------------------------------------------------------
 BYTE Jzq::s_MSA = 0x01;
+#define BUF_SIZE 4000
 Connection::Connection(struct event_base *base,struct bufferevent *_bev,evutil_socket_t _fd,struct sockaddr *sa)
-	:buffer_cur(0),bev(_bev),fd(_fd),m_remoteAddr((*(sockaddr_in*)sa))
+	:m_buffer(NULL),m_buffer_size(0),bev(_bev),fd(_fd),m_remoteAddr((*(sockaddr_in*)sa))
 {	
 	m_jzq.Invalid();
 #ifdef _WIN32
@@ -128,89 +129,122 @@ int Connection::SendPkg(const AFNPackage* pkg)
 	}
 	return size;
 }
+void Connection::appendData2Buffer(BYTE* msg, DWORD msgLen)
+{
+	m_buffer_size = m_buffer_size+msgLen;
+	BYTE* nBuffer = new BYTE[m_buffer_size];
+	memcpy(nBuffer,m_buffer,m_buffer_size);
+	memcpy(nBuffer+m_buffer_size,msg,msgLen);
+	delete[] m_buffer;
+	m_buffer = nBuffer;
+}
 int Connection::RecBuf()
 {
 	//每帧响应确认模式
-	int nRet = YQER_OK;
+	int errCode = YQER_OK;
+	BOOL parseBuffer = FALSE;
+	BOOL bufferedData = FALSE;
 	BYTE msg[BUF_SIZE];
-	size_t len = bufferevent_read(bev, msg, sizeof(msg)-1 );
-	msg[len] = '\0';
-	LOG(LOG_INFORMATION,"rec pkg len[%d] data:%s",len, TYQUtils::Byte2Hex(msg,len).c_str());
 	BYTE* pMsg = msg;
-	do 
+	DWORD msgLen = (DWORD)bufferevent_read(bev, msg, BUF_SIZE-1 );
+	LOG(LOG_INFORMATION,"rec pkg len[%d] data:%s",msgLen, TYQUtils::Byte2Hex(msg,msgLen).c_str());
+	if (m_buffer){
+		appendData2Buffer(msg,msgLen);
+		pMsg = m_buffer;		
+		msgLen = m_buffer_size;
+		parseBuffer = TRUE;
+	}
+	while(msgLen > 0) 
 	{
 		AFNPackage* pkg = new AFNPackage();
-		int errCode = pkg->ParseProto(pMsg,len);	
-		if (errCode != YQER_OK){
-			if (errCode == YQER_PKG_Err(1)){
-				//半截包，继续接收
-				YQLogMin("RecBuf, pkg invalid!");
+		DWORD eatLen = 0;
+		errCode = pkg->ParseProto(pMsg,msgLen,eatLen);
+		pMsg += eatLen;
+		msgLen -= eatLen;
+		if (errCode == YQER_OK)
+		{
+			std::list<AFNPackage* > ackLst;	
+			if (pkg->userHeader.A3._A3.TAG == 0){
+				//单地址
+				m_jzq.m_areacode = pkg->userHeader.A1;
+				m_jzq.m_number = pkg->userHeader.A2;				
+			}
+			if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 1  && pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 1) {
+				//单帧
+				YQLogInfo("rec single pkg ");
+				int nRet = AFNPackageBuilder::Instance().HandlePkg(pkg,ackLst);
+				if (nRet == YQER_OK && ackLst.size() > 0){
+					SendPkg(ackLst);
+					ClearPkgList(ackLst);
+				}
 				delete pkg;
-				return errCode;
 			}
-			else{
-				YQLogMin("RecBuf, pkg invalid!");
-				delete pkg;
-				return errCode;
-			}
-		}
-		pMsg += pkg->GetFrameL();
-		len -= pkg->GetFrameL();
-		std::list<AFNPackage* > ackLst;	
-		if (pkg->userHeader.A3._A3.TAG == 0){
-			//单地址
-			m_jzq.m_areacode = pkg->userHeader.A1;
-			m_jzq.m_number = pkg->userHeader.A2;				
-		}
-		if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 1  && pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 1) {
-			//单帧
-			YQLogInfo("rec single pkg ");
-			nRet = AFNPackageBuilder::Instance().HandlePkg(pkg,ackLst);
-			if (nRet == YQER_OK && ackLst.size() > 0){
-				SendPkg(ackLst);
-				ClearPkgList(ackLst);
-			}
-			delete pkg;
-		}
-		else if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 0  && pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 1) {
-			//多帧，第一帧
-			ClearPkgList(m_pkgList);
-			YQLogInfo("rec mul pkg , first");
-			m_pkgList.push_back(pkg);
+			else if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 0  && pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 1) {
+				//多帧，第一帧
+				ClearPkgList(m_pkgList);
+				YQLogInfo("rec mul pkg , first");
+				m_pkgList.push_back(pkg);
 
-			//in test, no another pkg after this first pkg, so handle this pkg
-			nRet = AFNPackageBuilder::Instance().HandlePkg(m_pkgList,ackLst);
-			if (nRet == YQER_OK && ackLst.size() > 0){
-				SendPkg(ackLst);
-				ClearPkgList(ackLst);
-			}	
-			ClearPkgList(m_pkgList);
-			//
-		}
-		else if (pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 0) {
-			//多帧，中间帧
-			m_pkgList.push_back(pkg);		
-			if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 0){
-				YQLogInfo("rec mul pkg , middle");
-			}
-			else{
-				//多帧，结束帧
-				YQLogInfo("rec mul pkg , end");
-				nRet = AFNPackageBuilder::Instance().HandlePkg(m_pkgList,ackLst);
+				//in test, no another pkg after this first pkg, so handle this pkg
+				int nRet = AFNPackageBuilder::Instance().HandlePkg(m_pkgList,ackLst);
 				if (nRet == YQER_OK && ackLst.size() > 0){
 					SendPkg(ackLst);
 					ClearPkgList(ackLst);
 				}	
 				ClearPkgList(m_pkgList);
-			}		
+				//
+			}
+			else if (pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 0) {
+				//多帧，中间帧
+				m_pkgList.push_back(pkg);		
+				if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 0){
+					YQLogInfo("rec mul pkg , middle");
+				}
+				else{
+					//多帧，结束帧
+					YQLogInfo("rec mul pkg , end");
+					int nRet = AFNPackageBuilder::Instance().HandlePkg(m_pkgList,ackLst);
+					if (nRet == YQER_OK && ackLst.size() > 0){
+						SendPkg(ackLst);
+						ClearPkgList(ackLst);
+					}	
+					ClearPkgList(m_pkgList);
+				}		
+			}
+			else{
+				YQLogMin("rec pkg,FIN|FIR error");
+			}
+			LOG(LOG_INFORMATION,"parse one pkg over, left %d bytes in buffer",msgLen);
+		}
+		else if (errCode == YQER_PKG_Err(1)){
+			//半截包，缓存起来继续接收
+			YQLogMin("RecBuf,half pkg, bufferred and wait left data...");
+			if (parseBuffer){
+				memmove(m_buffer,pMsg,msgLen);
+				m_buffer_size = msgLen;
+			}
+			else{
+				m_buffer_size = msgLen;
+				m_buffer = new BYTE[m_buffer_size];
+				memcpy(m_buffer,pMsg,msgLen);
+			}
+			delete pkg;
+			bufferedData = TRUE;
+			break;
 		}
 		else{
-			YQLogMin("rec pkg,FIN|FIR error");
+			YQLogMin("RecBuf, pkg invalid!");
+			delete pkg;
 		}
-		LOG(LOG_INFORMATION,"parse one pkg over, left %d bytes in buffer",len);
-	}while(len > 0);
+	};
 
-	return YQER_OK;
+	if (!bufferedData && m_buffer){
+		delete[] m_buffer;
+		m_buffer = NULL;
+		m_buffer_size = 0;
+	}
+
+	return errCode;
 }
 int Connection::SendPkg(std::list<AFNPackage*>& pkgLst)
 {

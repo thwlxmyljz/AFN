@@ -25,37 +25,40 @@ void AFNPackage::SetAckType2ZJQ()
 void AFNPackage::SetReqType2ZJQ()
 {
 }
-int AFNPackage::ParseProto(BYTE* data,DWORD len)
+int AFNPackage::ParseProto(BYTE* data,DWORD dataLen,DWORD& eatLen)
 {
-	if (len < (PKG_HEADLEN+PKG_USER_HEADLEN+PKG_TAILLEN)){
+	if (dataLen < (PKG_HEADLEN+PKG_USER_HEADLEN+PKG_TAILLEN)){
 		//包未收完整
 		LOG(LOG_MINOR,"parse pkg error, len too less , wait for left...");
+		eatLen = 0;
 		return YQER_PKG_Err(1);
 	}
 
 	//生成包头域
 	memcpy(&pkgHeader,data,PKG_HEADLEN);
 	
-	if ((int)len < (int)pkgHeader.L._L.LEN+PKG_HEADLEN+PKG_TAILLEN){
+	if ((int)dataLen < (int)pkgHeader.L._L.LEN+PKG_HEADLEN+PKG_TAILLEN){
 		//包未收完整
 		LOG(LOG_MINOR,"parse pkg error, len less pkg.length, wait for left...");
+		eatLen = 0;
 		return YQER_PKG_Err(1);
 	}
 
 	//生成包尾域
-	memcpy(&pkgTail,data+len-2,PKG_TAILLEN);
+	memcpy(&pkgTail,data+PKG_HEADLEN+(int)pkgHeader.L._L.LEN,PKG_TAILLEN);
+	eatLen = GetFrameL();
 
 	//判断包合法性
 	if (!valid()){
 		//包标识字符非法
-		LOG(LOG_MINOR,"parse pkg error, Tag error");
+		LOG(LOG_MINOR,"parse pkg error, Tag error, drop");
 		return YQER_PKG_Err(2);
 	}
 	
 	BYTE cs = GetCS(data+PKG_HEADLEN,pkgHeader.L._L.LEN);
 	if (cs != pkgTail.CS){
 		//校验和错误
-		LOG(LOG_MINOR,"parse pkg error, CS error");
+		LOG(LOG_MINOR,"parse pkg error, CS error, drop");
 		return YQER_PKG_Err(4);
 	}
 	data += PKG_HEADLEN;

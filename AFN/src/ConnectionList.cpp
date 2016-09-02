@@ -94,7 +94,7 @@ void JzqList::LoadJzq()
 		qopen(sqlBuf);
 		query()->First();
 		LOG(LOG_INFORMATION,"jzq count(%d)",query()->RecordCount);
-		while (!(query()->IsEof())){		
+		while (query()->RecordCount > 0 && !(query()->IsEof())){		
 			int pn = query()->FieldByName("EquipmentCjqPn")->AsInteger();
 			int id = query()->FieldByName("ID")->AsInteger();
 			LOG(LOG_INFORMATION,"load ele(%s,%d)",p->m_name.c_str(),pn);
