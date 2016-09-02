@@ -35,7 +35,7 @@ int AFNPackage::ParseProto(BYTE* data,DWORD len)
 
 	//生成包头域
 	memcpy(&pkgHeader,data,PKG_HEADLEN);
-
+	
 	if ((int)len < (int)pkgHeader.L._L.LEN+PKG_HEADLEN+PKG_TAILLEN){
 		//包未收完整
 		LOG(LOG_MINOR,"parse pkg error, len less pkg.length, wait for left...");
