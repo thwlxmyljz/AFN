@@ -23,7 +23,16 @@ public:
 	~AFNPackage(void);
 
 	//分析收到的数据帧生产包
-	int ParseProto(BYTE* data,DWORD len);
+	/*
+	@param data [in] - 收到数据
+	@param dataLen [in] - 收到的数据长度
+	@param eatLen [out] 分析了有效的长度(一个包的总长度)
+	@return =YQER_OK， 成功
+	        =YQER_PKG_Err(1)，数据不够，继续等待其他数据
+			！=YQER_PKG_Err(1)，数据非法
+	*/
+	int ParseProto(BYTE* data,DWORD dataLen,DWORD& eatLen);
+
 	//包序列化到帧buf中
 	int Serialize(BYTE* buf,DWORD bufLen) const;
 

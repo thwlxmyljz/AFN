@@ -1,7 +1,7 @@
 cc=g++
 #SO_REUSEADDR£ºlisten socket reuse
 #RUNASCHILD: make as AFN.so
-debug=-c -Wall -fpermissive -g -D_DEBUG -DSO_REUSEADDR
+debug=-c -Wall -fpermissive -g -D_DEBUG -DSO_REUSEADDR -DRUNASCHILD
 release=-c -Wall -DSO_REUSEADDR -DRUNASCHILD
 
 SRCDIR := ./src
