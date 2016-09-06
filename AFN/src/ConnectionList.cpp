@@ -55,7 +55,7 @@ void JzqList::LoadJzq()
 	qopen(sql);
 	query()->First();
 	LOG(LOG_INFORMATION,"jzq count(%d)",query()->RecordCount);
-	while (!(query()->IsEof())){		
+	while (query()->RecordCount > 0 && !(query()->IsEof())){		
 		int areacode = query()->FieldByName("EquipmentCjqArea")->AsInteger();
 		int address = query()->FieldByName("EquipmentCjqAddr")->AsInteger();
 		std::string name = query()->FieldByName("EquipmentName")->AsString();
@@ -93,8 +93,8 @@ void JzqList::LoadJzq()
 		snprintf(sqlBuf,128,"select * from gc_equipmentelect where EquipmentCjqArea=%d and EquipmentCjqAddr=%d",p->m_a1a2.m_areacode,p->m_a1a2.m_number);
 		qopen(sqlBuf);
 		query()->First();
-		LOG(LOG_INFORMATION,"jzq count(%d)",query()->RecordCount);
-		while (!(query()->IsEof())){		
+		LOG(LOG_INFORMATION,"jzq(%s) ele count(%d)",p->m_name.c_str(),query()->RecordCount);
+		while (query()->RecordCount > 0 && !(query()->IsEof())){		
 			int pn = query()->FieldByName("EquipmentCjqPn")->AsInteger();
 			int id = query()->FieldByName("ID")->AsInteger();
 			LOG(LOG_INFORMATION,"load ele(%s,%d)",p->m_name.c_str(),pn);

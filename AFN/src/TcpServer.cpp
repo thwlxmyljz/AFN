@@ -19,23 +19,18 @@
 #include <winsock2.h>
 #endif
 
-#define VER "1.0.1"
-
 #define TMOUT_CHECK 60 //connection check timeout , 60 secs
 struct timeval check_lasttime;
 
 TcpServer::TcpServer(unsigned int port)
 	:m_svrPort(port),base(NULL),listener(NULL),signal_event(NULL)
-{
-	LogFile = new TLogFile("afn.log",16*1024*1024,"APN",VER);
+{	
 	g_JzqConList = new JzqList();	
 }
 TcpServer::~TcpServer(void)
 {
 	delete g_JzqConList;
 	g_JzqConList = NULL;
-	delete LogFile;
-	LogFile = NULL;
 }
 int TcpServer::Run()
 {
