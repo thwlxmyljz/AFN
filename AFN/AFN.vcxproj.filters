@@ -25,6 +25,12 @@
     <Filter Include="源文件\src">
       <UniqueIdentifier>{b00a49d0-e936-483d-ac47-045e5c6b83fe}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\common">
+      <UniqueIdentifier>{9813d415-5f0a-42bb-9b9d-3c129fad6bd0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\common">
+      <UniqueIdentifier>{16956dba-42f5-45b8-8836-0c266889ce64}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -159,6 +165,15 @@
     <ClInclude Include="src\AFNAck.h">
       <Filter>头文件\src</Filter>
     </ClInclude>
+    <ClInclude Include="src\svr.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="common\YQProcess.h">
+      <Filter>头文件\common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="thirdparty\Ipv4Address.cpp">
@@ -278,5 +293,19 @@
     <ClCompile Include="src\AFNAck.cpp">
       <Filter>源文件\src</Filter>
     </ClCompile>
+    <ClCompile Include="src\svr.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="common\YQProcess.cpp">
+      <Filter>源文件\common</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="makefile">
+      <Filter>源文件</Filter>
+    </None>
   </ItemGroup>
 </Project>
