@@ -18,6 +18,7 @@
 #include <map>
 #include <string>
 #include "Element.h"
+#include "EventConnection.h"
 
 using namespace std;
 
@@ -84,9 +85,8 @@ public:
 	*/
 	BOOL CheckTimeout();
 };
-//------------------------------------------------------------------------------------
 /*集中器连接*/
-class Connection
+class Connection : public EventConnection
 {
 	friend class ZjqList;
 
@@ -97,40 +97,10 @@ public:
 	//连接对应的集中器标记
 	Jzq::JzqA1A2 m_jzq;
 
-public:
-	//读取帧
-	int RecBuf();
-	//发送帧
-	int SendBuf(const void* cmd,unsigned int cmdlen);
-
-	//发送数据包
-	int SendPkg(const AFNPackage* pkg);
-	int SendPkg(std::list<AFNPackage*>& pkgLst);
-
-	//判断是否此连接
-	BOOL Compare(struct bufferevent *_bev);
-
-	//清空收报缓存
-	void ClearRecPkgList();
-	
 protected:
-
-	void ClearPkgList(std::list<AFNPackage*>& lst);
-	void appendData2Buffer(BYTE* msg, DWORD msgLen);
-private:
-
-	//收到的未解析的数据缓存
-	BYTE* m_buffer;
-	int m_buffer_size;
-
-	//libevent数据通道
-	struct bufferevent *bev;	
-	//fd
-	evutil_socket_t fd;
-	//对端地址
-	sockaddr_in m_remoteAddr;
-	//接收到多帧报文列表缓存，单帧处理完后直接丢弃
-	std::list<AFNPackage*> m_pkgList;
-	typedef std::list<AFNPackage*>::iterator Iter;
+	//构造包
+	virtual IPackage* createPackage();
+	//处理包
+	virtual int handlePackage(IPackage* ipkg);
 };
 

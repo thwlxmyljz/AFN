@@ -9,7 +9,7 @@
 #include "AFN0C.h"
 #include "AFNPackageBuilder.h"
 #include "TelnetServer.h"
-
+#include "WaterPackageBuilder.h"
 const char* gVer = "1.0.0";
 const int PORT = 9027;
 
@@ -33,8 +33,11 @@ void YQLoop()
 {	
 	LOG(LOG_INFORMATION,"YQLoop ...");
 	TcpServer tcpsvr(PORT);
+
 	AFNPackageBuilder::Instance().Register(Pkg_Afn_Header::AFN02,&AFN02::HandleRequest,NULL);
 	AFNPackageBuilder::Instance().Register(Pkg_Afn_Header::AFN0C,NULL,&AFN0C::HandleAck);
+	WaterPackageBuilder::Instance().Register(0x1,NULL,NULL);
+
 	TelnetThread telsvr;
 	telsvr.Start();
 	tcpsvr.Run();

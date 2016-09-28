@@ -6,6 +6,7 @@
 #include "AFNData.h"
 
 class AFNPackage;
+class IPackage;
 //--------------------------------------------------------------------------
 class AFN0CAck_Data_GetClock : public Pkg_Afn_Data
 {
@@ -108,7 +109,7 @@ public:
 	AFN0C(void);
 	~AFN0C(void);
 
-	static Pkg_Afn_Data* HandleAck(AFNPackage* ackPkg);
+	static void* HandleAck(IPackage* _ackPkg);
 
 public:
 	int Create(WORD pn,WORD Fn);

@@ -54,25 +54,16 @@
 
 AFNPackageBuilder* AFNPackageBuilder::single = NULL;
 AFNPackageBuilder::AFNPackageBuilder(void)
+	:PackageBuilder()
 {
 }
 AFNPackageBuilder::~AFNPackageBuilder(void)
 {
-#ifdef _WIN32
-#else
-	pthread_mutex_destroy(&CritSection);  
-	pthread_cond_destroy(&ConditionVar);  
-#endif
 }
-void AFNPackageBuilder::Register(Pkg_Afn_Header::AFN_CODE code,pfnDoHandleRequest reqHandler,pfnDoHandleAck ackHandler)
+
+IPackage* AFNPackageBuilder::CreateAck(IPackage* _reqPkg, void* data)
 {
-	PkgHandler h;
-	h.reqHander = reqHandler;
-	h.ackHandler = ackHandler;
-	handlerMap[code] = h;
-}
-AFNPackage* AFNPackageBuilder::CreateAck(AFNPackage* reqPkg, Pkg_Afn_Data* data)
-{
+	AFNPackage* reqPkg = (AFNPackage*)_reqPkg;
 	AFNPackage* ackPkg = new AFNPackage();
 	ackPkg->userHeader.C._C.DIR = 0x00;
 	ackPkg->userHeader.C._C.PRM = 0x00;
@@ -90,50 +81,12 @@ AFNPackage* AFNPackageBuilder::CreateAck(AFNPackage* reqPkg, Pkg_Afn_Data* data)
 	ackPkg->pAfn->afnHeader.SEQ._SEQ.TPV = Pkg_Afn_Header::SEQ_TPV_NO;						
 	ackPkg->pAfn->afnHeader.SEQ._SEQ.PRSEQ = g_JzqConList->GetRSEQ(reqPkg->userHeader.A1,reqPkg->userHeader.A2);	
 	if (!data) data = new AFNAck_Data();
-	ackPkg->pAfn->pAfnData = data;
+	ackPkg->pAfn->pAfnData = (Pkg_Afn_Data*)data;
 	ackPkg->okPkg();
 	return ackPkg;
 }
-int AFNPackageBuilder::HandlePkg(AFNPackage* reqPkg,std::list<AFNPackage*>& ackLst)
-{
-	std::list<AFNPackage*> lst;
-	lst.push_back(reqPkg);
-	return HandlePkg(lst,ackLst);
-}
-int AFNPackageBuilder::HandlePkg(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& ackLst)
-{
-	if((reqLst.size()) >= 1){
-		AFNPackage* reqPkg = *(reqLst.begin());
-		if (reqPkg->userHeader.C._C.PRM == 1){
-			//收到集中器作为启动站请求帧
-			return DoHandleRequest(reqLst,ackLst);
-		}
-		else{
-			//收到集中器作为从动站响应帧
-			return DoHandleAck(reqLst);
-		}
-	}
-	return YQER_PARAMERR;
-}
-int AFNPackageBuilder::DoHandleRequest(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& ackLst)
-{	
-	AFNPackage* reqPkg = *(reqLst.begin());	
-	LOG(LOG_INFORMATION,"Handle request pkg , count(%d), AFN(0x%x),Fn(%d),pn(%d) ",(int)reqLst.size(),reqPkg->pAfn->afnHeader.AFN,reqPkg->Fn,reqPkg->pn);
-	for (mapIter it = handlerMap.begin(); it != handlerMap.end(); it++){
-		PkgHandler& h = (*it).second;
-		if (h.reqHander && (*it).first == reqPkg->pAfn->afnHeader.AFN){
-			return h.reqHander(reqLst,ackLst);		
-		}
-		else{
-			//不认识的命令，直接回复确认
-			ackLst.push_back(CreateAck(reqPkg));
-			return YQER_OK;
-		}
-	}
-	return -1;
-}
 
-int AFNPackageBuilder::DoHandleAck(std::list<AFNPackage*>& ackLst)
+int AFNPackageBuilder::DoHandleAck(std::list<IPackage*>& ackLst)
 {	
 	if (ackLst.size() == 0){
 		return -1;
@@ -143,8 +96,8 @@ int AFNPackageBuilder::DoHandleAck(std::list<AFNPackage*>& ackLst)
 	Pkg_Afn_Data* pDataTail = NULL;
 	AppCall call;
 	
-	for (std::list<AFNPackage*>::iterator it = ackLst.begin(); it != ackLst.end(); it++){
-		AFNPackage* ackPkg = *it;		
+	for (std::list<IPackage*>::iterator it = ackLst.begin(); it != ackLst.end(); it++){
+		AFNPackage* ackPkg = (AFNPackage*)(*it);		
 		LOG(LOG_INFORMATION,"Handle ack pkg , AFN(0x%x),Fn(%d),pn(%d) ",ackPkg->pAfn->afnHeader.AFN,ackPkg->Fn,ackPkg->pn);
 		call.AFN = ackPkg->pAfn->afnHeader.AFN;
 		call.m_areacode = ackPkg->userHeader.A1;
@@ -158,7 +111,7 @@ int AFNPackageBuilder::DoHandleAck(std::list<AFNPackage*>& ackLst)
 			for (mapIter it = handlerMap.begin(); it != handlerMap.end(); it++){
 				PkgHandler& h = (*it).second;
 				if (h.ackHandler && (*it).first == ackPkg->pAfn->afnHeader.AFN){
-					pData = h.ackHandler(ackPkg);
+					pData = (Pkg_Afn_Data*)h.ackHandler(ackPkg);
 				}
 			}
 			if (pData){

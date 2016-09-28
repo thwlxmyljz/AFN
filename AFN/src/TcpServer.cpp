@@ -23,7 +23,7 @@
 struct timeval check_lasttime;
 
 TcpServer::TcpServer(unsigned int port)
-	:m_svrPort(port),base(NULL),listener(NULL),signal_event(NULL)
+	:m_svrPort(port),base(NULL),listener_power(NULL),listener_water(NULL),signal_event(NULL)
 {	
 	g_JzqConList = new JzqList();	
 }
@@ -57,12 +57,12 @@ int TcpServer::Run()
     sin.sin_family = AF_INET;
 	sin.sin_port = htons(m_svrPort);
 
-    listener = evconnlistener_new_bind(base, TcpServer::listener_cb, (void *)base,
+    listener_power = evconnlistener_new_bind(base, TcpServer::listener_cb, (void *)base,
         LEV_OPT_REUSEABLE|LEV_OPT_CLOSE_ON_FREE, -1,
         (struct sockaddr*)&sin,
         sizeof(sin));
 
-    if (!listener)  {
+    if (!listener_power)  {
         YQLogInfo("Could not create a listener!");
         return YQER_SVR_Err(2);
     }
@@ -86,7 +86,7 @@ int TcpServer::Run()
     event_base_dispatch(base);
 
 	/*run over , exit*/
-	evconnlistener_free(listener);
+	evconnlistener_free(listener_power);
     event_free(signal_event);
     event_base_free(base);
 

@@ -174,6 +174,27 @@
     <ClInclude Include="common\YQProcess.h">
       <Filter>头文件\common</Filter>
     </ClInclude>
+    <ClInclude Include="src\IPackage.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\protoWater.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\WaterPackage.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EventConnection.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ConnectionWater.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PackageBuilder.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\WaterPackageBuilder.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="thirdparty\Ipv4Address.cpp">
@@ -301,6 +322,21 @@
     </ClCompile>
     <ClCompile Include="common\YQProcess.cpp">
       <Filter>源文件\common</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WaterPackage.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\EventConnection.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ConnectionWater.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PackageBuilder.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WaterPackageBuilder.cpp">
+      <Filter>源文件\src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

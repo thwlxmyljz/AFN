@@ -267,9 +267,10 @@ AFN0C::AFN0C(void)
 AFN0C::~AFN0C(void)
 {
 }
-Pkg_Afn_Data* AFN0C::HandleAck(AFNPackage* ackPkg)
+void* AFN0C::HandleAck(IPackage* _ackPkg)
 {	
 	Pkg_Afn_Data* pData = NULL;
+	AFNPackage* ackPkg = (AFNPackage*)_ackPkg;
 	switch (ackPkg->Fn)
 	{
 		case 2://F2
@@ -285,7 +286,7 @@ Pkg_Afn_Data* AFN0C::HandleAck(AFNPackage* ackPkg)
 		default:
 			break;
 	}
-	return pData;
+	return (void*)pData;
 }
 
 int AFN0C::Create(WORD pn,WORD Fn)

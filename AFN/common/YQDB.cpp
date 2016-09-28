@@ -505,7 +505,7 @@ bool TYQMySQLQuery::IsEof()
 
 void TYQMySQLQuery::First()
 {
-	MYSQL_ROW m_row; 
+	MYSQL_ROW m_row = NULL; 
 	if(m_res == NULL)
 		return;
 	mysql_data_seek(m_res, 0);
@@ -673,7 +673,7 @@ time_t TParams::AsDateTime()
 	int     ret         = 0;
 	char   *p         = NULL;
 	tm gettm;
-	time_t rettmp;
+	time_t rettmp = 0;
 
 	try
 	{	

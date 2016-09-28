@@ -5,6 +5,7 @@
 #include "YQErrCode.h"
 #include "LogFileu.h"
 #include "AFNPackageBuilder.h"
+#include "IPackage.h"
 
 AFN02Ack_Data::AFN02Ack_Data(Pkg_Afn_DataTag _what)
 	:Pkg_Afn_Data(),WhatAckDataTag(_what)
@@ -25,13 +26,13 @@ AFN02Ack_Data::AFN02Ack_Data(Pkg_Afn_DataTag _what)
 AFN02Ack_Data::~AFN02Ack_Data()
 {
 }
-int AFN02::HandleRequest(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& ackLst)
+int AFN02::HandleRequest(std::list<IPackage*>& reqLst,std::list<IPackage*>& ackLst)
 {	
 	if (reqLst.size() == 0){
 		return YQER_OK;
 	}
 	//AFN02单帧
-	AFNPackage* reqPkg = *(reqLst.begin());	
+	AFNPackage* reqPkg = (AFNPackage*)(*(reqLst.begin()));	
 	if (reqPkg->userHeader.C._C.FUN == Pkg_User_Header::UH_FUNC_MAIN9)
 	{
 		//链路接口检测,发送响应帧,保存启动帧序号PSEQ为响应帧起始序号			

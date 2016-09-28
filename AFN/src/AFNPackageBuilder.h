@@ -2,7 +2,7 @@
 
 #include "AFNPackage.h"
 #include <map>
-
+#include "PackageBuilder.h"
 class Jzq;
 
 #ifndef _WIN32
@@ -12,13 +12,6 @@ class Jzq;
 #include <windows.h>
 #endif
 
-typedef int (*pfnDoHandleRequest)(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& ackLst);
-typedef Pkg_Afn_Data* (*pfnDoHandleAck)(AFNPackage* ackPkg);
-
-struct PkgHandler{
-	pfnDoHandleRequest reqHander;
-	pfnDoHandleAck ackHandler;
-};
 struct AppCall{
 	//行政区号
 	WORD m_areacode;
@@ -58,7 +51,7 @@ struct AppCall{
 		return m_areacode==o.m_areacode && m_number==o.m_number && AFN==o.AFN && m_fn==o.m_fn&& m_pn==o.m_pn;
 	}
 };
-class AFNPackageBuilder
+class AFNPackageBuilder : public PackageBuilder
 {
 private:
 	AFNPackageBuilder(void);
@@ -66,42 +59,21 @@ private:
 
 	static AFNPackageBuilder* single;
 
-	//帧处理MAP
-	std::map< Pkg_Afn_Header::AFN_CODE,PkgHandler> handlerMap;
-	typedef std::map< Pkg_Afn_Header::AFN_CODE,PkgHandler>::iterator mapIter;
-
 	//app call request list
 	std::map<AppCall,Pkg_Afn_Data*> cmdMap;
 	typedef std::map<AppCall,Pkg_Afn_Data*>::iterator CmdMapIter;
-	
-#ifdef _WIN32
-	CRITICAL_SECTION CritSection;
-	CONDITION_VARIABLE ConditionVar;
-#else
-	pthread_mutex_t CritSection;  
-	pthread_cond_t ConditionVar; 
-#endif
 
 	//自动结果到数据库
 	void saveResultToDB(const AppCall& call,Pkg_Afn_Data* data);
 	//收到集中器的结果数据通知
 	int notify(const AppCall& call,Pkg_Afn_Data* data);
 
+	int DoHandleAck(std::list<IPackage*>& ackLst);
 public:		
-	//注册处理函数
-	void Register(Pkg_Afn_Header::AFN_CODE code,pfnDoHandleRequest reqHandler,pfnDoHandleAck ackHandler);
 	/*
 	为集中器请求包reqPkg构造一个回复包，当数据data=NULL时按F1全部确认进行回复
 	*/
-	AFNPackage* CreateAck(AFNPackage* reqPkg, Pkg_Afn_Data* data=NULL);
-
-	/*-------------------------------------------------------
-	tcpserver thread call these function when received jzq data
-	*/
-	//reqLst:多帧请求，ackLst:返回响应帧（可能0～多帧）,如果返回了响应帧，则需要发送到终端
-	int HandlePkg(AFNPackage* reqPkg,std::list<AFNPackage*>& ackLst);
-	int HandlePkg(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& ackLst);
-
+	IPackage* CreateAck(IPackage* reqPkg, void* data = NULL);
 	/*--------------------------------------------------------
 	telnet thread's user call these function, user sync wait for result
 	*/
@@ -137,11 +109,6 @@ public:
 #endif
 		}
 		return (*single);
-	}	
-protected:
-	//请求帧处理
-	int DoHandleRequest(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& ackLst);
-	//响应帧处理
-	int DoHandleAck(std::list<AFNPackage*>& ackLst);
+	}
 };
 

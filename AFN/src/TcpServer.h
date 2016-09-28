@@ -35,7 +35,8 @@ private:
 	unsigned int m_svrPort;
 	//libevent对象
 	struct event_base *base;
-    struct evconnlistener *listener;
+    struct evconnlistener *listener_power;
+	struct evconnlistener *listener_water;
     struct event *signal_event;
 
 	//集中器超时断线检测	

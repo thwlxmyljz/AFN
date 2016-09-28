@@ -4,7 +4,7 @@
 #include "proto.h"
 #include <list>
 class AFNPackage;
-
+class IPackage;
 /*
 链路接口检测
 //上行包
@@ -33,6 +33,6 @@ public:
 };
 class AFN02 : public Pkg_Afn{
 public:
-	static int HandleRequest(std::list<AFNPackage*>& reqLst,std::list<AFNPackage*>& ackLst);
+	static int HandleRequest(std::list<IPackage*>& reqLst,std::list<IPackage*>& ackLst);
 };
 

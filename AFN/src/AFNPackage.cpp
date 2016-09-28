@@ -19,12 +19,6 @@ AFNPackage::~AFNPackage(void)
 	delete pAfn;
 	pAfn = NULL;
 }
-void AFNPackage::SetAckType2ZJQ()
-{
-}
-void AFNPackage::SetReqType2ZJQ()
-{
-}
 int AFNPackage::ParseProto(BYTE* data,DWORD dataLen,DWORD& eatLen)
 {
 	if (dataLen < (PKG_HEADLEN+PKG_USER_HEADLEN+PKG_TAILLEN)){
@@ -112,6 +106,57 @@ int AFNPackage::Serialize(BYTE* buf,DWORD bufLen) const
 	//返回整个包长度字节数
 	return PKG_HEADLEN+PKG_USER_HEADLEN+afnLen+PKG_TAILLEN;
 }
+//校验包合法性
+BOOL AFNPackage::valid()
+{		
+	return pkgHeader.S1==0x68 && pkgHeader.S2==0x68 && pkgTail.E==0x16;
+}
+void AFNPackage::okPkg()
+{
+	SetL();
+	CreateCS();
+}
+//生产CS校验
+void AFNPackage::CreateCS()
+{
+	pkgTail.CS = 0x00;
+	pkgTail.CS += userHeader.C.c;
+	pkgTail.CS += userHeader.A1;
+	pkgTail.CS += userHeader.A1>>8;
+	pkgTail.CS += userHeader.A2;
+	pkgTail.CS += userHeader.A2>>8;
+	pkgTail.CS += userHeader.A3.a3;
+	pkgTail.CS += pAfn->afnHeader.AFN;
+	pkgTail.CS += pAfn->afnHeader.SEQ.seq;
+	pkgTail.CS += pAfn->pAfnData->m_Tag.DA1;
+	pkgTail.CS += pAfn->pAfnData->m_Tag.DA2;
+	pkgTail.CS += pAfn->pAfnData->m_Tag.DT1;
+	pkgTail.CS += pAfn->pAfnData->m_Tag.DT2;
+	for (DWORD i = 0; i < pAfn->pAfnData->m_nLen; i++){
+		pkgTail.CS += pAfn->pAfnData->m_pData[i];
+	}
+}
+void AFNPackage::SetL()
+{
+	pkgHeader.L._L.LEN = PKG_USER_HEADLEN+pAfn->GetDataLen();
+	pkgHeader.L1._L1.LEN = PKG_USER_HEADLEN+pAfn->GetDataLen();
+}
+BOOL AFNPackage::isRequest()
+{
+	if (userHeader.C._C.PRM == 1)
+		return TRUE;
+	return FALSE;
+}
+int AFNPackage::GetCode()
+{
+	return (int)pAfn->afnHeader.AFN;
+}
+void AFNPackage::SetAckType2ZJQ()
+{
+}
+void AFNPackage::SetReqType2ZJQ()
+{
+}
 BYTE AFNPackage::GetCS(BYTE* buf,DWORD len)
 {
 	BYTE cs = 0x00;
@@ -184,40 +229,4 @@ WORD AFNPackage::GetFn(BYTE DT1,BYTE DT2)
 		return Fn;
 	}
 	return 0x0;
-}
-
-//校验包合法性
-BOOL AFNPackage::valid()
-{		
-	return pkgHeader.S1==0x68 && pkgHeader.S2==0x68 && pkgTail.E==0x16;
-}
-void AFNPackage::okPkg()
-{
-	SetL();
-	CreateCS();
-}
-//生产CS校验
-void AFNPackage::CreateCS()
-{
-	pkgTail.CS = 0x00;
-	pkgTail.CS += userHeader.C.c;
-	pkgTail.CS += userHeader.A1;
-	pkgTail.CS += userHeader.A1>>8;
-	pkgTail.CS += userHeader.A2;
-	pkgTail.CS += userHeader.A2>>8;
-	pkgTail.CS += userHeader.A3.a3;
-	pkgTail.CS += pAfn->afnHeader.AFN;
-	pkgTail.CS += pAfn->afnHeader.SEQ.seq;
-	pkgTail.CS += pAfn->pAfnData->m_Tag.DA1;
-	pkgTail.CS += pAfn->pAfnData->m_Tag.DA2;
-	pkgTail.CS += pAfn->pAfnData->m_Tag.DT1;
-	pkgTail.CS += pAfn->pAfnData->m_Tag.DT2;
-	for (DWORD i = 0; i < pAfn->pAfnData->m_nLen; i++){
-		pkgTail.CS += pAfn->pAfnData->m_pData[i];
-	}
-}
-void AFNPackage::SetL()
-{
-	pkgHeader.L._L.LEN = PKG_USER_HEADLEN+pAfn->GetDataLen();
-	pkgHeader.L1._L1.LEN = PKG_USER_HEADLEN+pAfn->GetDataLen();
 }
