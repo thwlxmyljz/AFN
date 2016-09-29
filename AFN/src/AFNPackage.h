@@ -6,11 +6,9 @@
 
 class AFNPackage : public Pkg, public IPackage
 {
-	friend class Connection;
-	friend class AFNPackageBuilder;
 public:
 	AFNPackage(void);
-	~AFNPackage(void);
+	virtual ~AFNPackage(void);
 	//解包
 	virtual int ParseProto(BYTE* data,DWORD dataLen,DWORD& eatLen);
 	//包序列化到帧buf中

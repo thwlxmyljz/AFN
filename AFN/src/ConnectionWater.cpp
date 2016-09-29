@@ -18,5 +18,6 @@ IPackage* ConnectionWater::createPackage()
 }
 int ConnectionWater::handlePackage(IPackage* pkg)
 {
+	delete pkg;
 	return YQER_OK;
 }

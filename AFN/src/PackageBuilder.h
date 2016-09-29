@@ -22,7 +22,7 @@ class PackageBuilder
 {
 public:
 	PackageBuilder(void);
-	~PackageBuilder(void);
+	virtual ~PackageBuilder(void);
 	//注册处理函数
 	void Register(int code,pfnDoHandleRequest reqHandler,pfnDoHandleAck ackHandler);
 	
@@ -38,7 +38,6 @@ protected:
 	//构造回复包
 	virtual IPackage* CreateAck(IPackage* reqPkg, void* data=NULL) = 0;
 
-protected:
 #ifdef _WIN32
 	CRITICAL_SECTION CritSection;
 	CONDITION_VARIABLE ConditionVar;

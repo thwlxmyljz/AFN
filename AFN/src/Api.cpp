@@ -11,7 +11,6 @@
 #include "TelnetServer.h"
 #include "WaterPackageBuilder.h"
 const char* gVer = "1.0.0";
-const int PORT = 9027;
 
 const char * YQVersion()
 {
@@ -32,15 +31,22 @@ void YQClose()
 void YQLoop()
 {	
 	LOG(LOG_INFORMATION,"YQLoop ...");
-	TcpServer tcpsvr(PORT);
-
+	TcpServer tcpsvr;
+	LOG(LOG_INFORMATION,"YQLoop 1...");
 	AFNPackageBuilder::Instance().Register(Pkg_Afn_Header::AFN02,&AFN02::HandleRequest,NULL);
+	LOG(LOG_INFORMATION,"YQLoop 2...");
 	AFNPackageBuilder::Instance().Register(Pkg_Afn_Header::AFN0C,NULL,&AFN0C::HandleAck);
+	LOG(LOG_INFORMATION,"YQLoop 3...");
 	WaterPackageBuilder::Instance().Register(0x1,NULL,NULL);
+	LOG(LOG_INFORMATION,"YQLoop 4...");
 
+	LOG(LOG_INFORMATION,"YQLoop start TelnetThread...");
 	TelnetThread telsvr;
 	telsvr.Start();
+
+	LOG(LOG_INFORMATION,"YQLoop start tcpsvr...");
 	tcpsvr.Run();
+
 	return;
 }
 

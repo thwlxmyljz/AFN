@@ -1,4 +1,4 @@
-#include "Connection.h"
+#include "ConnectionPower.h"
 #include "ConnectionList.h"
 #include "AFNPackageBuilder.h"
 #include "YQErrCode.h"
@@ -11,7 +11,7 @@
 #include "Utility.h"
 
 #define LOCK_CONNECTION(name) AUTO_LOCK()\
-					Connection* con = g_JzqConList->getConnection(name);\
+					ConnectionPower* con = g_JzqConList->getJzqConnection(name);\
 					if (!con){\
 						return YQER_JZQ_NOTOK;\
 					}\

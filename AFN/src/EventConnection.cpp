@@ -85,6 +85,7 @@ int EventConnection::RecBuf()
 		pMsg += eatLen;
 		msgLen -= eatLen;
 		if (errCode == YQER_OK){
+			//ÓÉhandlePackage½øÐÐÉ¾³ýpkg
 			errCode = handlePackage(pkg);
 		}
 		else if (errCode == YQER_PKG_Err(1)){

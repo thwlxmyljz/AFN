@@ -1,4 +1,3 @@
-#include "Connection.h"
 #include "PackageBuilder.h"
 #include "YQErrCode.h"
 #include "Lock.h"
@@ -19,6 +18,7 @@ PackageBuilder::~PackageBuilder(void)
 }
 void PackageBuilder::Register(int code,pfnDoHandleRequest reqHandler,pfnDoHandleAck ackHandler)
 {
+	LOG(LOG_INFORMATION,"Register(code:%d, fnReq:0x%x,fnAck:0x%x)",code,(int)reqHandler,(int)ackHandler);
 	PkgHandler h;
 	h.reqHander = reqHandler;
 	h.ackHandler = ackHandler;

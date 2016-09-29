@@ -123,9 +123,6 @@
     <ClInclude Include="src\AFNPackageBuilder.h">
       <Filter>头文件\src</Filter>
     </ClInclude>
-    <ClInclude Include="src\Connection.h">
-      <Filter>头文件\src</Filter>
-    </ClInclude>
     <ClInclude Include="src\DBManager.h">
       <Filter>头文件\src</Filter>
     </ClInclude>
@@ -193,6 +190,15 @@
       <Filter>头文件\src</Filter>
     </ClInclude>
     <ClInclude Include="src\WaterPackageBuilder.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ConnectionPower.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Jzq.h">
+      <Filter>头文件\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Water.h">
       <Filter>头文件\src</Filter>
     </ClInclude>
   </ItemGroup>
@@ -269,9 +275,6 @@
     <ClCompile Include="src\AFNPackageBuilder.cpp">
       <Filter>源文件\src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Connection.cpp">
-      <Filter>源文件\src</Filter>
-    </ClCompile>
     <ClCompile Include="src\DBManager.cpp">
       <Filter>源文件\src</Filter>
     </ClCompile>
@@ -336,6 +339,18 @@
       <Filter>源文件\src</Filter>
     </ClCompile>
     <ClCompile Include="src\WaterPackageBuilder.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ConnectionPower.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Jzq.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Water.cpp">
+      <Filter>源文件\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ConnectionListWater.cpp">
       <Filter>源文件\src</Filter>
     </ClCompile>
   </ItemGroup>

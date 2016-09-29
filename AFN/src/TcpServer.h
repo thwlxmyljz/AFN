@@ -17,7 +17,7 @@ class ZjqList;
 class TcpServer
 {
 public:
-	TcpServer(unsigned int port);
+	TcpServer();
 	~TcpServer(void);
 	//运行服务器
 	int Run();
@@ -30,9 +30,8 @@ private:
 	static void timeout_cb_heart(evutil_socket_t fd, short event, void *arg);
 	//重设在线定时检测定时器
 	static void resetCheckTimer(evutil_socket_t fd, short event, void *arg);
-private:
-	//侦听端口
-	unsigned int m_svrPort;
+
+public:
 	//libevent对象
 	struct event_base *base;
     struct evconnlistener *listener_power;

@@ -6,10 +6,9 @@
 
 class WaterPackage : public PkgWater, public IPackage
 {
-	friend class Connection;
 public:
 	WaterPackage(void);
-	~WaterPackage(void);
+	virtual ~WaterPackage(void);
 	//解包
 	virtual int ParseProto(BYTE* data,DWORD dataLen,DWORD& eatLen);
 	//包序列化到帧buf中

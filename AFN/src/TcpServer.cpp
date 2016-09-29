@@ -2,7 +2,6 @@
 #include "TcpServer.h"
 #include "YQErrCode.h"
 #include "LogFileu.h"
-#include "Connection.h"
 #include "ConnectionList.h"
 #include "AFNPackage.h"
 #include "YQUtils.h"
@@ -19,11 +18,14 @@
 #include <winsock2.h>
 #endif
 
+const int PORT_POWER = 9027;
+const int PORT_WATER = 9026;
+
 #define TMOUT_CHECK 60 //connection check timeout , 60 secs
 struct timeval check_lasttime;
 
-TcpServer::TcpServer(unsigned int port)
-	:m_svrPort(port),base(NULL),listener_power(NULL),listener_water(NULL),signal_event(NULL)
+TcpServer::TcpServer()
+	:base(NULL),listener_power(NULL),listener_water(NULL),signal_event(NULL)
 {	
 	g_JzqConList = new JzqList();	
 }
@@ -34,11 +36,13 @@ TcpServer::~TcpServer(void)
 }
 int TcpServer::Run()
 {
+	YQLogInfo("Server begin");
 	if (base){
 		YQLogInfo("Server has already run!");
 		return 0;
 	}
-	g_JzqConList->LoadJzq();
+	g_JzqConList->Load();
+
 #ifdef _WIN32    
     WSADATA wsa_data;
     WSAStartup(0x0201, &wsa_data);
@@ -52,12 +56,12 @@ int TcpServer::Run()
         YQLogInfo("Could not initialize libevent!");
         return YQER_SVR_Err(1);
     }	
-
+	
     memset(&sin, 0, sizeof(sin));
     sin.sin_family = AF_INET;
-	sin.sin_port = htons(m_svrPort);
+	sin.sin_port = htons(PORT_POWER);
 
-    listener_power = evconnlistener_new_bind(base, TcpServer::listener_cb, (void *)base,
+    listener_power = evconnlistener_new_bind(base, TcpServer::listener_cb, (void *)this,
         LEV_OPT_REUSEABLE|LEV_OPT_CLOSE_ON_FREE, -1,
         (struct sockaddr*)&sin,
         sizeof(sin));
@@ -66,6 +70,22 @@ int TcpServer::Run()
         YQLogInfo("Could not create a listener!");
         return YQER_SVR_Err(2);
     }
+	YQLogInfo("create a power listener ok!");
+
+	memset(&sin, 0, sizeof(sin));
+    sin.sin_family = AF_INET;
+	sin.sin_port = htons(PORT_WATER);
+
+    listener_water = evconnlistener_new_bind(base, TcpServer::listener_cb, (void *)this,
+        LEV_OPT_REUSEABLE|LEV_OPT_CLOSE_ON_FREE, -1,
+        (struct sockaddr*)&sin,
+        sizeof(sin));
+
+    if (!listener_water)  {
+        YQLogInfo("Could not create a listener!");
+        return YQER_SVR_Err(2);
+    }
+	YQLogInfo("create a water listener ok!");
 
     signal_event = evsignal_new(base, SIGINT, TcpServer::signal_cb, (void *)base);
     if (!signal_event || event_add(signal_event, NULL)<0)  {
@@ -107,7 +127,13 @@ void TcpServer::signal_cb(evutil_socket_t sig, short events, void *user_data)
 void TcpServer::listener_cb(struct evconnlistener *listener, evutil_socket_t fd,
     struct sockaddr *sa, int socklen, void *user_data)
 {
-	g_JzqConList->newConnection((struct event_base *)user_data,fd,sa);
+	TcpServer* tcp = (TcpServer*)user_data;
+	if (listener == tcp->listener_power)
+		g_JzqConList->newJzqConnection(tcp->base,fd,sa);
+	else if (listener == tcp->listener_water)
+		g_JzqConList->newWaterConnection(tcp->base,fd,sa);
+	else
+		YQLogMaj("listener_cb error");
 }
 //集中器在线定时检测
 void TcpServer::timeout_cb_heart(evutil_socket_t fd, short event, void *arg)

@@ -42,7 +42,6 @@ protected:
 	virtual IPackage* createPackage() = 0;
 	//处理包
 	virtual int handlePackage(IPackage* ipkg) = 0;
-
 protected:
 	//收到的未解析的数据缓存
 	BYTE* m_buffer;

@@ -2,7 +2,6 @@
 #include "TelnetServer.h"
 #include "YQErrCode.h"
 #include "LogFileu.h"
-#include "Connection.h"
 #include "ConnectionList.h"
 #include "AFNPackage.h"
 #include "YQUtils.h"
@@ -192,7 +191,7 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 			return;		
 		}
 		if (params[0] == "ls"){			
-			std::string ss = g_JzqConList->printJzq();
+			std::string ss = g_JzqConList->Print();
 			ss += "$";
 			bufferevent_write(bev, ss.c_str(), ss.size());
 		}
@@ -299,7 +298,7 @@ void TelnetServer::conn_readcb(struct bufferevent *bev, void *user_data)
 			AUTO_LOCK()
 				g_JzqConList->LoadJzq();
 			ostringstream os;
-			string ss = g_JzqConList->printJzq();
+			string ss = g_JzqConList->Print();
 			os << ss << "\r\n$";	
 			bufferevent_write(bev, os.str().c_str(), os.str().length());
 		}

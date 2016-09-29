@@ -1,8 +1,6 @@
-#include "Connection.h"
-#include "AFNPackage.h"
+#include "Jzq.h"
 #include "LogFileu.h"
 #include "YQUtils.h"
-#include "AFNPackageBuilder.h"
 #include "Lock.h"
 #include "Log.h"
 #include <sstream>
@@ -16,7 +14,7 @@ Jzq::Jzq()
 	m_PSEQ(0x0),
 	m_PFC(0x0),
 	m_heartTimer(0),
-	m_kwhTimer(0)
+	m_getTimer(0)
 {
 	m_a1a2.Invalid();
 }
@@ -27,7 +25,7 @@ Jzq::Jzq(string _name,WORD _areaCode,WORD _number,BYTE _tag)
 	m_PSEQ(0x0),
 	m_PFC(0x0),
 	m_heartTimer(0),
-	m_kwhTimer(0)
+	m_getTimer(0)
 {
 	m_a1a2.m_areacode = _areaCode;
 	m_a1a2.m_number = _number;
@@ -50,7 +48,6 @@ std::string Jzq::printInfo()
 void Jzq::LoginState(WORD _Fn,BYTE _pseq,BOOL _log)
 {
 	if (_Fn==1){
-
 		//集中器发送登录消息
 		m_tag |= (0x1<<1);
 		m_RSEQ = _pseq;//响应帧起始=登录帧的请求帧起始序号,之后响应+1循环(0~15)
@@ -82,72 +79,4 @@ BOOL Jzq::CheckTimeout()
 		return TRUE;
 	}
 	return FALSE;
-}
-//-----------------------------------------------------------------------------------
-Connection::Connection(struct event_base *base,struct bufferevent *_bev,evutil_socket_t _fd,struct sockaddr *sa)
-	:EventConnection(base,_bev,_fd,sa,AFNPackageBuilder::Instance())
-{	
-}
-Connection::~Connection(void)
-{
-}
-IPackage* Connection::createPackage()
-{
-	return (IPackage*)(new AFNPackage());
-}
-int Connection::handlePackage(IPackage* ipkg)
-{
-	AFNPackage* pkg = (AFNPackage*)ipkg;
-	std::list<IPackage* > ackLst;	
-	if (pkg->userHeader.A3._A3.TAG == 0){
-		//单地址
-		m_jzq.m_areacode = pkg->userHeader.A1;
-		m_jzq.m_number = pkg->userHeader.A2;				
-	}
-	if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 1  && pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 1) {
-		//单帧
-		YQLogInfo("rec single pkg ");
-		int nRet = builder.HandlePkg(pkg,ackLst);
-		if (nRet == YQER_OK && ackLst.size() > 0){
-			SendPkg(ackLst);
-			ClearPkgList(ackLst);
-		}
-		delete pkg;
-	}
-	else if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 0  && pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 1) {
-		//多帧，第一帧
-		ClearPkgList(m_pkgList);
-		YQLogInfo("rec mul pkg , first");
-		m_pkgList.push_back(pkg);
-
-		//in test, no another pkg after this first pkg, so handle this pkg
-		int nRet = AFNPackageBuilder::Instance().HandlePkg(m_pkgList,ackLst);
-		if (nRet == YQER_OK && ackLst.size() > 0){
-			SendPkg(ackLst);
-			ClearPkgList(ackLst);
-		}	
-		ClearPkgList(m_pkgList);
-		//
-	}
-	else if (pkg->pAfn->afnHeader.SEQ._SEQ.FIR == 0) {
-		//多帧，中间帧
-		m_pkgList.push_back(pkg);		
-		if (pkg->pAfn->afnHeader.SEQ._SEQ.FIN == 0){
-			YQLogInfo("rec mul pkg , middle");
-		}
-		else{
-			//多帧，结束帧
-			YQLogInfo("rec mul pkg , end");
-			int nRet = AFNPackageBuilder::Instance().HandlePkg(m_pkgList,ackLst);
-			if (nRet == YQER_OK && ackLst.size() > 0){
-				SendPkg(ackLst);
-				ClearPkgList(ackLst);
-			}	
-			ClearPkgList(m_pkgList);
-		}		
-	}
-	else{
-		YQLogMin("rec pkg,FIN|FIR error");
-	}
-	return YQER_OK;
 }

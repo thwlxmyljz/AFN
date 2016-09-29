@@ -1,4 +1,4 @@
-#include "Connection.h"
+#include "ConnectionPower.h"
 #include "ConnectionList.h"
 #include "AFN02.h"
 #include "AFNPackage.h"
