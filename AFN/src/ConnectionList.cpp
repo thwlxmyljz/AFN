@@ -126,8 +126,9 @@ void JzqList::conn_eventcb(struct bufferevent *bev, short events, void *user_dat
 void JzqList::LoadJzq()
 {
 	//数据库加载集中器
-	std::string sql= "select * from gc_equipmentjzq";
-	qopen(sql);
+	char sqlBuf[128];
+	snprintf(sqlBuf,128,"select * from gc_equipmentjzq");
+	qopen(sqlBuf);
 	query()->First();
 	LOG(LOG_INFORMATION,"jzq count(%d)",query()->RecordCount);
 	while (query()->RecordCount > 0 && !(query()->IsEof())){		
@@ -142,7 +143,6 @@ void JzqList::LoadJzq()
 	qclose();
 	for (jzqIter it = m_jzqList.begin(); it != m_jzqList.end(); it++){
 		Jzq* p = (*it);
-		char sqlBuf[128];
 		snprintf(sqlBuf,128,"select * from gc_equipmentelect where EquipmentCjqArea=%d and EquipmentCjqAddr=%d",p->m_a1a2.m_areacode,p->m_a1a2.m_number);
 		qopen(sqlBuf);
 		query()->First();
