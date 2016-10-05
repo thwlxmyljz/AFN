@@ -36,6 +36,7 @@ int JzqList::newWaterConnection(struct event_base *base,evutil_socket_t fd, stru
 
 	ConnectionWater* con = new ConnectionWater(base,bev,fd,sa);
 	push_back(con);
+	YQLogInfo("ConnectionWater created.");
 
     bufferevent_setcb(bev, conn_readcb, conn_writecb, conn_eventcb, NULL);
     bufferevent_enable(bev, EV_READ|EV_WRITE);

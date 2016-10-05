@@ -263,6 +263,7 @@ int JzqList::newJzqConnection(struct event_base *base,evutil_socket_t fd, struct
 
 	ConnectionPower* con = new ConnectionPower(base,bev,fd,sa);
 	push_back(con);
+	YQLogInfo("ConnectionPower created.");
 
     bufferevent_setcb(bev, conn_readcb, conn_writecb, conn_eventcb, NULL);
     bufferevent_enable(bev, EV_READ|EV_WRITE);

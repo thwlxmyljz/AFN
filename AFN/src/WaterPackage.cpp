@@ -36,7 +36,7 @@ int WaterPackage::ParseProto(BYTE* data,DWORD dataLen,DWORD& eatLen)
 	}
 	
 	//数据生成
-
+	eatLen = dataLen;
 	LOG(LOG_INFORMATION,"parse pkg ok");
 	
 	return YQER_OK;

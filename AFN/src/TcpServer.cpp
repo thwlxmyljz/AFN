@@ -27,7 +27,8 @@ struct timeval check_lasttime;
 TcpServer::TcpServer()
 	:base(NULL),listener_power(NULL),listener_water(NULL),signal_event(NULL)
 {	
-	g_JzqConList = new JzqList();	
+	g_JzqConList = new JzqList();
+	g_JzqConList->Load();
 }
 TcpServer::~TcpServer(void)
 {
@@ -41,8 +42,7 @@ int TcpServer::Run()
 		YQLogInfo("Server has already run!");
 		return 0;
 	}
-	g_JzqConList->Load();
-
+	
 #ifdef _WIN32    
     WSADATA wsa_data;
     WSAStartup(0x0201, &wsa_data);

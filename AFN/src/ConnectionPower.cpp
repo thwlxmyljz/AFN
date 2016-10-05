@@ -25,6 +25,7 @@ IPackage* ConnectionPower::createPackage()
 }
 int ConnectionPower::handlePackage(IPackage* ipkg)
 {
+	YQLogInfo("ConnectionPower::handlePackage ...");
 	AFNPackage* pkg = (AFNPackage*)ipkg;
 	std::list<IPackage* > ackLst;	
 	if (pkg->userHeader.A3._A3.TAG == 0){
